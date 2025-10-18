@@ -153,7 +153,7 @@ const DEFAULT_PRIZES: Array<Omit<PrizeRecord, "id" | "created_at">> = [
 ];
 
 const DEFAULT_ADMIN_USERNAME = "admin";
-const DEFAULT_ADMIN_PASSWORD_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"; // sha256("admin123")
+const DEFAULT_ADMIN_PASSWORD_HASH = "ac9689e2272427085e35b9d3e3e8bed88cb3434828b43b86fc0596cad4c6e270"; // sha256("admin1234")
 
 const getCrypto = () => {
   if (!globalThis.crypto) {
