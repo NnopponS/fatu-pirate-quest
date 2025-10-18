@@ -255,5 +255,14 @@ const Signup = () => {
               placeholder="โรงเรียน / มหาวิทยาลัย"
             />
           </div>
+          
+          <Button type="submit" className="w-full !mt-10" disabled={loading}>
+            {loading ? "กำลังสร้างบัญชี..." : "ลงทะเบียนและรับรหัส"}
+          </Button>
+        </form>
+      </div>
+    </PirateBackdrop>
+  );
+};
 
-  [message truncated at 4096 tokens; no more tokens given]
+export default Signup;

@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CheckCircle2, ShipWheel, XCircle } from "lucide-react";
+import { PirateBackdrop } from "@/components/PirateBackdrop";
 
 type Status = "loading" | "success" | "error";
 
@@ -21,8 +22,8 @@ const Checkin = () => {
       const participantId = localStorage.getItem("participantId");
       if (!participantId) {
         toast({
-          title: "Login required",
-          description: "Please log in before checking in.",
+          title: "ต้องเข้าสู่ระบบก่อน",
+          description: "กรุณาเข้าสู่ระบบเพื่อใช้การเช็กอิน",
           variant: "destructive",
         });
         navigate("/login");
@@ -34,7 +35,7 @@ const Checkin = () => {
 
       if (!loc || !sig) {
         setStatus("error");
-        setMessage("Invalid check-in link. Please scan the QR code again.");
+        setMessage("ลิงก์เช็กอินไม่ถูกต้อง กรุณาสแกน QR ใหม่อีกครั้ง");
         return;
       }
 
@@ -53,25 +54,27 @@ const Checkin = () => {
           setPointsAdded(data.pointsAdded || 0);
           setMessage(
             data.pointsAdded > 0
-              ? `Check-in completed! +${data.pointsAdded} points`
-              : "You have already checked in at this station.",
+              ? `เช็กอินสำเร็จ! ได้รับ +${data.pointsAdded} คะแนน`
+              : "คุณเคยเช็กอินสถานีนี้แล้ว"
           );
 
           toast({
-            title: "Check-in recorded",
-            description: data.pointsAdded > 0 ? `+${data.pointsAdded} points` : "Already checked in.",
+            title: "เช็กอินสำเร็จ",
+            description: data.pointsAdded > 0 ? `+${data.pointsAdded} คะแนน` : undefined,
           });
 
-          setTimeout(() => navigate("/map"), 2000);
+          setTimeout(() => navigate("/map"), 2500);
         } else {
-          throw new Error("Unexpected response from check-in service.");
+          throw new Error("ไม่สามารถตรวจสอบเช็กอินได้");
         }
       } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
         setStatus("error");
-        setMessage(error instanceof Error ? error.message : "Unable to complete check-in.");
+        setMessage(message);
         toast({
-          title: "Check-in failed",
-          description: error instanceof Error ? error.message : "Unknown error",
+          title: "เช็กอินไม่สำเร็จ",
+          description: message,
           variant: "destructive",
         });
       }
@@ -81,39 +84,47 @@ const Checkin = () => {
   }, [searchParams, navigate, toast]);
 
   return (
-    <div className="min-h-screen bg-parchment flex items-center justify-center p-4">
-      <div className="text-center max-w-md">
-        {status === "loading" && (
-          <div>
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
-            <p className="text-lg text-muted-foreground">Checking in...</p>
-          </div>
-        )}
+    <PirateBackdrop>
+      <div className="container mx-auto max-w-3xl px-4 py-16">
+        <div className="pirate-card px-8 py-12 text-center space-y-6">
+          {status === "loading" && (
+            <>
+              <div className="mx-auto h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              <p className="text-lg text-foreground/70">กำลังตรวจสอบการเช็กอิน...</p>
+            </>
+          )}
 
-        {status === "success" && (
-          <div className="bg-card p-8 rounded-2xl border-2 border-primary shadow-xl space-y-4">
-            <CheckCircle2 className="w-20 h-20 text-primary mx-auto" />
-            <h2 className="text-2xl font-bold text-primary">Success!</h2>
-            <p className="text-lg">{message}</p>
-            {pointsAdded > 0 && (
-              <div className="text-4xl font-bold text-accent">+{pointsAdded}</div>
-            )}
-            <Button onClick={() => navigate("/map")}>Back to map</Button>
-          </div>
-        )}
+          {status === "success" && (
+            <>
+              <CheckCircle2 className="mx-auto h-20 w-20 text-primary animate-in fade-in zoom-in" />
+              <h2 className="text-3xl font-semibold text-primary">เช็กอินสำเร็จ</h2>
+              <p className="text-lg text-foreground/80">{message}</p>
+              {pointsAdded > 0 && (
+                <div className="text-4xl font-bold text-accent">+{pointsAdded}</div>
+              )}
+              <Button onClick={() => navigate("/map")}>กลับไปยังแผนที่</Button>
+            </>
+          )}
 
-        {status === "error" && (
-          <div className="bg-card p-8 rounded-2xl border-2 border-destructive shadow-xl space-y-4">
-            <XCircle className="w-20 h-20 text-destructive mx-auto" />
-            <h2 className="text-2xl font-bold text-destructive">Check-in failed</h2>
-            <p className="text-lg">{message}</p>
-            <Button variant="outline" onClick={() => navigate("/map")}>
-              Back to map
-            </Button>
+          {status === "error" && (
+            <>
+              <XCircle className="mx-auto h-20 w-20 text-destructive animate-in fade-in zoom-in" />
+              <h2 className="text-3xl font-semibold text-destructive">เช็กอินไม่สำเร็จ</h2>
+              <p className="text-lg text-foreground/80">{message}</p>
+              <Button variant="outline" onClick={() => navigate("/map")}>
+                กลับไปยังแผนที่
+              </Button>
+            </>
+          )}
+
+          <div className="pirate-divider" />
+          <div className="flex items-center justify-center gap-2 text-sm text-foreground/60">
+            <ShipWheel className="h-4 w-4" />
+            สนุกกับการล่าสมบัติอย่างปลอดภัย โปรดระวังลิงก์ปลอมที่ไม่ใช่ของกิจกรรม
           </div>
-        )}
+        </div>
       </div>
-    </div>
+    </PirateBackdrop>
   );
 };
 

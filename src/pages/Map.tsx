@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LocationCard } from "@/components/LocationCard";
 import { Button } from "@/components/ui/button";
-import { Anchor, Trophy } from "lucide-react";
+import { Anchor, Compass, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PirateBackdrop } from "@/components/PirateBackdrop";
 
 interface LocationEntry {
   id: number;
@@ -24,21 +25,7 @@ const Map = () => {
   const [pointsRequired, setPointsRequired] = useState(300);
   const [loading, setLoading] = useState(true);
 
-  const participantId = localStorage.getItem("participantId");
-
-  useEffect(() => {
-    if (!participantId) {
-      toast({
-        title: "Login required",
-        description: "Sign in to keep track of your progress.",
-        variant: "destructive",
-      });
-      navigate("/login");
-      return;
-    }
-
-    loadData();
-  }, [participantId, toast, navigate, loadData]);
+  const participantId = useMemo(() => localStorage.getItem("participantId"), []);
 
   const loadData = useCallback(async () => {
     if (!participantId) return;
@@ -58,14 +45,15 @@ const Map = () => {
       if (checkinsRes.data) setCheckins(checkinsRes.data.map((c) => c.location_id));
       if (participantRes.data) setPoints(participantRes.data.points ?? 0);
 
-      const settingsValue = settingsRes.data?.value as { value?: number } | undefined;
-      if (settingsValue?.value !== undefined) {
-        setPointsRequired(settingsValue.value);
+      const value = settingsRes.data?.value as { value?: number } | null;
+      if (value?.value !== undefined) {
+        setPointsRequired(value.value);
       }
     } catch (error: unknown) {
       toast({
-        title: "Unable to load map",
-        description: error instanceof Error ? error.message : "Unknown error",
+        title: "โหลดข้อมูลไม่สำเร็จ",
+        description:
+          error instanceof Error ? error.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ",
         variant: "destructive",
       });
     } finally {
@@ -73,52 +61,88 @@ const Map = () => {
     }
   }, [participantId, toast]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-parchment flex items-center justify-center">
-        <p className="text-lg text-muted-foreground">Loading map...</p>
-      </div>
-    );
+  useEffect(() => {
+    if (!participantId) {
+      toast({
+        title: "ต้องเข้าสู่ระบบก่อน",
+        description: "กรุณาเข้าสู่ระบบเพื่อดูสถานะการผจญภัยของคุณ",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+    loadData();
+  }, [participantId, toast, navigate, loadData]);
+
+  if (!participantId) {
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-parchment p-4">
-      <div className="container max-w-4xl mx-auto py-8 space-y-6">
-        <div className="text-center space-y-3">
-          <Anchor className="w-16 h-16 mx-auto text-primary" />
-          <h1 className="text-4xl font-bold text-primary">Treasure map</h1>
-          <div className="inline-block bg-accent/20 px-6 py-3 rounded-full border-2 border-accent/50">
-            <p className="text-2xl font-bold text-accent flex items-center justify-center gap-2">
-              <Trophy className="w-6 h-6" />
-              {points} points collected
-            </p>
-          </div>
+    <PirateBackdrop>
+      <div className="container mx-auto max-w-5xl px-4 py-16 space-y-12">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <span className="pirate-highlight">
+            <Compass className="h-4 w-4 text-secondary" />
+            แผนที่ล่าสมบัติ
+          </span>
+          <h1 className="pirate-heading md:text-5xl">สถานีผจญภัยของลูกเรือ</h1>
+          <p className="pirate-subheading">
+            เช็กอินครบทั้ง 4 จุดสะสมคะแนนให้ครบกำหนด แล้วปลดล็อกวงล้อสมบัติเพื่อรับรางวัลใหญ่!
+          </p>
         </div>
 
-        <div className="space-y-4">
-          {locations.map((loc) => (
-            <LocationCard key={loc.id} {...loc} checkedIn={checkins.includes(loc.id)} />
-          ))}
+        <div className="pirate-card p-8 space-y-6">
+          <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
+                <Trophy className="h-6 w-6" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm uppercase tracking-wider text-foreground/60">
+                  คะแนนปัจจุบัน
+                </p>
+                <h2 className="text-3xl font-semibold text-primary">{points} คะแนน</h2>
+              </div>
+            </div>
+            <div className="text-sm text-foreground/70">
+              ต้องการอีก{" "}
+              <span className="font-semibold text-primary">
+                {Math.max(pointsRequired - points, 0)}
+              </span>{" "}
+              คะแนนเพื่อหมุนวงล้อสมบัติ
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="py-16 text-center text-foreground/70">
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              กำลังโหลดจุดเช็กอิน...
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {locations.map((location) => (
+                <LocationCard
+                  key={location.id}
+                  {...location}
+                  checkedIn={checkins.includes(location.id)}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {points >= pointsRequired && (
-          <div className="text-center">
-            <Button size="lg" className="text-lg gap-2" onClick={() => navigate("/rewards")}>
-              Spin for rewards
-            </Button>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Requires {pointsRequired} points to unlock the wheel.
-            </p>
-          </div>
-        )}
-
-        <div className="text-center">
-          <Button variant="outline" onClick={() => navigate("/")}>
-            Back to home
+        <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <Button size="lg" variant="outline" onClick={() => navigate("/rewards")}>
+            ไปหน้าวงล้อสมบัติ
+          </Button>
+          <Button size="lg" variant="ghost" onClick={() => navigate("/")}>
+            <Anchor className="mr-2 h-4 w-4" />
+            กลับหน้าแรก
           </Button>
         </div>
       </div>
-    </div>
+    </PirateBackdrop>
   );
 };
 

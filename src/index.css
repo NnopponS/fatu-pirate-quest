@@ -144,6 +144,10 @@ All colors MUST be HSL.
     filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.25));
   }
 
+  .animate-spin-slow {
+    animation: spin 2.6s linear infinite;
+  }
+
   .pirate-wave {
     animation: pirate-wave 18s linear infinite;
   }

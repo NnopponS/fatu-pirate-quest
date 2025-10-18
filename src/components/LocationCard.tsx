@@ -1,4 +1,4 @@
-import { MapPin, CheckCircle2, Circle } from "lucide-react";
+import { MapPin, CheckCircle2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface LocationCardProps {
@@ -15,31 +15,42 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn }: LocationCard
 
   return (
     <div
-      className={`p-6 rounded-xl border-2 transition-all ${
-        checkedIn ? "bg-primary/10 border-primary/50" : "bg-card border-rope"
+      className={`relative overflow-hidden rounded-2xl border transition-all duration-500 ${
+        checkedIn
+          ? "border-primary/40 bg-primary/10 shadow-lg shadow-primary/15"
+          : "border-rope/40 bg-white/70 shadow-md hover:shadow-xl hover:shadow-secondary/10"
       }`}
     >
-      <div className="flex items-start gap-4">
-        <div className="flex-shrink-0">
-          {checkedIn ? (
-            <CheckCircle2 className="w-8 h-8 text-primary" />
-          ) : (
-            <Circle className="w-8 h-8 text-muted-foreground" />
-          )}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/20 to-white/0 pointer-events-none" />
+      <div className="relative p-6 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-xl font-semibold text-primary">{name}</h3>
+          <span
+            className={`pirate-chip ${
+              checkedIn ? "bg-primary/20 text-primary border-primary/30" : "bg-muted text-foreground/70"
+            }`}
+          >
+            {checkedIn ? <CheckCircle2 className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+            {checkedIn ? "เช็กอินแล้ว" : "ยังไม่เช็กอิน"}
+          </span>
         </div>
 
-        <div className="flex-1">
-          <h3 className="font-bold text-lg mb-1">{name}</h3>
-          <p className="text-sm text-muted-foreground mb-3">
-            +{points} points {checkedIn && "(already checked in)"}
-          </p>
+        <p className="text-sm text-foreground/70">
+          สถานีนี้มอบ{" "}
+          <span className="font-semibold text-primary">{points} คะแนน</span>{" "}
+          เมื่อเช็กอินสำเร็จ
+        </p>
 
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <Button variant="secondary" size="sm" className="gap-2" asChild>
             <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
-              <MapPin className="w-4 h-4" />
-              Open in Google Maps
+              <MapPin className="h-4 w-4" />
+              เปิดใน Google Maps
             </a>
           </Button>
+          <p className="text-xs text-foreground/60">
+            พิกัด: {lat.toFixed(6)}, {lng.toFixed(6)}
+          </p>
         </div>
       </div>
     </div>

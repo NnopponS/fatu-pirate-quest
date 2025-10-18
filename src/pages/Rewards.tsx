@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SpinWheel } from "@/components/SpinWheel";
 import { Button } from "@/components/ui/button";
-import { Anchor } from "lucide-react";
+import { Anchor, Gift } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PirateBackdrop } from "@/components/PirateBackdrop";
 
 interface PrizeOption {
   name: string;
@@ -21,7 +22,7 @@ const Rewards = () => {
   const [hasSpun, setHasSpun] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const participantId = localStorage.getItem("participantId");
+  const participantId = useMemo(() => localStorage.getItem("participantId"), []);
 
   const loadData = useCallback(async () => {
     if (!participantId) return;
@@ -40,19 +41,19 @@ const Rewards = () => {
       if (participantRes.data) setPoints(participantRes.data.points ?? 0);
       if (spinRes.data) setHasSpun(true);
 
-      const settingsValue = settingsRes.data?.value as { value?: number } | undefined;
-      if (settingsValue?.value !== undefined) {
-        setPointsRequired(settingsValue.value);
+      const value = settingsRes.data?.value as { value?: number } | null;
+      if (value?.value !== undefined) {
+        setPointsRequired(value.value);
       }
 
       if (prizesRes.data) {
         setPrizes(prizesRes.data.map((prize) => ({ name: prize.name, weight: prize.weight })));
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Unknown error";
       toast({
-        title: "Failed to load rewards",
-        description: message,
+        title: "โหลดรางวัลไม่สำเร็จ",
+        description:
+          error instanceof Error ? error.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ",
         variant: "destructive",
       });
     } finally {
@@ -63,14 +64,13 @@ const Rewards = () => {
   useEffect(() => {
     if (!participantId) {
       toast({
-        title: "Login required",
-        description: "Please log in before accessing rewards.",
+        title: "ต้องเข้าสู่ระบบก่อน",
+        description: "กรุณาเข้าสู่ระบบเพื่อแลกรางวัล",
         variant: "destructive",
       });
       navigate("/login");
       return;
     }
-
     loadData();
   }, [participantId, toast, navigate, loadData]);
 
@@ -86,15 +86,18 @@ const Rewards = () => {
 
       if (data?.prize) {
         setHasSpun(true);
-        toast({ title: "Congratulations!", description: `You won ${data.prize}` });
+        toast({
+          title: "ยินดีด้วย!",
+          description: `คุณได้รับ ${data.prize}`,
+        });
         return data.prize;
       }
 
-      throw new Error("Spin failed, please try again.");
+      throw new Error("ไม่สามารถหมุนวงล้อได้ กรุณาลองใหม่อีกครั้ง");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Unknown error";
       toast({
-        title: "Spin failed",
+        title: "หมุนวงล้อไม่สำเร็จ",
         description: message,
         variant: "destructive",
       });
@@ -102,66 +105,78 @@ const Rewards = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-parchment flex items-center justify-center">
-        <p className="text-lg text-muted-foreground">Loading reward data...</p>
-      </div>
-    );
+  if (!participantId) {
+    return null;
   }
 
-  if (points < pointsRequired) {
-    return (
-      <div className="min-h-screen bg-parchment flex items-center justify-center p-4">
-        <div className="text-center max-w-md space-y-4">
-          <Anchor className="w-20 h-20 mx-auto text-muted-foreground" />
-          <h2 className="text-2xl font-bold">Not enough points yet</h2>
-          <p className="text-lg">
-            You currently have {points} points. Collect {pointsRequired - points} more to spin the
-            wheel.
-          </p>
-          <Button onClick={() => navigate("/map")}>Back to map</Button>
-        </div>
-      </div>
-    );
-  }
+  const notEnoughPoints = points < pointsRequired;
 
   return (
-    <div className="min-h-screen bg-parchment p-4">
-      <div className="container max-w-4xl mx-auto py-8 space-y-6">
-        <div className="text-center space-y-2">
-          <Anchor className="w-16 h-16 mx-auto text-primary" />
-          <h1 className="text-4xl font-bold text-primary">Spin for treasure</h1>
-          <p className="text-muted-foreground">
-            You have {points} points. One spin per participant.
+    <PirateBackdrop>
+      <div className="container mx-auto max-w-5xl px-4 py-16 space-y-10">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <span className="pirate-highlight">
+            <Gift className="h-4 w-4 text-accent" />
+            วงล้อขุมทรัพย์
+          </span>
+          <h1 className="pirate-heading md:text-5xl">หมุนวงล้อแห่งโชค</h1>
+          <p className="pirate-subheading">
+            สะสมคะแนนให้ครบแล้วปล่อยให้วงล้อพาไปสู่รางวัลล้ำค่า ประกายสมบัติโจรสลัดรออยู่ตรงหน้า!
           </p>
         </div>
 
-        <div className="bg-card p-8 rounded-2xl border-2 border-rope shadow-xl">
-          <SpinWheel
-            onSpin={handleSpin}
-            disabled={hasSpun || prizes.length === 0}
-            prizes={prizes}
-          />
-          {hasSpun && (
-            <p className="mt-4 text-center text-sm text-muted-foreground">
-              You have already claimed a prize for this event.
-            </p>
-          )}
-          {prizes.length === 0 && (
-            <p className="mt-4 text-center text-sm text-muted-foreground">
-              Prizes have not been configured yet. Please check again later.
-            </p>
-          )}
-        </div>
+        {loading ? (
+          <div className="pirate-card p-12 text-center text-foreground/70">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            กำลังโหลดข้อมูลรางวัล...
+          </div>
+        ) : (
+          <>
+            {notEnoughPoints ? (
+              <div className="pirate-card px-8 py-12 space-y-4 text-center">
+                <Anchor className="mx-auto h-16 w-16 text-muted-foreground" />
+                <h2 className="text-3xl font-semibold text-primary">คะแนนยังไม่เพียงพอ</h2>
+                <p className="text-lg text-foreground/70">
+                  คุณมี {points} คะแนน
+                  ต้องสะสมเพิ่มอีก {pointsRequired - points} คะแนนเพื่อปลดล็อกวงล้อสมบัติ
+                </p>
+                <Button size="lg" onClick={() => navigate("/map")}>
+                  กลับไปสะสมคะแนนต่อ
+                </Button>
+              </div>
+            ) : (
+              <div className="pirate-card px-6 py-10 space-y-8">
+                <div className="text-center space-y-2">
+                  <h2 className="text-3xl font-semibold text-primary">
+                    พร้อมหมุนวงล้อสมบัติแล้ว!
+                  </h2>
+                  <p className="text-sm text-foreground/70">
+                    คุณสะสมทั้งหมด {points} คะแนน หมุนได้เพียง 1 ครั้งต่อคน
+                  </p>
+                </div>
+                <SpinWheel onSpin={handleSpin} disabled={hasSpun || prizes.length === 0} prizes={prizes} />
+                {hasSpun && (
+                  <p className="text-center text-sm text-foreground/70">
+                    คุณหมุนวงล้อแล้ว หากต้องการรับชมผลอีกครั้ง ให้สอบถามทีมงานได้เลย
+                  </p>
+                )}
+                {prizes.length === 0 && (
+                  <p className="text-center text-sm text-foreground/70">
+                    ขณะนี้ยังไม่มีการตั้งค่ารางวัล กรุณาติดต่อทีมงาน
+                  </p>
+                )}
+              </div>
+            )}
+          </>
+        )}
 
         <div className="text-center">
-          <Button variant="outline" onClick={() => navigate("/map")}>
-            Return to map
+          <Button variant="ghost" onClick={() => navigate("/map")}>
+            กลับไปที่แผนที่
           </Button>
         </div>
       </div>
-    </div>
+    </PirateBackdrop>
   );
 };
 

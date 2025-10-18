@@ -5,14 +5,27 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { RefreshCw, LogOut, Download, Save, Plus, Trash2 } from "lucide-react";
-
-const getErrorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : "Unknown error";
+import {
+  RefreshCw,
+  LogOut,
+  Download,
+  Save,
+  Plus,
+  Trash2,
+  Anchor,
+  MapPin,
+  Gift,
+} from "lucide-react";
+import { PirateBackdrop } from "@/components/PirateBackdrop";
 
 interface ParticipantRow {
   id: string;
@@ -52,6 +65,9 @@ interface DashboardResponse {
   };
 }
 
+const errorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -73,47 +89,44 @@ const AdminDashboard = () => {
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminUsername");
     localStorage.removeItem("authRole");
-    toast({ title: "Signed out", description: "Admin session closed." });
+    toast({
+      title: "ออกจากระบบแล้ว",
+      description: "ปิดการควบคุมเรือโจรสลัดเรียบร้อย",
+    });
     navigate("/login");
   }, [navigate, toast]);
 
-  const fetchDashboard = useCallback(async (sessionToken: string) => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke<DashboardResponse>("admin", {
-        body: {
-          token: sessionToken,
-          action: "get-dashboard-data",
-        },
-      });
+  const fetchDashboard = useCallback(
+    async (sessionToken: string) => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke<DashboardResponse>("admin", {
+          body: {
+            token: sessionToken,
+            action: "get-dashboard-data",
+          },
+        });
 
-      if (error) {
-        throw error;
-      }
+        if (error) throw error;
+        if (!data?.ok) throw new Error("ข้อมูลไม่ถูกต้อง");
 
-      if (!data?.ok) {
-        throw new Error("Unexpected dashboard response.");
-      }
-
-      setDashboard(data);
-      setLocationDrafts(data.locations.map((loc) => ({ ...loc })));
-      setPrizeDrafts(data.prizes.map((prize) => ({ ...prize })));
-      setPointsRequired(data.settings.pointsRequiredForWheel);
-    } catch (error: unknown) {
-      const message = getErrorMessage(error);
-      toast({
-        title: "Unable to load dashboard",
-        description: message,
-        variant: "destructive",
-      });
-
-      if (message.toLowerCase().includes("session")) {
+        setDashboard(data);
+        setLocationDrafts(data.locations.map((loc) => ({ ...loc })));
+        setPrizeDrafts(data.prizes.map((prize) => ({ ...prize })));
+        setPointsRequired(data.settings.pointsRequiredForWheel);
+      } catch (error) {
+        toast({
+          title: "ไม่สามารถโหลดข้อมูลได้",
+          description: errorMessage(error),
+          variant: "destructive",
+        });
         logout();
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [logout, toast]);
+    },
+    [logout, toast],
+  );
 
   useEffect(() => {
     const sessionToken = localStorage.getItem("adminToken");
@@ -121,38 +134,38 @@ const AdminDashboard = () => {
       navigate("/login");
       return;
     }
-
     setToken(sessionToken);
     fetchDashboard(sessionToken);
-  }, [navigate, fetchDashboard]);
+  }, [fetchDashboard, navigate]);
 
   const handleLocationChange = (index: number, field: keyof LocationRow, value: string) => {
     setLocationDrafts((prev) => {
       const updated = [...prev];
       const current = { ...updated[index] };
-      if (field === "points" || field === "lat" || field === "lng") {
-        const numberValue = value === "" ? NaN : Number(value);
-        current[field] = numberValue;
+
+      if (field === "lat" || field === "lng" || field === "points") {
+        const numeric = value === "" ? NaN : Number(value);
+        current[field] = numeric;
       } else {
         current[field] = value as never;
       }
+
       updated[index] = current;
       return updated;
     });
   };
 
   const saveLocation = async (location: LocationRow) => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
+
     if (
       Number.isNaN(location.lat) ||
       Number.isNaN(location.lng) ||
       Number.isNaN(location.points)
     ) {
       toast({
-        title: "Invalid location data",
-        description: "Latitude, longitude and points must be valid numbers.",
+        title: "ข้อมูลไม่ถูกต้อง",
+        description: "Latitude, Longitude และคะแนนต้องเป็นตัวเลข",
         variant: "destructive",
       });
       return;
@@ -174,17 +187,13 @@ const AdminDashboard = () => {
         },
       });
 
-      if (error) {
-        throw error;
-      }
-
-      toast({ title: "Location updated" });
+      if (error) throw error;
+      toast({ title: "อัปเดตจุดเช็กอินแล้ว" });
       fetchDashboard(token);
-    } catch (error: unknown) {
-      const message = getErrorMessage(error);
+    } catch (error) {
       toast({
-        title: "Failed to update location",
-        description: message,
+        title: "บันทึกจุดเช็กอินไม่สำเร็จ",
+        description: errorMessage(error),
         variant: "destructive",
       });
     } finally {
@@ -193,14 +202,11 @@ const AdminDashboard = () => {
   };
 
   const savePrize = async (prize: PrizeRow) => {
-    if (!token) {
-      return;
-    }
-
-    if (prize.name.trim().length === 0 || prize.weight <= 0) {
+    if (!token) return;
+    if (!prize.name.trim() || prize.weight <= 0) {
       toast({
-        title: "Invalid prize",
-        description: "Provide a name and a weight greater than zero.",
+        title: "ข้อมูลรางวัลไม่ครบ",
+        description: "กรุณากรอกชื่อรางวัลและน้ำหนักมากกว่า 0",
         variant: "destructive",
       });
       return;
@@ -219,18 +225,13 @@ const AdminDashboard = () => {
           },
         },
       });
-
-      if (error) {
-        throw error;
-      }
-
-      toast({ title: "Prize updated" });
+      if (error) throw error;
+      toast({ title: "อัปเดตรางวัลแล้ว" });
       fetchDashboard(token);
-    } catch (error: unknown) {
-      const message = getErrorMessage(error);
+    } catch (error) {
       toast({
-        title: "Failed to update prize",
-        description: message,
+        title: "อัปเดตรางวัลไม่สำเร็จ",
+        description: errorMessage(error),
         variant: "destructive",
       });
     } finally {
@@ -239,10 +240,7 @@ const AdminDashboard = () => {
   };
 
   const deletePrize = async (id: string) => {
-    if (!token) {
-      return;
-    }
-
+    if (!token) return;
     try {
       const { error } = await supabase.functions.invoke("admin", {
         body: {
@@ -251,35 +249,27 @@ const AdminDashboard = () => {
           payload: { id },
         },
       });
-
-      if (error) {
-        throw error;
-      }
-
-      toast({ title: "Prize removed" });
+      if (error) throw error;
+      toast({ title: "ลบรางวัลเรียบร้อย" });
       fetchDashboard(token);
-    } catch (error: unknown) {
-      const message = getErrorMessage(error);
+    } catch (error) {
       toast({
-        title: "Failed to remove prize",
-        description: message,
+        title: "ลบรางวัลไม่สำเร็จ",
+        description: errorMessage(error),
         variant: "destructive",
       });
     }
   };
 
   const addPrize = async () => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     const trimmedName = newPrize.name.trim();
     const weightValue = Number(newPrize.weight);
-
     if (!trimmedName || Number.isNaN(weightValue) || weightValue <= 0) {
       toast({
-        title: "Invalid prize details",
-        description: "Add a title and a positive weight.",
+        title: "ข้อมูลรางวัลไม่ครบ",
+        description: "กรุณากรอกชื่อและน้ำหนักรางวัลให้ถูกต้อง",
         variant: "destructive",
       });
       return;
@@ -290,39 +280,29 @@ const AdminDashboard = () => {
         body: {
           token,
           action: "create-prize",
-          payload: {
-            name: trimmedName,
-            weight: weightValue,
-          },
+          payload: { name: trimmedName, weight: weightValue },
         },
       });
-
-      if (error) {
-        throw error;
-      }
-
-      toast({ title: "Prize added" });
+      if (error) throw error;
+      toast({ title: "เพิ่มรางวัลใหม่เรียบร้อย" });
       setNewPrize({ name: "", weight: "10" });
       fetchDashboard(token);
-    } catch (error: unknown) {
-      const message = getErrorMessage(error);
+    } catch (error) {
       toast({
-        title: "Failed to add prize",
-        description: message,
+        title: "เพิ่มรางวัลไม่สำเร็จ",
+        description: errorMessage(error),
         variant: "destructive",
       });
     }
   };
 
   const updateThreshold = async () => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     if (Number.isNaN(pointsRequired) || pointsRequired < 0) {
       toast({
-        title: "Invalid threshold",
-        description: "Points must be zero or a positive number.",
+        title: "ค่าคะแนนไม่ถูกต้อง",
+        description: "กรุณากรอกคะแนนเป็นจำนวนเต็ม 0 ขึ้นไป",
         variant: "destructive",
       });
       return;
@@ -334,23 +314,16 @@ const AdminDashboard = () => {
         body: {
           token,
           action: "set-spin-threshold",
-          payload: {
-            pointsRequired: Number(pointsRequired),
-          },
+          payload: { pointsRequired: Number(pointsRequired) },
         },
       });
-
-      if (error) {
-        throw error;
-      }
-
-      toast({ title: "Spin threshold updated" });
+      if (error) throw error;
+      toast({ title: "อัปเดตคะแนนขั้นต่ำสำเร็จ" });
       fetchDashboard(token);
-    } catch (error: unknown) {
-      const message = getErrorMessage(error);
+    } catch (error) {
       toast({
-        title: "Failed to update threshold",
-        description: message,
+        title: "อัปเดตคะแนนไม่สำเร็จ",
+        description: errorMessage(error),
         variant: "destructive",
       });
     } finally {
@@ -359,21 +332,19 @@ const AdminDashboard = () => {
   };
 
   const exportParticipants = () => {
-    if (!dashboard) {
-      return;
-    }
+    if (!dashboard) return;
 
     const header = [
-      "Participant ID",
+      "ID",
       "Username",
-      "First Name",
-      "Last Name",
-      "Points",
-      "Age",
-      "Grade",
-      "School",
-      "Program",
-      "Registered At",
+      "ชื่อ",
+      "นามสกุล",
+      "คะแนน",
+      "อายุ",
+      "ระดับชั้น",
+      "สถานศึกษา",
+      "โปรแกรม",
+      "ลงทะเบียนเมื่อ",
     ];
 
     const rows = dashboard.participants.map((p) => [
@@ -404,7 +375,7 @@ const AdminDashboard = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `participants_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `fatu_participants_${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -416,179 +387,215 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-parchment p-4">
-      <div className="container mx-auto space-y-8 py-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-primary">Admin dashboard</h1>
-            <p className="text-muted-foreground">
-              Manage locations, prizes, and export registered participants.
+    <PirateBackdrop>
+      <div className="container mx-auto max-w-6xl px-4 py-16 space-y-10">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <span className="pirate-highlight">
+            <Anchor className="h-4 w-4 text-primary" />
+            แดชบอร์ดผู้ควบคุมเรือ
+          </span>
+          <h1 className="pirate-heading md:text-5xl">บริหารกองเรือ FATU</h1>
+          <p className="pirate-subheading">
+            ติดตามลูกเรือ จัดการจุดเช็กอิน กำหนดรางวัล และดูคะแนนได้จากศูนย์ควบคุมแห่งนี้
+          </p>
+        </div>
+
+        <div className="pirate-card flex flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-left">
+            <p className="text-sm uppercase tracking-wide text-foreground/60">
+              เข้าสู่ระบบในนาม
             </p>
+            <p className="text-lg font-semibold text-primary">{adminUsername}</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="outline">Signed in as {adminUsername}</Badge>
-            <Button variant="secondary" onClick={() => fetchDashboard(token)} disabled={loading}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
+          <div className="flex gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => token && fetchDashboard(token)}
+              disabled={loading}
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              รีเฟรชข้อมูล
             </Button>
-            <Button variant="outline" onClick={logout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign out
+            <Button variant="outline" onClick={logout} className="gap-2">
+              <LogOut className="h-4 w-4" />
+              ออกจากระบบ
             </Button>
           </div>
         </div>
 
-        {loading && (
-          <Card>
-            <CardContent className="p-10 text-center text-muted-foreground">
-              Loading dashboard data...
-            </CardContent>
-          </Card>
-        )}
-
-        {!loading && dashboard && (
-          <Tabs defaultValue="participants" className="space-y-6">
-            <TabsList className="grid grid-cols-4">
-              <TabsTrigger value="participants">Participants</TabsTrigger>
-              <TabsTrigger value="locations">Locations</TabsTrigger>
-              <TabsTrigger value="prizes">Prizes</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
+        {loading || !dashboard ? (
+          <div className="pirate-card py-16 text-center text-foreground/70">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            กำลังโหลดข้อมูลแดชบอร์ด...
+          </div>
+        ) : (
+          <Tabs defaultValue="participants" className="space-y-8">
+            <TabsList className="grid grid-cols-4 bg-transparent">
+              <TabsTrigger value="participants">ลูกเรือ</TabsTrigger>
+              <TabsTrigger value="locations">จุดเช็กอิน</TabsTrigger>
+              <TabsTrigger value="prizes">รางวัล</TabsTrigger>
+              <TabsTrigger value="settings">ตั้งค่า</TabsTrigger>
             </TabsList>
 
             <TabsContent value="participants" className="space-y-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
+              <div className="pirate-card px-6 py-8 space-y-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <CardTitle>Registered participants</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Total members: {dashboard.participants.length}
+                    <h2 className="text-2xl font-semibold text-primary">ลูกเรือทั้งหมด</h2>
+                    <p className="text-sm text-foreground/70">
+                      มีลูกเรือ {dashboard.participants.length} คนร่วมออกล่าสมบัติ
                     </p>
                   </div>
-                  <Button onClick={exportParticipants}>
-                    <Download className="w-4 h-4 mr-2" />
-                    Export CSV
+                  <Button variant="outline" className="gap-2" onClick={exportParticipants}>
+                    <Download className="h-4 w-4" />
+                    ดาวน์โหลด CSV
                   </Button>
-                </CardHeader>
-                <CardContent className="overflow-x-auto">
+                </div>
+
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Username</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Points</TableHead>
-                        <TableHead>School</TableHead>
-                        <TableHead>Program</TableHead>
-                        <TableHead>Registered</TableHead>
+                        <TableHead>ชื่อ - นามสกุล</TableHead>
+                        <TableHead>คะแนน</TableHead>
+                        <TableHead>สถานศึกษา</TableHead>
+                        <TableHead>โปรแกรม</TableHead>
+                        <TableHead>ลงทะเบียนเมื่อ</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {dashboard.participants.map((participant) => (
                         <TableRow key={participant.id}>
-                          <TableCell className="font-medium">{participant.username}</TableCell>
+                          <TableCell className="font-semibold">{participant.username}</TableCell>
                           <TableCell>
                             {participant.first_name} {participant.last_name}
                           </TableCell>
                           <TableCell>{participant.points}</TableCell>
-                          <TableCell>{participant.school ?? "—"}</TableCell>
-                          <TableCell>{participant.program ?? "—"}</TableCell>
+                          <TableCell>{participant.school ?? "-"}</TableCell>
+                          <TableCell>{participant.program ?? "-"}</TableCell>
                           <TableCell>
-                            {new Date(participant.created_at).toLocaleString()}
+                            {new Date(participant.created_at).toLocaleString("th-TH")}
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="locations" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Manage locations</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
+              <div className="pirate-card px-6 py-8 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary/15 text-secondary">
+                    <MapPin className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-semibold text-primary">จัดการจุดเช็กอิน</h2>
+                    <p className="text-sm text-foreground/70">
+                      ปรับชื่อ พิกัด และคะแนนที่ได้รับของแต่ละจุดได้ที่นี่
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-6">
                   {locationDrafts.map((location, index) => (
                     <div
                       key={location.id}
-                      className="grid gap-4 rounded-xl border border-border p-4 md:grid-cols-2"
+                      className="rounded-2xl border border-rope/40 bg-white/70 px-6 py-6 shadow-sm"
                     >
-                      <div className="space-y-2">
-                        <Label htmlFor={`loc-name-${location.id}`}>Name</Label>
-                        <Input
-                          id={`loc-name-${location.id}`}
-                          value={location.name}
-                          onChange={(event) =>
-                            handleLocationChange(index, "name", event.target.value)
-                          }
-                        />
+                      <div className="mb-4 flex items-center justify-between">
+                        <h3 className="text-lg font-semibold text-primary">
+                          จุดที่ {location.id}
+                        </h3>
+                        <span className="text-sm text-foreground/60">
+                          +{location.points} คะแนนเมื่อเช็กอิน
+                        </span>
                       </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor={`loc-points-${location.id}`}>Points</Label>
-                        <Input
-                          id={`loc-points-${location.id}`}
-                          type="number"
-                          value={location.points}
-                          onChange={(event) =>
-                            handleLocationChange(index, "points", event.target.value)
-                          }
-                        />
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor={`loc-name-${location.id}`}>ชื่อจุดเช็กอิน</Label>
+                          <Input
+                            id={`loc-name-${location.id}`}
+                            value={location.name}
+                            onChange={(event) =>
+                              handleLocationChange(index, "name", event.target.value)
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`loc-points-${location.id}`}>คะแนน</Label>
+                          <Input
+                            id={`loc-points-${location.id}`}
+                            type="number"
+                            value={location.points}
+                            onChange={(event) =>
+                              handleLocationChange(index, "points", event.target.value)
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`loc-lat-${location.id}`}>Latitude</Label>
+                          <Input
+                            id={`loc-lat-${location.id}`}
+                            type="number"
+                            value={location.lat}
+                            onChange={(event) =>
+                              handleLocationChange(index, "lat", event.target.value)
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`loc-lng-${location.id}`}>Longitude</Label>
+                          <Input
+                            id={`loc-lng-${location.id}`}
+                            type="number"
+                            value={location.lng}
+                            onChange={(event) =>
+                              handleLocationChange(index, "lng", event.target.value)
+                            }
+                          />
+                        </div>
                       </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor={`loc-lat-${location.id}`}>Latitude</Label>
-                        <Input
-                          id={`loc-lat-${location.id}`}
-                          type="number"
-                          value={location.lat}
-                          onChange={(event) =>
-                            handleLocationChange(index, "lat", event.target.value)
-                          }
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor={`loc-lng-${location.id}`}>Longitude</Label>
-                        <Input
-                          id={`loc-lng-${location.id}`}
-                          type="number"
-                          value={location.lng}
-                          onChange={(event) =>
-                            handleLocationChange(index, "lng", event.target.value)
-                          }
-                        />
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <Button
-                          onClick={() => saveLocation(location)}
-                          disabled={savingLocationId === location.id}
-                        >
-                          <Save className="w-4 h-4 mr-2" />
-                          {savingLocationId === location.id ? "Saving..." : "Save changes"}
-                        </Button>
-                      </div>
+                      <Button
+                        className="mt-4 gap-2"
+                        onClick={() => saveLocation(location)}
+                        disabled={savingLocationId === location.id}
+                      >
+                        <Save className="h-4 w-4" />
+                        {savingLocationId === location.id ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
+                      </Button>
                     </div>
                   ))}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="prizes" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Prize catalog</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid gap-6">
-                    {prizeDrafts.map((prize, index) => (
-                      <div
-                        key={prize.id}
-                        className="grid gap-4 rounded-xl border border-border p-4 md:grid-cols-[1fr_auto]"
-                      >
+              <div className="pirate-card px-6 py-8 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/15 text-accent">
+                    <Gift className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-semibold text-primary">รายชื่อรางวัล</h2>
+                    <p className="text-sm text-foreground/70">
+                      ปรับแต่งรางวัลบนวงล้อและน้ำหนักการสุ่มได้ตามต้องการ
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-6">
+                  {prizeDrafts.map((prize, index) => (
+                    <div
+                      key={prize.id}
+                      className="rounded-2xl border border-rope/40 bg-white/70 px-6 py-6 shadow-sm"
+                    >
+                      <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
                         <div className="space-y-2">
-                          <Label htmlFor={`prize-name-${prize.id}`}>Prize name</Label>
+                          <Label htmlFor={`prize-name-${prize.id}`}>ชื่อรางวัล</Label>
                           <Input
                             id={`prize-name-${prize.id}`}
                             value={prize.name}
@@ -601,9 +608,8 @@ const AdminDashboard = () => {
                             }
                           />
                         </div>
-
                         <div className="space-y-2">
-                          <Label htmlFor={`prize-weight-${prize.id}`}>Weight</Label>
+                          <Label htmlFor={`prize-weight-${prize.id}`}>น้ำหนัก (โอกาส)</Label>
                           <Input
                             id={`prize-weight-${prize.id}`}
                             type="number"
@@ -620,80 +626,76 @@ const AdminDashboard = () => {
                             }
                           />
                         </div>
-
-                        <div className="flex gap-2 md:col-span-2">
-                          <Button
-                            onClick={() => savePrize(prize)}
-                            disabled={savingPrizeId === prize.id}
-                          >
-                            <Save className="w-4 h-4 mr-2" />
-                            {savingPrizeId === prize.id ? "Saving..." : "Save prize"}
-                          </Button>
-                          <Button variant="outline" onClick={() => deletePrize(prize.id)}>
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </Button>
-                        </div>
                       </div>
-                    ))}
-                  </div>
-
-                  <div className="rounded-xl border border-dashed border-border p-4 space-y-4">
-                    <h3 className="text-lg font-semibold">Add a new prize</h3>
-                    <div className="grid gap-4 md:grid-cols-[2fr_1fr_auto]">
-                      <Input
-                        placeholder="Prize name"
-                        value={newPrize.name}
-                        onChange={(event) =>
-                          setNewPrize((prev) => ({ ...prev, name: event.target.value }))
-                        }
-                      />
-                      <Input
-                        type="number"
-                        min="1"
-                        placeholder="Weight"
-                        value={newPrize.weight}
-                        onChange={(event) =>
-                          setNewPrize((prev) => ({ ...prev, weight: event.target.value }))
-                        }
-                      />
-                      <Button onClick={addPrize}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add prize
-                      </Button>
+                      <div className="mt-4 flex gap-3">
+                        <Button
+                          onClick={() => savePrize(prize)}
+                          disabled={savingPrizeId === prize.id}
+                          className="gap-2"
+                        >
+                          <Save className="h-4 w-4" />
+                          {savingPrizeId === prize.id ? "กำลังบันทึก..." : "บันทึก"}
+                        </Button>
+                        <Button variant="outline" className="gap-2" onClick={() => deletePrize(prize.id)}>
+                          <Trash2 className="h-4 w-4" />
+                          ลบ
+                        </Button>
+                      </div>
                     </div>
+                  ))}
+                </div>
+
+                <div className="rounded-2xl border border-dashed border-rope/40 bg-white/60 px-6 py-6 shadow-inner">
+                  <h3 className="text-lg font-semibold text-primary mb-4">เพิ่มรางวัลใหม่</h3>
+                  <div className="grid gap-4 md:grid-cols-[2fr_1fr_auto]">
+                    <Input
+                      placeholder="ชื่อรางวัล"
+                      value={newPrize.name}
+                      onChange={(event) =>
+                        setNewPrize((prev) => ({ ...prev, name: event.target.value }))
+                      }
+                    />
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="น้ำหนัก"
+                      value={newPrize.weight}
+                      onChange={(event) =>
+                        setNewPrize((prev) => ({ ...prev, weight: event.target.value }))
+                      }
+                    />
+                    <Button className="gap-2" onClick={addPrize}>
+                      <Plus className="h-4 w-4" />
+                      เพิ่มรางวัล
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </TabsContent>
 
-            <TabsContent value="settings">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Reward configuration</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-2 max-w-sm">
-                    <Label htmlFor="points-required">Points needed to spin</Label>
-                    <Input
-                      id="points-required"
-                      type="number"
-                      min="0"
-                      value={pointsRequired}
-                      onChange={(event) => setPointsRequired(Number(event.target.value))}
-                    />
-                  </div>
-                  <Button onClick={updateThreshold} disabled={updatingThreshold}>
-                    <Save className="w-4 h-4 mr-2" />
-                    {updatingThreshold ? "Saving..." : "Save threshold"}
-                  </Button>
-                </CardContent>
-              </Card>
+            <TabsContent value="settings" className="space-y-4">
+              <div className="pirate-card px-6 py-8 space-y-6">
+                <h2 className="text-2xl font-semibold text-primary">ตั้งค่าระบบรางวัล</h2>
+                <div className="max-w-sm space-y-3">
+                  <Label htmlFor="points-required">คะแนนขั้นต่ำในการหมุนวงล้อ</Label>
+                  <Input
+                    id="points-required"
+                    type="number"
+                    min="0"
+                    value={pointsRequired}
+                    onChange={(event) => setPointsRequired(Number(event.target.value))}
+                  />
+                </div>
+                <Button onClick={updateThreshold} disabled={updatingThreshold} className="gap-2">
+                  <Save className="h-4 w-4" />
+                  {updatingThreshold ? "กำลังบันทึก..." : "บันทึกค่าคะแนน"}
+                </Button>
+              </div>
             </TabsContent>
           </Tabs>
         )}
       </div>
-    </div>
+    </PirateBackdrop>
   );
 };
 
