@@ -5,27 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { login } from "@/services/firebase";
 import { Anchor, LogIn, Shield } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 
 type Role = "participant" | "admin";
-
-interface LoginResponseParticipant {
-  ok: boolean;
-  role: "participant";
-  participantId: string;
-  username: string;
-  displayName: string;
-}
-
-interface LoginResponseAdmin {
-  ok: boolean;
-  role: "admin";
-  token: string;
-  username: string;
-  expiresAt: string;
-}
 
 const Login = () => {
   const navigate = useNavigate();
@@ -44,28 +28,12 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke<
-        LoginResponseParticipant | LoginResponseAdmin
-      >("login", {
-        body: {
-          username: formData.username.trim(),
-          password: formData.password,
-          role: activeRole,
-        },
-      });
+      const result = await login(activeRole, formData.username.trim(), formData.password);
 
-      if (error) {
-        throw error;
-      }
-
-      if (!data?.ok) {
-        throw new Error("invalid response");
-      }
-
-      if (data.role === "participant") {
-        localStorage.setItem("participantId", data.participantId);
-        localStorage.setItem("participantUsername", data.username);
-        localStorage.setItem("participantDisplayName", data.displayName);
+      if (result.role === "participant") {
+        localStorage.setItem("participantId", result.participantId);
+        localStorage.setItem("participantUsername", result.username);
+        localStorage.setItem("participantDisplayName", result.displayName);
         localStorage.setItem("authRole", "participant");
         localStorage.removeItem("adminToken");
         localStorage.removeItem("adminUsername");
@@ -75,9 +43,9 @@ const Login = () => {
           description: "เข้าสู่โหมดลูกเรือแล้ว พร้อมออกเรือต่อได้เลย",
         });
         navigate("/map");
-      } else if (data.role === "admin") {
-        localStorage.setItem("adminToken", data.token);
-        localStorage.setItem("adminUsername", data.username);
+      } else if (result.role === "admin") {
+        localStorage.setItem("adminToken", result.token);
+        localStorage.setItem("adminUsername", result.username);
         localStorage.setItem("authRole", "admin");
         localStorage.removeItem("participantId");
         localStorage.removeItem("participantUsername");

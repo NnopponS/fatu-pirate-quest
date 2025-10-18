@@ -4,16 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { signupParticipant } from "@/services/firebase";
 import { Anchor, Check, Copy, Sparkles } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
-
-interface SignupResponse {
-  ok: boolean;
-  participantId: string;
-  username: string;
-  password: string;
-}
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -57,27 +50,21 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke<SignupResponse>("signup", {
-        body: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          age: formData.age ? parseInt(formData.age, 10) : null,
-          gradeLevel: formData.gradeLevel || null,
-          school: formData.school || null,
-          program: formData.program || null,
-        },
+      const result = await signupParticipant({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        age: formData.age ? parseInt(formData.age, 10) : null,
+        gradeLevel: formData.gradeLevel || null,
+        school: formData.school || null,
+        program: formData.program || null,
       });
 
-      if (error) {
-        throw error;
-      }
-
-      if (data?.participantId && data.username && data.password) {
-        localStorage.setItem("participantId", data.participantId);
-        localStorage.setItem("participantUsername", data.username);
+      if (result?.participantId && result.username && result.password) {
+        localStorage.setItem("participantId", result.participantId);
+        localStorage.setItem("participantUsername", result.username);
         localStorage.setItem("authRole", "participant");
 
-        setCredentials({ username: data.username, password: data.password });
+        setCredentials({ username: result.username, password: result.password });
 
         toast({
           title: "ลงทะเบียนสำเร็จ",

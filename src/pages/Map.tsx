@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { getMapData } from "@/services/firebase";
 import { LocationCard } from "@/components/LocationCard";
 import { Button } from "@/components/ui/button";
 import { Anchor, Compass, Trophy } from "lucide-react";
@@ -30,25 +30,12 @@ const Map = () => {
   const loadData = useCallback(async () => {
     if (!participantId) return;
     try {
-      const [locsRes, checkinsRes, participantRes, settingsRes] = await Promise.all([
-        supabase.from("locations").select("*").order("id"),
-        supabase.from("checkins").select("location_id").eq("participant_id", participantId),
-        supabase.from("participants").select("points").eq("id", participantId).single(),
-        supabase
-          .from("app_settings")
-          .select("value")
-          .eq("key", "points_required_for_wheel")
-          .maybeSingle(),
-      ]);
+      const data = await getMapData(participantId);
 
-      if (locsRes.data) setLocations(locsRes.data);
-      if (checkinsRes.data) setCheckins(checkinsRes.data.map((c) => c.location_id));
-      if (participantRes.data) setPoints(participantRes.data.points ?? 0);
-
-      const value = settingsRes.data?.value as { value?: number } | null;
-      if (value?.value !== undefined) {
-        setPointsRequired(value.value);
-      }
+      setLocations(data.locations);
+      setCheckins(data.checkins);
+      setPoints(data.points ?? 0);
+      setPointsRequired(data.pointsRequired);
     } catch (error: unknown) {
       toast({
         title: "โหลดข้อมูลไม่สำเร็จ",
@@ -147,3 +134,4 @@ const Map = () => {
 };
 
 export default Map;
+

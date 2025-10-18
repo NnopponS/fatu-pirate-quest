@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { getRewardsData, spinWheel } from "@/services/firebase";
 import { SpinWheel } from "@/components/SpinWheel";
 import { Button } from "@/components/ui/button";
 import { Anchor, Gift } from "lucide-react";
@@ -27,28 +27,12 @@ const Rewards = () => {
   const loadData = useCallback(async () => {
     if (!participantId) return;
     try {
-      const [participantRes, spinRes, settingsRes, prizesRes] = await Promise.all([
-        supabase.from("participants").select("points").eq("id", participantId).single(),
-        supabase.from("spins").select("id").eq("participant_id", participantId).maybeSingle(),
-        supabase
-          .from("app_settings")
-          .select("value")
-          .eq("key", "points_required_for_wheel")
-          .maybeSingle(),
-        supabase.from("prizes").select("name, weight").order("created_at", { ascending: true }),
-      ]);
+      const data = await getRewardsData(participantId);
 
-      if (participantRes.data) setPoints(participantRes.data.points ?? 0);
-      if (spinRes.data) setHasSpun(true);
-
-      const value = settingsRes.data?.value as { value?: number } | null;
-      if (value?.value !== undefined) {
-        setPointsRequired(value.value);
-      }
-
-      if (prizesRes.data) {
-        setPrizes(prizesRes.data.map((prize) => ({ name: prize.name, weight: prize.weight })));
-      }
+      setPoints(data.points ?? 0);
+      setHasSpun(data.hasSpun);
+      setPointsRequired(data.pointsRequired);
+      setPrizes(data.prizes);
     } catch (error: unknown) {
       toast({
         title: "โหลดรางวัลไม่สำเร็จ",
@@ -76,35 +60,27 @@ const Rewards = () => {
 
   const handleSpin = async (): Promise<string> => {
     try {
-      const { data, error } = await supabase.functions.invoke<{ prize: string }>("spin", {
-        body: { participantId },
+      if (!participantId) {
+        throw new Error("Missing participant identifier");
+      }
+
+      const { prize } = await spinWheel(participantId);
+      setHasSpun(true);
+      toast({
+        title: "Congrats on your prize!",
+        description: `You just won ${prize}.`,
       });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data?.prize) {
-        setHasSpun(true);
-        toast({
-          title: "ยินดีด้วย!",
-          description: `คุณได้รับ ${data.prize}`,
-        });
-        return data.prize;
-      }
-
-      throw new Error("ไม่สามารถหมุนวงล้อได้ กรุณาลองใหม่อีกครั้ง");
+      return prize;
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Unknown error";
       toast({
-        title: "หมุนวงล้อไม่สำเร็จ",
+        title: "Spin failed",
         description: message,
         variant: "destructive",
       });
       throw new Error(message);
     }
   };
-
   if (!participantId) {
     return null;
   }
@@ -181,3 +157,5 @@ const Rewards = () => {
 };
 
 export default Rewards;
+
+

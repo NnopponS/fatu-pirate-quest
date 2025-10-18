@@ -64,12 +64,12 @@ This project is built with:
 
 Simply open [Lovable](https://lovable.dev/projects/76096bf3-c8e5-42ba-a837-9de1d7fbe278) and click on Share -> Publish.
 
-## Supabase migrations
+## Firebase configuration
 
-- Run `npm run supabase:migrate` to push the SQL files in `supabase/migrations` to the linked project before deploying.
-- `npm run deploy` runs the migration step and then builds the frontend bundle.
-- The GitHub Actions workflow at `.github/workflows/deploy.yml` executes the same sequence on every push to `main`. Set a repository secret named `SUPABASE_ACCESS_TOKEN` that contains a Supabase personal access token with database permissions so the workflow can authenticate.
-- Locally you can either export `SUPABASE_ACCESS_TOKEN` or sign in once with `npx supabase login`; the script will reuse the CLI session.
+- Create a Firebase Realtime Database and copy its base URL (ending with `.firebasedatabase.app`).
+- Update `.env` with `VITE_FIREBASE_DB_URL="<your database url>"`. For local testing you can point to the same production instance or a local emulator.
+- Set `VITE_CHECKIN_SECRET` to the shared secret used to sign QR codes so that check-ins can be validated on the client.
+- Running `npm run build` will compile the frontend; no additional backend migrations are required.
 
 ## Can I connect a custom domain to my Lovable project?
 

@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  createPrize as createPrizeApi,
+  deletePrize as deletePrizeApi,
+  getDashboardData,
+  invalidateAdminSession,
+  savePrize as savePrizeApi,
+  setSpinThreshold as setSpinThresholdApi,
+  updateLocation as updateLocationApi,
+} from "@/services/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,6 +94,7 @@ const AdminDashboard = () => {
   const adminUsername = useMemo(() => localStorage.getItem("adminUsername") ?? "admin", []);
 
   const logout = useCallback(() => {
+    void invalidateAdminSession(localStorage.getItem("adminToken") ?? "");
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminUsername");
     localStorage.removeItem("authRole");
@@ -100,15 +109,7 @@ const AdminDashboard = () => {
     async (sessionToken: string) => {
       setLoading(true);
       try {
-        const { data, error } = await supabase.functions.invoke<DashboardResponse>("admin", {
-          body: {
-            token: sessionToken,
-            action: "get-dashboard-data",
-          },
-        });
-
-        if (error) throw error;
-        if (!data?.ok) throw new Error("ข้อมูลไม่ถูกต้อง");
+        const data = await getDashboardData(sessionToken);
 
         setDashboard(data);
         setLocationDrafts(data.locations.map((loc) => ({ ...loc })));
@@ -173,21 +174,13 @@ const AdminDashboard = () => {
 
     setSavingLocationId(location.id);
     try {
-      const { error } = await supabase.functions.invoke("admin", {
-        body: {
-          token,
-          action: "update-location",
-          payload: {
-            id: location.id,
-            name: location.name.trim(),
-            lat: Number(location.lat),
-            lng: Number(location.lng),
-            points: Number(location.points),
-          },
-        },
+      await updateLocationApi(token, {
+        id: location.id,
+        name: location.name.trim(),
+        lat: Number(location.lat),
+        lng: Number(location.lng),
+        points: Number(location.points),
       });
-
-      if (error) throw error;
       toast({ title: "อัปเดตจุดเช็กอินแล้ว" });
       fetchDashboard(token);
     } catch (error) {
@@ -201,12 +194,13 @@ const AdminDashboard = () => {
     }
   };
 
+
   const savePrize = async (prize: PrizeRow) => {
     if (!token) return;
     if (!prize.name.trim() || prize.weight <= 0) {
       toast({
-        title: "ข้อมูลรางวัลไม่ครบ",
-        description: "กรุณากรอกชื่อรางวัลและน้ำหนักมากกว่า 0",
+        title: "??????????????????",
+        description: "?????????????????????????????????????????????",
         variant: "destructive",
       });
       return;
@@ -214,23 +208,16 @@ const AdminDashboard = () => {
 
     setSavingPrizeId(prize.id);
     try {
-      const { error } = await supabase.functions.invoke("admin", {
-        body: {
-          token,
-          action: "update-prize",
-          payload: {
-            id: prize.id,
-            name: prize.name.trim(),
-            weight: Number(prize.weight),
-          },
-        },
+      await savePrizeApi(token, {
+        ...prize,
+        name: prize.name.trim(),
+        weight: Number(prize.weight),
       });
-      if (error) throw error;
-      toast({ title: "อัปเดตรางวัลแล้ว" });
+      toast({ title: "????????????????" });
       fetchDashboard(token);
     } catch (error) {
       toast({
-        title: "อัปเดตรางวัลไม่สำเร็จ",
+        title: "?????????????????????",
         description: errorMessage(error),
         variant: "destructive",
       });
@@ -242,19 +229,12 @@ const AdminDashboard = () => {
   const deletePrize = async (id: string) => {
     if (!token) return;
     try {
-      const { error } = await supabase.functions.invoke("admin", {
-        body: {
-          token,
-          action: "delete-prize",
-          payload: { id },
-        },
-      });
-      if (error) throw error;
-      toast({ title: "ลบรางวัลเรียบร้อย" });
+      await deletePrizeApi(token, id);
+      toast({ title: "?????????????????" });
       fetchDashboard(token);
     } catch (error) {
       toast({
-        title: "ลบรางวัลไม่สำเร็จ",
+        title: "?????????????????",
         description: errorMessage(error),
         variant: "destructive",
       });
@@ -268,28 +248,21 @@ const AdminDashboard = () => {
     const weightValue = Number(newPrize.weight);
     if (!trimmedName || Number.isNaN(weightValue) || weightValue <= 0) {
       toast({
-        title: "ข้อมูลรางวัลไม่ครบ",
-        description: "กรุณากรอกชื่อและน้ำหนักรางวัลให้ถูกต้อง",
+        title: "??????????????????",
+        description: "???????????????????????????????????????",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      const { error } = await supabase.functions.invoke("admin", {
-        body: {
-          token,
-          action: "create-prize",
-          payload: { name: trimmedName, weight: weightValue },
-        },
-      });
-      if (error) throw error;
-      toast({ title: "เพิ่มรางวัลใหม่เรียบร้อย" });
+      await createPrizeApi(token, trimmedName, weightValue);
+      toast({ title: "????????????????????????" });
       setNewPrize({ name: "", weight: "10" });
       fetchDashboard(token);
     } catch (error) {
       toast({
-        title: "เพิ่มรางวัลไม่สำเร็จ",
+        title: "????????????????????",
         description: errorMessage(error),
         variant: "destructive",
       });
@@ -301,8 +274,8 @@ const AdminDashboard = () => {
 
     if (Number.isNaN(pointsRequired) || pointsRequired < 0) {
       toast({
-        title: "ค่าคะแนนไม่ถูกต้อง",
-        description: "กรุณากรอกคะแนนเป็นจำนวนเต็ม 0 ขึ้นไป",
+        title: "Invalid points threshold",
+        description: "Please provide a non-negative number for the wheel requirement.",
         variant: "destructive",
       });
       return;
@@ -310,19 +283,12 @@ const AdminDashboard = () => {
 
     setUpdatingThreshold(true);
     try {
-      const { error } = await supabase.functions.invoke("admin", {
-        body: {
-          token,
-          action: "set-spin-threshold",
-          payload: { pointsRequired: Number(pointsRequired) },
-        },
-      });
-      if (error) throw error;
-      toast({ title: "อัปเดตคะแนนขั้นต่ำสำเร็จ" });
+      await setSpinThresholdApi(token, pointsRequired);
+      toast({ title: "Updated spin threshold" });
       fetchDashboard(token);
     } catch (error) {
       toast({
-        title: "อัปเดตคะแนนไม่สำเร็จ",
+        title: "Unable to update threshold",
         description: errorMessage(error),
         variant: "destructive",
       });
@@ -700,3 +666,9 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
+
+
+
+
+

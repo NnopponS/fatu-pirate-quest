@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { checkinParticipant } from "@/services/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, ShipWheel, XCircle } from "lucide-react";
@@ -40,33 +40,21 @@ const Checkin = () => {
       }
 
       try {
-        const { data, error } = await supabase.functions.invoke<{
-          ok: boolean;
-          pointsAdded: number;
-        }>("checkin", {
-          body: { participantId, locationId: parseInt(loc, 10), signature: sig },
-        });
-
-        if (error) throw error;
-
-        if (data?.ok) {
-          setStatus("success");
-          setPointsAdded(data.pointsAdded || 0);
-          setMessage(
-            data.pointsAdded > 0
-              ? `เช็กอินสำเร็จ! ได้รับ +${data.pointsAdded} คะแนน`
-              : "คุณเคยเช็กอินสถานีนี้แล้ว"
+        const result = await checkinParticipant(participantId, parseInt(loc, 10), sig);
+        setStatus("success");
+        setPointsAdded(result.pointsAdded || 0);
+        setMessage(
+          result.pointsAdded > 0
+            ? `เช็กอินสำเร็จ! ได้รับ +${result.pointsAdded} คะแนน`
+            : "คุณเคยเช็กอินสถานีนี้แล้ว"
           );
 
-          toast({
-            title: "เช็กอินสำเร็จ",
-            description: data.pointsAdded > 0 ? `+${data.pointsAdded} คะแนน` : undefined,
-          });
+        toast({
+          title: "เช็กอินสำเร็จ",
+          description: result.pointsAdded > 0 ? `+${result.pointsAdded} คะแนน` : undefined,
+        });
 
-          setTimeout(() => navigate("/map"), 2500);
-        } else {
-          throw new Error("ไม่สามารถตรวจสอบเช็กอินได้");
-        }
+        setTimeout(() => navigate("/map"), 2500);
       } catch (error: unknown) {
         const message =
           error instanceof Error ? error.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
@@ -88,39 +76,39 @@ const Checkin = () => {
       <div className="container mx-auto max-w-3xl px-4 py-16">
         <div className="pirate-card px-8 py-12 text-center space-y-6">
           {status === "loading" && (
-            <>
-              <div className="mx-auto h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <p className="text-lg text-foreground/70">กำลังตรวจสอบการเช็กอิน...</p>
-            </>
+          <>
+          <div className="mx-auto h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-lg text-foreground/70">กำลังตรวจสอบการเช็กอิน...</p>
+          </>
           )}
 
           {status === "success" && (
-            <>
-              <CheckCircle2 className="mx-auto h-20 w-20 text-primary animate-in fade-in zoom-in" />
-              <h2 className="text-3xl font-semibold text-primary">เช็กอินสำเร็จ</h2>
-              <p className="text-lg text-foreground/80">{message}</p>
-              {pointsAdded > 0 && (
-                <div className="text-4xl font-bold text-accent">+{pointsAdded}</div>
-              )}
-              <Button onClick={() => navigate("/map")}>กลับไปยังแผนที่</Button>
-            </>
+          <>
+          <CheckCircle2 className="mx-auto h-20 w-20 text-primary animate-in fade-in zoom-in" />
+          <h2 className="text-3xl font-semibold text-primary">เช็กอินสำเร็จ</h2>
+          <p className="text-lg text-foreground/80">{message}</p>
+          {pointsAdded > 0 && (
+          <div className="text-4xl font-bold text-accent">+{pointsAdded}</div>
+          )}
+          <Button onClick={() => navigate("/map")}>กลับไปยังแผนที่</Button>
+          </>
           )}
 
           {status === "error" && (
-            <>
-              <XCircle className="mx-auto h-20 w-20 text-destructive animate-in fade-in zoom-in" />
-              <h2 className="text-3xl font-semibold text-destructive">เช็กอินไม่สำเร็จ</h2>
-              <p className="text-lg text-foreground/80">{message}</p>
-              <Button variant="outline" onClick={() => navigate("/map")}>
-                กลับไปยังแผนที่
-              </Button>
-            </>
+          <>
+          <XCircle className="mx-auto h-20 w-20 text-destructive animate-in fade-in zoom-in" />
+          <h2 className="text-3xl font-semibold text-destructive">เช็กอินไม่สำเร็จ</h2>
+          <p className="text-lg text-foreground/80">{message}</p>
+          <Button variant="outline" onClick={() => navigate("/map")}>
+          กลับไปยังแผนที่
+          </Button>
+          </>
           )}
 
           <div className="pirate-divider" />
           <div className="flex items-center justify-center gap-2 text-sm text-foreground/60">
-            <ShipWheel className="h-4 w-4" />
-            สนุกกับการล่าสมบัติอย่างปลอดภัย โปรดระวังลิงก์ปลอมที่ไม่ใช่ของกิจกรรม
+          <ShipWheel className="h-4 w-4" />
+          สนุกกับการล่าสมบัติอย่างปลอดภัย โปรดระวังลิงก์ปลอมที่ไม่ใช่ของกิจกรรม
           </div>
         </div>
       </div>
