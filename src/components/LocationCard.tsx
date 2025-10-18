@@ -8,10 +8,11 @@ interface LocationCardProps {
   lng: number;
   points: number;
   checkedIn: boolean;
+  mapUrl?: string;
 }
 
-export const LocationCard = ({ name, lat, lng, points, checkedIn }: LocationCardProps) => {
-  const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl }: LocationCardProps) => {
+  const mapsUrl = mapUrl ?? `https://www.google.com/maps?q=${lat},${lng}`;
 
   return (
     <div
@@ -31,26 +32,22 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn }: LocationCard
             }`}
           >
             {checkedIn ? <CheckCircle2 className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-            {checkedIn ? "เช็กอินแล้ว" : "ยังไม่เช็กอิน"}
+            {checkedIn ? "???????????" : "????????????????"}
           </span>
         </div>
 
         <p className="text-sm text-foreground/70">
-          สถานีนี้มอบ{" "}
-          <span className="font-semibold text-primary">{points} คะแนน</span>{" "}
-          เมื่อเช็กอินสำเร็จ
+          ??????????????: <span className="font-semibold text-primary">{points} ?????</span>
         </p>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <Button variant="secondary" size="sm" className="gap-2" asChild>
             <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
               <MapPin className="h-4 w-4" />
-              เปิดใน Google Maps
+              ?????? Google Maps
             </a>
           </Button>
-          <p className="text-xs text-foreground/60">
-            พิกัด: {lat.toFixed(6)}, {lng.toFixed(6)}
-          </p>
+          <p className="text-xs text-foreground/60">?????: {lat.toFixed(6)}, {lng.toFixed(6)}</p>
         </div>
       </div>
     </div>

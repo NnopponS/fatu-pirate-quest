@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,10 +19,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ username: "", password: "" });
 
-  useEffect(() => {
-    setFormData({ username: "", password: "" });
-  }, [activeRole]);
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
@@ -39,11 +35,11 @@ const Login = () => {
         localStorage.removeItem("adminUsername");
 
         toast({
-          title: "ยินดีต้อนรับกลับ!",
-          description: "เข้าสู่โหมดลูกเรือแล้ว พร้อมออกเรือต่อได้เลย",
+          title: "????????????????????????????",
+          description: "???????????????????????????????!",
         });
         navigate("/map");
-      } else if (result.role === "admin") {
+      } else {
         localStorage.setItem("adminToken", result.token);
         localStorage.setItem("adminUsername", result.username);
         localStorage.setItem("authRole", "admin");
@@ -52,17 +48,15 @@ const Login = () => {
         localStorage.removeItem("participantDisplayName");
 
         toast({
-          title: "เปิดแดชบอร์ดผู้การเรือ",
-          description: "พร้อมจัดการภารกิจและรางวัลทั้งหมด",
+          title: "????????????????????????",
+          description: "??????????????????????????????",
         });
         navigate("/admin");
-      } else {
-        throw new Error("unsupported role");
       }
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Unknown error";
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "?????????????? ????????????????????";
       toast({
-        title: "เข้าสู่ระบบไม่สำเร็จ",
+        title: "???????????????????????",
         description: message,
         variant: "destructive",
       });
@@ -77,63 +71,55 @@ const Login = () => {
         <div className="flex flex-col items-center gap-4 text-center">
           <span className="pirate-highlight">
             <LogIn className="h-4 w-4 text-primary" />
-            ประตูสู่เรือโจรสลัด
+            ????????????? FATU Pirate Quest
           </span>
-          <h1 className="pirate-heading md:text-5xl">เข้าสู่ระบบลูกเรือ FATU</h1>
+          <h1 className="pirate-heading md:text-5xl">???????????????????????????????????</h1>
           <p className="pirate-subheading">
-            เลือกโหมดลูกเรือหรือนายสถานี จากนั้นกรอกชื่อผู้ใช้และรหัสผ่านที่ได้รับเพื่อพร้อมลุย
+            ????????????????????????????????????????????????? ????????????????????????????????
           </p>
         </div>
 
-        <Tabs
-          value={activeRole}
-          onValueChange={(value) => setActiveRole(value as Role)}
-          className="pirate-card px-6 py-8 shadow-2xl shadow-primary/10"
-        >
-          <TabsList className="mb-6 grid grid-cols-2 bg-transparent">
-            <TabsTrigger value="participant" className="data-[state=active]:bg-primary/15">
-              <Anchor className="mr-2 h-4 w-4" />
-              ลูกเรือทั่วไป
+        <Tabs value={activeRole} onValueChange={(value) => setActiveRole(value as Role)} className="pirate-card p-8 space-y-6">
+          <TabsList className="grid grid-cols-2 bg-white/80">
+            <TabsTrigger value="participant" className="gap-2 data-[state=active]:bg-primary/10">
+              <Anchor className="h-4 w-4" />
+              ??????????????????
             </TabsTrigger>
-            <TabsTrigger value="admin" className="data-[state=active]:bg-secondary/15">
-              <Shield className="mr-2 h-4 w-4" />
-              ผู้ควบคุมเรือ
+            <TabsTrigger value="admin" className="gap-2 data-[state=active]:bg-secondary/15">
+              <Shield className="h-4 w-4" />
+              ???????????
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="participant">
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="space-y-2">
-                <Label htmlFor="participant-username">ชื่อผู้ใช้</Label>
+                <Label htmlFor="participant-username">?????????? *</Label>
                 <Input
                   id="participant-username"
                   required
                   value={formData.username}
-                  onChange={(event) =>
-                    setFormData((prev) => ({ ...prev, username: event.target.value }))
-                  }
-                  placeholder="กรอกชื่อผู้ใช้จากระบบสมัคร"
+                  onChange={(event) => setFormData((prev) => ({ ...prev, username: event.target.value }))}
+                  placeholder="??????????????????????????????????"
                   autoComplete="username"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="participant-password">รหัสผ่าน</Label>
+                <Label htmlFor="participant-password">???????? *</Label>
                 <Input
                   id="participant-password"
                   type="password"
                   required
                   value={formData.password}
-                  onChange={(event) =>
-                    setFormData((prev) => ({ ...prev, password: event.target.value }))
-                  }
-                  placeholder="กรอกรหัสผ่านที่ได้รับ"
+                  onChange={(event) => setFormData((prev) => ({ ...prev, password: event.target.value }))}
+                  placeholder="????????????"
                   autoComplete="current-password"
                 />
               </div>
 
               <Button type="submit" size="lg" className="w-full" disabled={loading}>
-                {loading ? "กำลังตรวจสอบ..." : "เข้าสู่เส้นทางล่าขุมทรัพย์"}
+                {loading ? "????????????????..." : "??????????????????????"}
               </Button>
             </form>
           </TabsContent>
@@ -141,50 +127,47 @@ const Login = () => {
           <TabsContent value="admin">
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="space-y-2">
-                <Label htmlFor="admin-username">ชื่อผู้ใช้ผู้ดูแล</Label>
+                <Label htmlFor="admin-username">????????????????? *</Label>
                 <Input
                   id="admin-username"
                   required
                   value={formData.username}
-                  onChange={(event) =>
-                    setFormData((prev) => ({ ...prev, username: event.target.value }))
-                  }
-                  placeholder="admin หรือชื่อผู้ใช้ที่เปลี่ยนไว้"
+                  onChange={(event) => setFormData((prev) => ({ ...prev, username: event.target.value }))}
+                  placeholder="????????????????????"
                   autoComplete="username"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="admin-password">รหัสผ่านผู้ดูแล</Label>
+                <Label htmlFor="admin-password">??????????????? *</Label>
                 <Input
                   id="admin-password"
                   type="password"
                   required
                   value={formData.password}
-                  onChange={(event) =>
-                    setFormData((prev) => ({ ...prev, password: event.target.value }))
-                  }
-                  placeholder="กรอกรหัสผ่านผู้ดูแล"
+                  onChange={(event) => setFormData((prev) => ({ ...prev, password: event.target.value }))}
+                  placeholder="??????????????????"
                   autoComplete="current-password"
                 />
               </div>
 
               <Button type="submit" size="lg" className="w-full" disabled={loading}>
-                {loading ? "กำลังยืนยัน..." : "เข้าสู่แดชบอร์ดผู้ควบคุมเรือ"}
+                {loading ? "????????????????..." : "??????????????????"}
               </Button>
             </form>
           </TabsContent>
         </Tabs>
 
         <div className="text-center text-sm text-foreground/70">
-          ยังไม่มีบัญชีลูกเรือ?{" "}
-          <button
+          ??????????????
+          <Button
             type="button"
-            className="font-semibold text-primary underline-offset-4 transition hover:underline"
+            variant="link"
+            className="font-semibold text-primary"
             onClick={() => navigate("/signup")}
           >
-            ลงทะเบียนที่นี่
-          </button>
+            ???????????????
+          </Button>
         </div>
       </div>
     </PirateBackdrop>

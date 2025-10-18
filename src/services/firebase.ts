@@ -28,6 +28,7 @@ export interface LocationRecord {
   lat: number;
   lng: number;
   points: number;
+  map_url?: string;
 }
 
 export interface PrizeRecord {
@@ -72,6 +73,9 @@ export interface SignupPayload {
   gradeLevel?: string | null;
   school?: string | null;
   program?: string | null;
+  username?: string | null;
+  password?: string | null;
+  autoGenerateCredentials?: boolean;
 }
 
 export interface SignupResponse {
@@ -121,6 +125,7 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     lat: 14.0661446,
     lng: 100.6033427,
     points: 100,
+    map_url: "https://maps.app.goo.gl/hJB4uaVZJkAWoyE98",
   },
   "2": {
     id: 2,
@@ -128,6 +133,7 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     lat: 14.06879,
     lng: 100.604679,
     points: 100,
+    map_url: "https://maps.app.goo.gl/eXgdntGV8D522TeQ6",
   },
   "3": {
     id: 3,
@@ -135,6 +141,7 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     lat: 14.071901,
     lng: 100.6076747,
     points: 100,
+    map_url: "https://maps.app.goo.gl/RNUzznFv6bz82JYN6",
   },
   "4": {
     id: 4,
@@ -142,6 +149,7 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     lat: 14.0671832,
     lng: 100.6067732,
     points: 100,
+    map_url: "https://maps.app.goo.gl/kKjeJ4w8zqZdMECYA",
   },
 };
 
@@ -264,7 +272,10 @@ const ensureParticipantsIndex = async () => {
   }
 };
 
-const generateUniqueUsername = async (firstName: string, lastName: string) => {
+const generateUniqueUsername = async (
+  firstName: string,
+  lastName: string,
+): Promise<{ username: string; normalized: string }> => {
   await ensureParticipantsIndex();
 
   const existingIndex =
@@ -282,12 +293,33 @@ const generateUniqueUsername = async (firstName: string, lastName: string) => {
       .toString()
       .padStart(4, "0");
     const candidate = `${base}${suffix}`;
-    if (!existingIndex[normalizeUsername(candidate)]) {
-      return candidate;
+    const normalized = normalizeUsername(candidate);
+    if (!existingIndex[normalized]) {
+      existingIndex[normalized] = "reserved";
+      return { username: candidate, normalized };
     }
   }
 
   throw new Error("Unable to generate unique username. Please try again.");
+};
+
+const reserveManualUsername = async (rawUsername: string) => {
+  const trimmed = rawUsername.trim();
+  if (!trimmed) {
+    throw new Error("กรุณากรอกชื่อผู้ใช้");
+  }
+
+  await ensureParticipantsIndex();
+
+  const normalized = normalizeUsername(trimmed);
+  const existing = await firebaseDb.get<string | null>(
+    `participants_by_username/${normalized}`,
+  );
+  if (existing) {
+    throw new Error("ชื่อผู้ใช้นี้ถูกใช้งานแล้ว");
+  }
+
+  return { username: trimmed, normalized };
 };
 
 const getParticipantById = async (participantId: string) =>
@@ -309,8 +341,41 @@ export const signupParticipant = async (payload: SignupPayload): Promise<SignupR
 
   await ensureDefaults();
 
-  const username = await generateUniqueUsername(firstName, lastName);
-  const password = randomUUID().replace(/-/g, "").slice(0, 10);
+  const trimmedUsername = payload.username?.trim() ?? "";
+  const trimmedPassword = payload.password?.trim() ?? "";
+  const shouldGenerate =
+    payload.autoGenerateCredentials !== false ||
+    !trimmedUsername ||
+    !trimmedPassword;
+
+  if (payload.autoGenerateCredentials === false) {
+    if (!trimmedUsername) {
+      throw new Error("กรุณากรอกชื่อผู้ใช้");
+    }
+    if (!trimmedPassword) {
+      throw new Error("กรุณากรอกรหัสผ่าน");
+    }
+    if (trimmedPassword.length < 6) {
+      throw new Error("รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร");
+    }
+  }
+
+  let username: string;
+  let normalizedUsername: string;
+  let password: string;
+
+  if (shouldGenerate) {
+    const generated = await generateUniqueUsername(firstName, lastName);
+    username = generated.username;
+    normalizedUsername = generated.normalized;
+    password = randomUUID().replace(/-/g, "").slice(0, 10);
+  } else {
+    const manual = await reserveManualUsername(trimmedUsername);
+    username = manual.username;
+    normalizedUsername = manual.normalized;
+    password = trimmedPassword;
+  }
+
   const passwordHash = await hashPassword(password);
   const now = new Date().toISOString();
   const participantId = randomUUID();
@@ -333,7 +398,7 @@ export const signupParticipant = async (payload: SignupPayload): Promise<SignupR
   await Promise.all([
     firebaseDb.set(`participants/${participantId}`, record),
     firebaseDb.set(
-      `participants_by_username/${normalizeUsername(username)}`,
+      `participants_by_username/${normalizedUsername}`,
       participantId,
     ),
   ]);
@@ -652,7 +717,13 @@ export const updateLocation = async (token: string, location: LocationRecord) =>
     throw new Error("Invalid session");
   }
 
-  await firebaseDb.set(`locations/${location.id}`, location);
+  await firebaseDb.update(`locations/${location.id}`, {
+    name: location.name,
+    lat: location.lat,
+    lng: location.lng,
+    points: location.points,
+    ...(location.map_url ? { map_url: location.map_url } : {}),
+  });
 };
 
 export const createPrize = async (token: string, name: string, weight: number) => {
