@@ -80,36 +80,134 @@ export type Database = {
       participants: {
         Row: {
           age: number | null
+          credentials_generated_at: string
           created_at: string
           first_name: string
           grade_level: string | null
           id: string
           last_name: string
+          password_hash: string
           points: number
           program: string | null
           school: string | null
+          username: string
         }
         Insert: {
           age?: number | null
+          credentials_generated_at?: string
           created_at?: string
           first_name: string
           grade_level?: string | null
           id?: string
           last_name: string
+          password_hash: string
           points?: number
           program?: string | null
           school?: string | null
+          username: string
         }
         Update: {
           age?: number | null
+          credentials_generated_at?: string
           created_at?: string
           first_name?: string
           grade_level?: string | null
           id?: string
           last_name?: string
+          password_hash?: string
           points?: number
           program?: string | null
           school?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      admin_sessions: {
+        Row: {
+          admin_id: string
+          created_at: string
+          expires_at: string
+          token: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          expires_at: string
+          token?: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          expires_at?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_sessions_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_users: {
+        Row: {
+          created_at: string
+          id: string
+          password_hash: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          password_hash: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          password_hash?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      prizes: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          weight?: number
         }
         Relationships: []
       }

@@ -26,6 +26,63 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    const encoder = new TextEncoder();
+    const toHex = (buffer: ArrayBuffer) =>
+      Array.from(new Uint8Array(buffer))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+
+    const hashPassword = async (password: string) => {
+      const digest = await crypto.subtle.digest('SHA-256', encoder.encode(password));
+      return toHex(digest);
+    };
+
+    const sanitize = (value: string) =>
+      value
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '');
+
+    const baseUsername = (() => {
+      const first = sanitize(firstName);
+      const last = sanitize(lastName);
+      const baseParts = [first, last].filter((part) => part.length > 0);
+      if (baseParts.length === 0) {
+        return 'pirate';
+      }
+      return baseParts.join('').slice(0, 12);
+    })();
+
+    let username: string | null = null;
+    let attempts = 0;
+    while (!username && attempts < 10) {
+      const suffix = Math.floor(Math.random() * 10000)
+        .toString()
+        .padStart(4, '0');
+      const candidate = `${baseUsername}${suffix}`;
+      const { data: existing } = await supabase
+        .from('participants')
+        .select('id')
+        .eq('username', candidate)
+        .maybeSingle();
+
+      if (!existing) {
+        username = candidate;
+      }
+      attempts += 1;
+    }
+
+    if (!username) {
+      return new Response(
+        JSON.stringify({ error: 'Unable to generate unique username. Please try again.' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const password = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
+    const passwordHash = await hashPassword(password);
+
     const { data, error } = await supabase
       .from('participants')
       .insert({
@@ -35,6 +92,8 @@ serve(async (req) => {
         grade_level: gradeLevel || null,
         school: school || null,
         program: program || null,
+        username,
+        password_hash: passwordHash,
       })
       .select('id')
       .single();
@@ -50,7 +109,7 @@ serve(async (req) => {
     console.log(`New participant registered: ${data.id}`);
 
     return new Response(
-      JSON.stringify({ ok: true, participantId: data.id }),
+      JSON.stringify({ ok: true, participantId: data.id, username, password }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
