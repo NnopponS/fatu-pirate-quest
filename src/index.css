@@ -1,8 +1,10 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Pirata+One&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
 All colors MUST be HSL.
 */
 
@@ -67,8 +69,17 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    background-image: radial-gradient(circle at top, rgba(255, 255, 255, 0.4), transparent 70%),
+      linear-gradient(135deg, rgba(214, 182, 140, 0.2), transparent);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: "Pirata One", "Inter", system-ui, sans-serif;
+    letter-spacing: 0.04em;
   }
 }
 
@@ -76,12 +87,118 @@ All colors MUST be HSL.
   .text-shadow-pirate {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
   }
-  
+
   .bg-parchment {
     background: linear-gradient(135deg, hsl(var(--pirate-parchment)), hsl(40 35% 88%));
   }
-  
+
   .border-rope {
     border-color: hsl(var(--pirate-rope));
+  }
+
+  .pirate-page {
+    @apply min-h-screen bg-parchment relative overflow-hidden;
+  }
+
+  .pirate-card {
+    @apply bg-card/90 backdrop-blur border-2 border-rope rounded-3xl shadow-2xl;
+    box-shadow: 0 24px 60px rgba(67, 47, 34, 0.22);
+  }
+
+  .pirate-highlight {
+    @apply inline-flex items-center gap-2 rounded-full border border-rope/60 bg-white/40 px-4 py-1 text-sm uppercase tracking-wider text-foreground/80;
+  }
+
+  .pirate-heading {
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold text-primary text-shadow-pirate;
+  }
+
+  .pirate-subheading {
+    @apply text-lg md:text-xl text-foreground/70 max-w-2xl mx-auto;
+  }
+
+  .pirate-grid {
+    background: radial-gradient(circle at top left, rgba(255, 200, 120, 0.2), transparent 40%),
+      radial-gradient(circle at bottom right, rgba(120, 180, 255, 0.18), transparent 45%);
+  }
+
+  .pirate-divider {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-border to-transparent;
+  }
+
+  .pirate-chip {
+    @apply inline-flex items-center gap-2 rounded-xl border border-rope/50 bg-white/60 px-3 py-1 text-sm font-medium text-foreground/80;
+  }
+
+  .pirate-floating {
+    animation: pirate-bob 6s ease-in-out infinite;
+  }
+
+  .pirate-floating-delayed {
+    animation: pirate-bob 7.5s ease-in-out infinite;
+    animation-delay: 1.5s;
+  }
+
+  .pirate-coin {
+    animation: pirate-coin-spin 8s linear infinite;
+    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.25));
+  }
+
+  .pirate-wave {
+    animation: pirate-wave 18s linear infinite;
+  }
+
+  .pirate-scroll {
+    background: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.35),
+        rgba(255, 255, 255, 0.35) 10px,
+        transparent 10px,
+        transparent 22px
+      ),
+      rgba(255, 255, 255, 0.35);
+  }
+}
+
+@keyframes pirate-bob {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(2deg);
+  }
+}
+
+@keyframes pirate-wave {
+  0% {
+    transform: translateX(-25%);
+  }
+  100% {
+    transform: translateX(25%);
+  }
+}
+
+@keyframes pirate-coin-spin {
+  0% {
+    transform: scale(1) rotateY(0deg);
+  }
+  50% {
+    transform: scale(1.05) rotateY(180deg);
+  }
+  100% {
+    transform: scale(1) rotateY(360deg);
+  }
+}
+
+@keyframes pirate-sparkle {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
   }
 }

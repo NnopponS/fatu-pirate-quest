@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Anchor, Copy, Check } from "lucide-react";
+import { Anchor, Check, Copy, Sparkles } from "lucide-react";
+import { PirateBackdrop } from "@/components/PirateBackdrop";
 
 interface SignupResponse {
   ok: boolean;
@@ -20,10 +21,9 @@ const Signup = () => {
 
   const [loading, setLoading] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [credentials, setCredentials] = useState<{
-    username: string;
-    password: string;
-  } | null>(null);
+  const [credentials, setCredentials] = useState<{ username: string; password: string } | null>(
+    null,
+  );
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -34,16 +34,19 @@ const Signup = () => {
     program: "",
   });
 
-  const handleCopy = async (label: "username" | "password", value: string) => {
+  const handleCopy = async (field: "username" | "password", value: string) => {
     try {
       await navigator.clipboard.writeText(value);
-      setCopiedField(label);
-      setTimeout(() => setCopiedField(null), 2000);
-    } catch (error) {
-      console.error("Copy failed:", error);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 1800);
       toast({
-        title: "Unable to copy",
-        description: "Please copy the value manually.",
+        title: "คัดลอกแล้ว",
+        description: field === "username" ? "คัดลอกชื่อผู้ใช้เรียบร้อย" : "คัดลอกรหัสผ่านเรียบร้อย",
+      });
+    } catch (error) {
+      toast({
+        title: "คัดลอกไม่สำเร็จ",
+        description: "กรุณาเลือกข้อความและคัดลอกด้วยตนเอง",
         variant: "destructive",
       });
     }
@@ -74,14 +77,11 @@ const Signup = () => {
         localStorage.setItem("participantUsername", data.username);
         localStorage.setItem("authRole", "participant");
 
-        setCredentials({
-          username: data.username,
-          password: data.password,
-        });
+        setCredentials({ username: data.username, password: data.password });
 
         toast({
-          title: "Registration completed",
-          description: "Keep your username and password safe for future logins.",
+          title: "ลงทะเบียนสำเร็จ",
+          description: "ระบบสร้างชื่อผู้ใช้และรหัสผ่านให้แล้ว โปรดเก็บรักษาไว้ให้ดี",
         });
       } else {
         throw new Error("Unexpected response from signup service.");
@@ -89,7 +89,7 @@ const Signup = () => {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Unknown error";
       toast({
-        title: "Registration failed",
+        title: "ลงทะเบียนไม่สำเร็จ",
         description: message,
         variant: "destructive",
       });
@@ -99,63 +99,80 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-parchment p-4">
-      <div className="container max-w-3xl mx-auto py-8 space-y-8">
-        <div className="text-center">
-          <Anchor className="w-16 h-16 mx-auto mb-4 text-primary" />
-          <h1 className="text-4xl font-bold text-primary mb-2">Join the Crew</h1>
-          <p className="text-muted-foreground">
-            Register for the treasure hunt and receive your personal login details.
+    <PirateBackdrop>
+      <div className="container mx-auto max-w-4xl px-4 py-16 space-y-10">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <span className="pirate-highlight">
+            <Sparkles className="h-4 w-4 text-accent" />
+            ลูกเรือใหม่
+          </span>
+          <h1 className="pirate-heading md:text-5xl">ลงทะเบียนเป็นลูกเรือโจรสลัด</h1>
+          <p className="pirate-subheading">
+            กรอกข้อมูลสั้น ๆ แล้วรับชื่อผู้ใช้และรหัสผ่านที่ระบบสร้างให้ทันที
+            ใช้เข้าสู่ระบบสำหรับเช็กอินสะสมคะแนนและหมุนวงล้อสมบัติ
           </p>
         </div>
 
         {credentials && (
-          <div className="bg-card p-6 rounded-2xl border-2 border-rope shadow-xl space-y-4">
-            <div>
-              <h2 className="text-2xl font-semibold text-primary mb-1">Credentials generated</h2>
-              <p className="text-sm text-muted-foreground">
-                Save these details now. You will need them to log in again or to claim rewards.
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="flex items-center justify-between rounded-xl border bg-muted/40 px-4 py-3">
-                <div>
-                  <p className="text-sm text-muted-foreground uppercase tracking-wide">Username</p>
-                  <p className="text-lg font-semibold">{credentials.username}</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleCopy("username", credentials.username)}
-                  aria-label="Copy username"
-                >
-                  {copiedField === "username" ? <Check className="w-5 h-5 text-primary" /> : <Copy className="w-5 h-5" />}
-                </Button>
+          <div className="pirate-card px-6 py-8 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
+                <Anchor className="h-6 w-6" />
               </div>
-
-              <div className="flex items-center justify-between rounded-xl border bg-muted/40 px-4 py-3">
-                <div>
-                  <p className="text-sm text-muted-foreground uppercase tracking-wide">Password</p>
-                  <p className="text-lg font-semibold">{credentials.password}</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleCopy("password", credentials.password)}
-                  aria-label="Copy password"
-                >
-                  {copiedField === "password" ? <Check className="w-5 h-5 text-primary" /> : <Copy className="w-5 h-5" />}
-                </Button>
+              <div>
+                <h2 className="text-2xl font-semibold text-primary">ข้อมูลสำหรับเข้าสู่ระบบ</h2>
+                <p className="text-sm text-foreground/70">
+                  เก็บคู่นี้ไว้ให้ดี ระบบจะแสดงเพียงครั้งเดียว จำเป็นสำหรับการล็อกอินและรับรางวัล
+                </p>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-rope/50 bg-white/70 p-4 shadow-sm">
+                <p className="text-xs uppercase tracking-wide text-foreground/60">Username</p>
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <p className="text-xl font-semibold text-primary">{credentials.username}</p>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleCopy("username", credentials.username)}
+                    aria-label="คัดลอกชื่อผู้ใช้"
+                  >
+                    {copiedField === "username" ? (
+                      <Check className="h-5 w-5 text-primary" />
+                    ) : (
+                      <Copy className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-rope/50 bg-white/70 p-4 shadow-sm">
+                <p className="text-xs uppercase tracking-wide text-foreground/60">Password</p>
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <p className="text-xl font-semibold text-primary">{credentials.password}</p>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleCopy("password", credentials.password)}
+                    aria-label="คัดลอกรหัสผ่าน"
+                  >
+                    {copiedField === "password" ? (
+                      <Check className="h-5 w-5 text-primary" />
+                    ) : (
+                      <Copy className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
               <Button className="flex-1" onClick={() => navigate("/map")}>
-                Continue to the map
+                ไปยังแผนที่ขุมทรัพย์
               </Button>
               <Button className="flex-1" variant="outline" onClick={() => navigate("/login")}>
-                Go to login page
+                ไปหน้าเข้าสู่ระบบ
               </Button>
             </div>
           </div>
@@ -163,11 +180,18 @@ const Signup = () => {
 
         <form
           onSubmit={handleSubmit}
-          className="bg-card p-8 rounded-2xl border-2 border-rope shadow-xl space-y-6"
+          className="pirate-card px-8 py-10 space-y-8 shadow-2xl shadow-primary/10"
         >
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="firstName">First name *</Label>
+          <div className="space-y-2 text-center">
+            <h2 className="text-3xl font-semibold text-primary">ข้อมูลลูกเรือ</h2>
+            <p className="text-sm text-foreground/70">
+              ข้อมูลใช้เพื่อระบุตัวตนเวลารับคะแนน ไม่เผยแพร่สู่สาธารณะ
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="firstName">ชื่อ (First name) *</Label>
               <Input
                 id="firstName"
                 required
@@ -175,12 +199,11 @@ const Signup = () => {
                 onChange={(event) =>
                   setFormData((prev) => ({ ...prev, firstName: event.target.value }))
                 }
-                className="mt-1"
+                placeholder="เช่น นที"
               />
             </div>
-
-            <div>
-              <Label htmlFor="lastName">Last name *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">นามสกุล (Last name) *</Label>
               <Input
                 id="lastName"
                 required
@@ -188,14 +211,14 @@ const Signup = () => {
                 onChange={(event) =>
                   setFormData((prev) => ({ ...prev, lastName: event.target.value }))
                 }
-                className="mt-1"
+                placeholder="เช่น ทะเลทอง"
               />
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="age">Age</Label>
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="age">อายุ</Label>
               <Input
                 id="age"
                 type="number"
@@ -205,56 +228,32 @@ const Signup = () => {
                 onChange={(event) =>
                   setFormData((prev) => ({ ...prev, age: event.target.value }))
                 }
-                className="mt-1"
+                placeholder="เช่น 17"
               />
             </div>
-
-            <div>
-              <Label htmlFor="gradeLevel">Grade level</Label>
+            <div className="space-y-2">
+              <Label htmlFor="gradeLevel">ระดับชั้น / ปีการศึกษา</Label>
               <Input
                 id="gradeLevel"
                 value={formData.gradeLevel}
                 onChange={(event) =>
                   setFormData((prev) => ({ ...prev, gradeLevel: event.target.value }))
                 }
-                className="mt-1"
-                placeholder="e.g. M.6"
+                placeholder="เช่น ม.6 หรือ ปี 1"
               />
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="school">School</Label>
+          <div className="space-y-2">
+            <Label htmlFor="school">สถานศึกษา</Label>
             <Input
               id="school"
               value={formData.school}
               onChange={(event) =>
                 setFormData((prev) => ({ ...prev, school: event.target.value }))
               }
-              className="mt-1"
+              placeholder="โรงเรียน / มหาวิทยาลัย"
             />
           </div>
 
-          <div>
-            <Label htmlFor="program">Program / faculty</Label>
-            <Input
-              id="program"
-              value={formData.program}
-              onChange={(event) =>
-                setFormData((prev) => ({ ...prev, program: event.target.value }))
-              }
-              className="mt-1"
-              placeholder="e.g. Digital art"
-            />
-          </div>
-
-          <Button type="submit" className="w-full text-lg" size="lg" disabled={loading}>
-            {loading ? "Submitting..." : "Register now"}
-          </Button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-export default Signup;
+  [message truncated at 4096 tokens; no more tokens given]
