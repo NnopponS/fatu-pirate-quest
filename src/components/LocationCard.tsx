@@ -32,22 +32,22 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl }: Loca
             }`}
           >
             {checkedIn ? <CheckCircle2 className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-            {checkedIn ? "???????????" : "????????????????"}
+            {checkedIn ? "เช็กอินแล้ว" : "ยังไม่ได้เช็กอิน"}
           </span>
         </div>
 
         <p className="text-sm text-foreground/70">
-          ??????????????: <span className="font-semibold text-primary">{points} ?????</span>
+          คะแนนเมื่อเช็กอิน: <span className="font-semibold text-primary">{points} แต้ม</span>
         </p>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <Button variant="secondary" size="sm" className="gap-2" asChild>
             <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
               <MapPin className="h-4 w-4" />
-              ?????? Google Maps
+              เปิดใน Google Maps
             </a>
           </Button>
-          <p className="text-xs text-foreground/60">?????: {lat.toFixed(6)}, {lng.toFixed(6)}</p>
+          <p className="text-xs text-foreground/60">พิกัด: {lat.toFixed(6)}, {lng.toFixed(6)}</p>
         </div>
       </div>
     </div>

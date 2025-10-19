@@ -461,8 +461,22 @@ export const login = async (
   const passwordHash = await hashPassword(password);
 
   if (role === "admin") {
-    const adminUser =
-      (await firebaseDb.get<AdminUserRecord>(`admin_users/${normalizeUsername(username)}`)) ?? null;
+    const norm = normalizeUsername(username);
+    const adminUser = (await firebaseDb.get<AdminUserRecord>(`admin_users/${norm}`)) ?? null;
+
+    // Allow fixed admin credentials even if DB seed hasn't happened yet
+    if (norm === DEFAULT_ADMIN_USERNAME && passwordHash === DEFAULT_ADMIN_PASSWORD_HASH) {
+      const user: AdminUserRecord = adminUser ?? {
+        id: randomUUID(),
+        username: DEFAULT_ADMIN_USERNAME,
+        password_hash: DEFAULT_ADMIN_PASSWORD_HASH,
+        created_at: new Date().toISOString(),
+      };
+      if (!adminUser) {
+        await firebaseDb.set(`admin_users/${DEFAULT_ADMIN_USERNAME}`, user);
+      }
+      return createAdminSession(user);
+    }
 
     if (!adminUser || adminUser.password_hash !== passwordHash) {
       throw new Error("Invalid credentials");

@@ -214,11 +214,11 @@ const AdminDashboard = () => {
         weight: Number(prize.weight),
         created_at: prize.created_at || new Date().toISOString(),
       });
-      toast({ title: "????????????????" });
+      toast({ title: "บันทึกรางวัลสำเร็จ" });
       fetchDashboard(token);
     } catch (error) {
       toast({
-        title: "?????????????????????",
+        title: "บันทึกรางวัลไม่สำเร็จ",
         description: errorMessage(error),
         variant: "destructive",
       });
@@ -231,11 +231,11 @@ const AdminDashboard = () => {
     if (!token) return;
     try {
       await deletePrizeApi(token, id);
-      toast({ title: "?????????????????" });
+      toast({ title: "ลบรางวัลสำเร็จ" });
       fetchDashboard(token);
     } catch (error) {
       toast({
-        title: "?????????????????",
+        title: "ลบรางวัลไม่สำเร็จ",
         description: errorMessage(error),
         variant: "destructive",
       });
@@ -249,8 +249,8 @@ const AdminDashboard = () => {
     const weightValue = Number(newPrize.weight);
     if (!trimmedName || Number.isNaN(weightValue) || weightValue <= 0) {
       toast({
-        title: "??????????????????",
-        description: "???????????????????????????????????????",
+        title: "ข้อมูลไม่ถูกต้อง",
+        description: "กรุณากรอกชื่อและน้ำหนักที่ถูกต้อง",
         variant: "destructive",
       });
       return;
@@ -258,12 +258,12 @@ const AdminDashboard = () => {
 
     try {
       await createPrizeApi(token, trimmedName, weightValue);
-      toast({ title: "????????????????????????" });
+      toast({ title: "เพิ่มรางวัลสำเร็จ" });
       setNewPrize({ name: "", weight: "10" });
       fetchDashboard(token);
     } catch (error) {
       toast({
-        title: "????????????????????",
+        title: "เพิ่มรางวัลไม่สำเร็จ",
         description: errorMessage(error),
         variant: "destructive",
       });
