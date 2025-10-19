@@ -199,8 +199,8 @@ const AdminDashboard = () => {
     if (!token) return;
     if (!prize.name.trim() || prize.weight <= 0) {
       toast({
-        title: "??????????????????",
-        description: "?????????????????????????????????????????????",
+        title: "ข้อมูลไม่ถูกต้อง",
+        description: "กรุณากรอกชื่อและน้ำหนักที่ถูกต้อง",
         variant: "destructive",
       });
       return;
@@ -209,9 +209,10 @@ const AdminDashboard = () => {
     setSavingPrizeId(prize.id);
     try {
       await savePrizeApi(token, {
-        ...prize,
+        id: prize.id,
         name: prize.name.trim(),
         weight: Number(prize.weight),
+        created_at: prize.created_at || new Date().toISOString(),
       });
       toast({ title: "????????????????" });
       fetchDashboard(token);
