@@ -96,11 +96,11 @@ const Map = () => {
         <div className="flex flex-col items-center gap-4 text-center animate-scale-in">
           <span className="pirate-highlight">
             <Compass className="h-4 w-4 text-secondary" />
-            แผนที่ล่าสมบัติ
+            4 จุดล่าสมบัติ
           </span>
-          <h1 className="pirate-heading md:text-5xl">สถานีผจญภัยของลูกเรือ</h1>
+          <h1 className="pirate-heading md:text-5xl">ท่องดินแดน FATU เช็กอินด้วย QR</h1>
           <p className="pirate-subheading">
-            เช็กอินครบทั้ง 4 จุดสะสมคะแนนให้ครบกำหนด แล้วปลดล็อกวงล้อสมบัติเพื่อรับรางวัลใหญ่!
+            เพื่อปลดล็อกจากจุดหมายสำคัญ
           </p>
         </div>
 
@@ -121,13 +121,11 @@ const Map = () => {
                   <ScanLine className="h-4 w-4" />
                   เปิดกล้องสแกน QR
                 </Button>
-                <p className="text-sm text-foreground/70">
-                  เหลืออีก{" "}
-                  <span className="font-semibold text-primary">
-                    {Math.max(pointsRequired - points, 0)}
-                  </span>{" "}
-                  คะแนนเพื่อปลดล็อกการหมุนวงล้อ
-                </p>
+                <div className="text-center sm:text-right">
+                  <p className="text-2xl font-bold text-primary">{pointsRequired} คะแนน</p>
+                  <p className="text-sm text-foreground/70">สะสมครบเพื่อหมุนวงล้อสมบัติ</p>
+                  <p className="text-xs text-foreground/60 mt-1">ลุ้นรับของรางวัลพิเศษเฉพาะงานนี้เท่านั้น</p>
+                </div>
               </div>
             </div>
           </div>

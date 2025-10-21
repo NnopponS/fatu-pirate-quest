@@ -76,6 +76,7 @@ export interface SignupPayload {
   username?: string | null;
   password?: string | null;
   autoGenerateCredentials?: boolean;
+  isAdmin?: boolean;
 }
 
 export interface SignupResponse {
@@ -334,12 +335,55 @@ const getParticipantByUsername = async (username: string) => {
 };
 
 export const signupParticipant = async (payload: SignupPayload): Promise<SignupResponse> => {
-  const { firstName, lastName } = payload;
+  const { firstName, lastName, isAdmin } = payload;
   if (!firstName || !lastName) {
     throw new Error("firstName and lastName are required");
   }
 
   await ensureDefaults();
+
+  // If signing up as admin, create admin user instead
+  if (isAdmin) {
+    const trimmedUsername = payload.username?.trim() ?? "";
+    const trimmedPassword = payload.password?.trim() ?? "";
+    
+    if (!trimmedUsername) {
+      throw new Error("กรุณากรอกชื่อผู้ใช้สำหรับ Admin");
+    }
+    if (!trimmedPassword) {
+      throw new Error("กรุณากรอกรหัสผ่านสำหรับ Admin");
+    }
+    if (trimmedPassword.length < 6) {
+      throw new Error("รหัสผ่าน Admin ต้องยาวอย่างน้อย 6 ตัวอักษร");
+    }
+
+    const normalized = normalizeUsername(trimmedUsername);
+    const existingAdmin = await firebaseDb.get<AdminUserRecord>(`admin_users/${normalized}`);
+    
+    if (existingAdmin) {
+      throw new Error("ชื่อผู้ใช้ Admin นี้ถูกใช้งานแล้ว");
+    }
+
+    const passwordHash = await hashPassword(trimmedPassword);
+    const now = new Date().toISOString();
+    const adminId = randomUUID();
+
+    const adminRecord: AdminUserRecord = {
+      id: adminId,
+      username: trimmedUsername,
+      password_hash: passwordHash,
+      created_at: now,
+    };
+
+    await firebaseDb.set(`admin_users/${normalized}`, adminRecord);
+
+    return {
+      ok: true,
+      participantId: adminId,
+      username: trimmedUsername,
+      password: trimmedPassword,
+    };
+  }
 
   const trimmedUsername = payload.username?.trim() ?? "";
   const trimmedPassword = payload.password?.trim() ?? "";

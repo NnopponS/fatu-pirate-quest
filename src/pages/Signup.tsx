@@ -21,6 +21,8 @@ const Signup = () => {
   const [autoGenerate, setAutoGenerate] = useState(true);
   const [manualUsername, setManualUsername] = useState("");
   const [manualPassword, setManualPassword] = useState("");
+  const [isAdminSignup, setIsAdminSignup] = useState(false);
+  const [adminSecretCode, setAdminSecretCode] = useState("");
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -71,6 +73,10 @@ const Signup = () => {
         }
       }
 
+      if (isAdminSignup && adminSecretCode !== "AdMin_FaTu-openhouse 2025") {
+        throw new Error("รหัสสมัคร Admin ไม่ถูกต้อง");
+      }
+
       const result = await signupParticipant({
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -81,15 +87,22 @@ const Signup = () => {
         username: autoGenerate ? null : manualUsername,
         password: autoGenerate ? null : manualPassword,
         autoGenerateCredentials: autoGenerate,
+        isAdmin: isAdminSignup,
       });
 
       if (!result?.participantId || !result.username || !result.password) {
         throw new Error("ระบบไม่สามารถสมัครสมาชิกได้ กรุณาลองใหม่");
       }
 
-      localStorage.setItem("participantId", result.participantId);
-      localStorage.setItem("participantUsername", result.username);
-      localStorage.setItem("authRole", "participant");
+      if (isAdminSignup) {
+        localStorage.setItem("adminToken", result.participantId);
+        localStorage.setItem("adminUsername", result.username);
+        localStorage.setItem("authRole", "admin");
+      } else {
+        localStorage.setItem("participantId", result.participantId);
+        localStorage.setItem("participantUsername", result.username);
+        localStorage.setItem("authRole", "participant");
+      }
 
       setCredentials({ username: result.username, password: result.password });
 
@@ -313,6 +326,44 @@ const Signup = () => {
                     autoComplete="new-password"
                   />
                 </div>
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-6 space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-primary">สมัครเป็น Admin</h3>
+                <p className="text-sm text-foreground/70">
+                  ต้องการสิทธิ์ Admin ให้กรอกรหัสพิเศษด้านล่าง
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="admin-signup" className="text-sm text-foreground/70">
+                  สมัครเป็น Admin
+                </Label>
+                <Switch
+                  id="admin-signup"
+                  checked={isAdminSignup}
+                  onCheckedChange={setIsAdminSignup}
+                />
+              </div>
+            </div>
+
+            {isAdminSignup && (
+              <div className="space-y-2">
+                <Label htmlFor="admin-secret">รหัสพิเศษสำหรับ Admin *</Label>
+                <Input
+                  id="admin-secret"
+                  type="password"
+                  value={adminSecretCode}
+                  onChange={(event) => setAdminSecretCode(event.target.value)}
+                  placeholder="กรอกรหัสพิเศษ"
+                  autoComplete="off"
+                />
+                <p className="text-xs text-foreground/60">
+                  ติดต่อทีมงานเพื่อขอรหัสพิเศษสำหรับสมัคร Admin
+                </p>
               </div>
             )}
           </div>
