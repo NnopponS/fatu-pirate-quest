@@ -213,8 +213,12 @@ const stripDiacritics = (value: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]/g, "");
 
-const objectValues = <T>(input: Nullable<Record<string, T>>): T[] =>
-  input ? Object.values(input) : [];
+const objectValues = <T>(input: Nullable<Record<string, T> | T[]>): T[] =>
+  Array.isArray(input)
+    ? ((input.filter(Boolean) as unknown[]) as T[])
+    : input
+    ? ((Object.values(input).filter(Boolean) as unknown[]) as T[])
+    : [];
 
 let defaultsEnsured = false;
 
@@ -759,14 +763,20 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
 
   console.log("Dashboard data loaded successfully");
 
+  const participantsArr = objectValues(participantsRecord ?? {});
+  const locationsArr = (objectValues(locationsRecord ?? {}) as unknown as LocationRecord[]).filter(
+    (l) => l && typeof l.id === "number",
+  );
+  const prizesArr = objectValues(prizesRecord ?? {});
+
   return {
     ok: true,
-    participants: objectValues(participantsRecord).sort(
+    participants: participantsArr.sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     ),
-    locations: objectValues(locationsRecord).sort((a, b) => a.id - b.id),
-    prizes: objectValues(prizesRecord).sort(
-      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    locations: locationsArr.sort((a, b) => a.id - b.id),
+    prizes: prizesArr.sort(
+      (a, b) => new Date((a as any).created_at).getTime() - new Date((b as any).created_at).getTime(),
     ),
     settings: {
       pointsRequiredForWheel: pointsRequired,
