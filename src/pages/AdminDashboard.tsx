@@ -8,6 +8,9 @@ import {
   savePrize as savePrizeApi,
   setSpinThreshold as setSpinThresholdApi,
   updateLocation as updateLocationApi,
+  regenerateLocationQR as regenerateLocationQRApi,
+  deleteParticipant as deleteParticipantApi,
+  updateParticipant as updateParticipantApi,
 } from "@/services/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -32,8 +35,12 @@ import {
   Anchor,
   MapPin,
   Gift,
+  Users,
 } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
+import { AdminLocationManager } from "@/components/AdminLocationManager";
+import { AdminParticipantManager } from "@/components/AdminParticipantManager";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ParticipantRow {
   id: string;
@@ -54,6 +61,10 @@ interface LocationRow {
   lat: number;
   lng: number;
   points: number;
+  map_url?: string;
+  image_url?: string;
+  description?: string;
+  qr_code_version?: number;
 }
 
 interface PrizeRow {
@@ -166,14 +177,10 @@ const AdminDashboard = () => {
   const saveLocation = async (location: LocationRow) => {
     if (!token) return;
 
-    if (
-      Number.isNaN(location.lat) ||
-      Number.isNaN(location.lng) ||
-      Number.isNaN(location.points)
-    ) {
+    if (!location.name.trim() || Number.isNaN(location.points)) {
       toast({
         title: "ข้อมูลไม่ถูกต้อง",
-        description: "Latitude, Longitude และคะแนนต้องเป็นตัวเลข",
+        description: "ชื่อและคะแนนต้องไม่ว่าง",
         variant: "destructive",
       });
       return;
@@ -184,9 +191,10 @@ const AdminDashboard = () => {
       await updateLocationApi(token, {
         id: location.id,
         name: location.name.trim(),
-        lat: Number(location.lat),
-        lng: Number(location.lng),
         points: Number(location.points),
+        map_url: location.map_url,
+        image_url: location.image_url,
+        description: location.description,
       });
       toast({ title: "อัปเดตจุดเช็กอินแล้ว" });
       fetchDashboard(token);
@@ -198,6 +206,82 @@ const AdminDashboard = () => {
       });
     } finally {
       setSavingLocationId(null);
+    }
+  };
+
+  const regenerateQR = async (locationId: number) => {
+    if (!token) return;
+    
+    try {
+      await regenerateLocationQRApi(token, locationId);
+      toast({ 
+        title: "สร้าง QR Code ใหม่สำเร็จ",
+        description: "QR code เวอร์ชันเก่าจะใช้ไม่ได้แล้ว" 
+      });
+      fetchDashboard(token);
+    } catch (error) {
+      toast({
+        title: "สร้าง QR ไม่สำเร็จ",
+        description: errorMessage(error),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteParticipant = async (participantId: string) => {
+    if (!token) return;
+    
+    try {
+      await deleteParticipantApi(token, participantId);
+      toast({ title: "ลบลูกเรือสำเร็จ" });
+      fetchDashboard(token);
+    } catch (error) {
+      toast({
+        title: "ลบลูกเรือไม่สำเร็จ",
+        description: errorMessage(error),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateParticipant = async (participantId: string, updates: Partial<ParticipantRow>) => {
+    if (!token) return;
+    
+    try {
+      await updateParticipantApi(token, participantId, updates);
+      toast({ title: "อัปเดตข้อมูลลูกเรือสำเร็จ" });
+      fetchDashboard(token);
+    } catch (error) {
+      toast({
+        title: "อัปเดตข้อมูลไม่สำเร็จ",
+        description: errorMessage(error),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const adjustParticipantPoints = async (participantId: string, delta: number) => {
+    if (!token) return;
+    
+    try {
+      const { error } = await supabase.rpc('adjust_participant_points', {
+        p_participant_id: participantId,
+        p_points_delta: delta,
+      });
+      
+      if (error) throw error;
+      
+      toast({ 
+        title: "ปรับคะแนนสำเร็จ",
+        description: `${delta > 0 ? '+' : ''}${delta} คะแนน`
+      });
+      fetchDashboard(token);
+    } catch (error) {
+      toast({
+        title: "ปรับคะแนนไม่สำเร็จ",
+        description: errorMessage(error),
+        variant: "destructive",
+      });
     }
   };
 
@@ -405,11 +489,23 @@ const AdminDashboard = () => {
           </div>
         ) : (
           <Tabs defaultValue="participants" className="space-y-8">
-            <TabsList className="grid grid-cols-4 bg-transparent">
-              <TabsTrigger value="participants">ลูกเรือ</TabsTrigger>
-              <TabsTrigger value="locations">จุดเช็กอิน</TabsTrigger>
-              <TabsTrigger value="prizes">รางวัล</TabsTrigger>
-              <TabsTrigger value="settings">ตั้งค่า</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 bg-white/80">
+              <TabsTrigger value="participants" className="gap-2">
+                <Users className="h-4 w-4" />
+                ลูกเรือ
+              </TabsTrigger>
+              <TabsTrigger value="locations" className="gap-2">
+                <MapPin className="h-4 w-4" />
+                จุดเช็กอิน
+              </TabsTrigger>
+              <TabsTrigger value="prizes" className="gap-2">
+                <Gift className="h-4 w-4" />
+                รางวัล
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="gap-2">
+                <Anchor className="h-4 w-4" />
+                ตั้งค่า
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="participants" className="space-y-4">
@@ -427,35 +523,30 @@ const AdminDashboard = () => {
                   </Button>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Username</TableHead>
-                        <TableHead>ชื่อ - นามสกุล</TableHead>
-                        <TableHead>คะแนน</TableHead>
-                        <TableHead>สถานศึกษา</TableHead>
-                        <TableHead>โปรแกรม</TableHead>
-                        <TableHead>ลงทะเบียนเมื่อ</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                <div className="overflow-x-auto rounded-lg border border-primary/10">
+                  <table className="w-full">
+                    <thead className="bg-primary/5">
+                      <tr>
+                        <th className="p-3 text-left text-sm font-semibold">Username</th>
+                        <th className="p-3 text-left text-sm font-semibold">ชื่อ</th>
+                        <th className="p-3 text-left text-sm font-semibold">นามสกุล</th>
+                        <th className="p-3 text-center text-sm font-semibold">คะแนน</th>
+                        <th className="p-3 text-left text-sm font-semibold">สถานศึกษา</th>
+                        <th className="p-3 text-left text-sm font-semibold">จัดการ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {dashboard.participants.map((participant) => (
-                        <TableRow key={participant.id}>
-                          <TableCell className="font-semibold">{participant.username}</TableCell>
-                          <TableCell>
-                            {participant.first_name} {participant.last_name}
-                          </TableCell>
-                          <TableCell>{participant.points}</TableCell>
-                          <TableCell>{participant.school ?? "-"}</TableCell>
-                          <TableCell>{participant.program ?? "-"}</TableCell>
-                          <TableCell>
-                            {new Date(participant.created_at).toLocaleString("th-TH")}
-                          </TableCell>
-                        </TableRow>
+                        <AdminParticipantManager
+                          key={participant.id}
+                          participant={participant}
+                          onUpdate={updateParticipant}
+                          onDelete={deleteParticipant}
+                          onAdjustPoints={adjustParticipantPoints}
+                        />
                       ))}
-                    </TableBody>
-                  </Table>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </TabsContent>
@@ -469,79 +560,19 @@ const AdminDashboard = () => {
                   <div>
                     <h2 className="text-2xl font-semibold text-primary">จัดการจุดเช็กอิน</h2>
                     <p className="text-sm text-foreground/70">
-                      ปรับชื่อ พิกัด และคะแนนที่ได้รับของแต่ละจุดได้ที่นี่
+                      แก้ไขรายละเอียด อัปโหลดรูปภาพ และสร้าง QR Code สำหรับแต่ละจุด
                     </p>
                   </div>
                 </div>
 
                 <div className="grid gap-6">
-                  {locationDrafts.map((location, index) => (
-                    <div
+                  {dashboard.locations.map((location) => (
+                    <AdminLocationManager
                       key={location.id}
-                      className="rounded-2xl border border-rope/40 bg-white/70 px-6 py-6 shadow-sm"
-                    >
-                      <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-primary">
-                          จุดที่ {location.id}
-                        </h3>
-                        <span className="text-sm text-foreground/60">
-                          +{location.points} คะแนนเมื่อเช็กอิน
-                        </span>
-                      </div>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div className="space-y-2">
-                          <Label htmlFor={`loc-name-${location.id}`}>ชื่อจุดเช็กอิน</Label>
-                          <Input
-                            id={`loc-name-${location.id}`}
-                            value={location.name}
-                            onChange={(event) =>
-                              handleLocationChange(index, "name", event.target.value)
-                            }
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`loc-points-${location.id}`}>คะแนน</Label>
-                          <Input
-                            id={`loc-points-${location.id}`}
-                            type="number"
-                            value={location.points}
-                            onChange={(event) =>
-                              handleLocationChange(index, "points", event.target.value)
-                            }
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`loc-lat-${location.id}`}>Latitude</Label>
-                          <Input
-                            id={`loc-lat-${location.id}`}
-                            type="number"
-                            value={location.lat}
-                            onChange={(event) =>
-                              handleLocationChange(index, "lat", event.target.value)
-                            }
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`loc-lng-${location.id}`}>Longitude</Label>
-                          <Input
-                            id={`loc-lng-${location.id}`}
-                            type="number"
-                            value={location.lng}
-                            onChange={(event) =>
-                              handleLocationChange(index, "lng", event.target.value)
-                            }
-                          />
-                        </div>
-                      </div>
-                      <Button
-                        className="mt-4 gap-2"
-                        onClick={() => saveLocation(location)}
-                        disabled={savingLocationId === location.id}
-                      >
-                        <Save className="h-4 w-4" />
-                        {savingLocationId === location.id ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
-                      </Button>
-                    </div>
+                      location={location}
+                      onSave={saveLocation}
+                      onGenerateQR={regenerateQR}
+                    />
                   ))}
                 </div>
               </div>

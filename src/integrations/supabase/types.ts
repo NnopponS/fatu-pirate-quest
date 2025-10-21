@@ -140,6 +140,7 @@ export type Database = {
           map_url: string | null
           name: string
           points: number
+          qr_code_version: number | null
         }
         Insert: {
           description?: string | null
@@ -150,6 +151,7 @@ export type Database = {
           map_url?: string | null
           name: string
           points?: number
+          qr_code_version?: number | null
         }
         Update: {
           description?: string | null
@@ -160,6 +162,7 @@ export type Database = {
           map_url?: string | null
           name?: string
           points?: number
+          qr_code_version?: number | null
         }
         Relationships: []
       }

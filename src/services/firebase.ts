@@ -29,6 +29,9 @@ export interface LocationRecord {
   lng: number;
   points: number;
   map_url?: string;
+  image_url?: string;
+  description?: string;
+  qr_code_version?: number;
 }
 
 export interface PrizeRecord {
@@ -784,19 +787,70 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
   };
 };
 
-export const updateLocation = async (token: string, location: LocationRecord) => {
+export const updateLocation = async (token: string, location: Partial<LocationRecord> & { id: number }) => {
   const session = await validateAdminSession(token);
   if (!session) {
     throw new Error("Invalid session");
   }
 
-  await firebaseDb.update(`locations/${location.id}`, {
-    name: location.name,
-    lat: location.lat,
-    lng: location.lng,
-    points: location.points,
-    ...(location.map_url ? { map_url: location.map_url } : {}),
+  const updates: Record<string, any> = {};
+  if (location.name !== undefined) updates.name = location.name;
+  if (location.points !== undefined) updates.points = location.points;
+  if (location.map_url !== undefined) updates.map_url = location.map_url;
+  if (location.image_url !== undefined) updates.image_url = location.image_url;
+  if (location.description !== undefined) updates.description = location.description;
+
+  await firebaseDb.update(`locations/${location.id}`, updates);
+};
+
+export const regenerateLocationQR = async (token: string, locationId: number) => {
+  const session = await validateAdminSession(token);
+  if (!session) {
+    throw new Error("Invalid session");
+  }
+
+  const location = await firebaseDb.get<LocationRecord>(`locations/${locationId}`);
+  const currentVersion = location?.qr_code_version ?? 1;
+  
+  await firebaseDb.update(`locations/${locationId}`, {
+    qr_code_version: currentVersion + 1,
   });
+
+  return currentVersion + 1;
+};
+
+export const deleteParticipant = async (token: string, participantId: string) => {
+  const session = await validateAdminSession(token);
+  if (!session) {
+    throw new Error("Invalid session");
+  }
+
+  const participant = await firebaseDb.get<ParticipantRecord>(`participants/${participantId}`);
+  if (!participant) {
+    throw new Error("Participant not found");
+  }
+
+  const normalized = normalizeUsername(participant.username);
+  
+  await Promise.all([
+    firebaseDb.remove(`participants/${participantId}`),
+    firebaseDb.remove(`participants_by_username/${normalized}`),
+    firebaseDb.remove(`checkins/${participantId}`),
+    firebaseDb.remove(`spins/${participantId}`),
+  ]);
+};
+
+export const updateParticipant = async (
+  token: string, 
+  participantId: string, 
+  updates: Partial<Pick<ParticipantRecord, 'first_name' | 'last_name' | 'age' | 'grade_level' | 'school' | 'program' | 'points'>>
+) => {
+  const session = await validateAdminSession(token);
+  if (!session) {
+    throw new Error("Invalid session");
+  }
+
+  await firebaseDb.update(`participants/${participantId}`, updates);
 };
 
 export const createPrize = async (token: string, name: string, weight: number) => {
