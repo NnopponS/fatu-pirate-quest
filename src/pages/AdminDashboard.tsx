@@ -116,12 +116,19 @@ const AdminDashboard = () => {
         setPrizeDrafts(data.prizes.map((prize) => ({ ...prize })));
         setPointsRequired(data.settings.pointsRequiredForWheel);
       } catch (error) {
+        console.error("Dashboard fetch error:", error);
+        const errorMsg = errorMessage(error);
+        
         toast({
           title: "ไม่สามารถโหลดข้อมูลได้",
-          description: errorMessage(error),
+          description: errorMsg,
           variant: "destructive",
         });
-        logout();
+        
+        // Only logout if session is actually invalid
+        if (errorMsg.includes("Invalid session") || errorMsg.includes("session")) {
+          logout();
+        }
       } finally {
         setLoading(false);
       }

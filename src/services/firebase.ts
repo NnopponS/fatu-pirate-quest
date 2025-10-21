@@ -742,7 +742,10 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
 
   await ensureDefaults();
 
+  console.log("Validating admin session:", token);
   const session = await validateAdminSession(token);
+  console.log("Session validation result:", session);
+  
   if (!session) {
     throw new Error("Invalid session");
   }
@@ -753,6 +756,8 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
     firebaseDb.get<Record<string, PrizeRecord>>("prizes"),
     getPointsRequired(),
   ]);
+
+  console.log("Dashboard data loaded successfully");
 
   return {
     ok: true,
