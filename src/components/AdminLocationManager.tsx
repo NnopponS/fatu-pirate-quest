@@ -48,11 +48,11 @@ export const AdminLocationManager = ({ location, onSave, onGenerateQR }: Props) 
         const dateStr = todayStr();
         const sig = await signCheckin(location.id, dateStr, secret, currentVersion);
         
-        // Use current domain for QR code (works for both local and production)
-        const baseUrl = window.location.origin;
-        const checkinUrl = `${baseUrl}/checkin?loc=${location.id}&sig=${sig}&v=${currentVersion}`;
+        // Use relative path (works everywhere - no domain needed)
+        // Format: CHECKIN|loc|sig|version
+        const checkinData = `CHECKIN|${location.id}|${sig}|${currentVersion}`;
         
-        const qrDataUrl = await QRCode.toDataURL(checkinUrl, {
+        const qrDataUrl = await QRCode.toDataURL(checkinData, {
           width: 512,
           margin: 2,
           color: {

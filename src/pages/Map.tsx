@@ -213,10 +213,47 @@ const Map = () => {
           onScan={(value) => {
             setScannerOpen(false);
             if (!value) return;
-            if (value.startsWith("http")) {
-              window.location.href = value;
-            } else {
-              navigate(`/checkin?payload=${encodeURIComponent(value)}`);
+            
+            // Parse QR code format: CHECKIN|loc|sig|version
+            if (value.startsWith("CHECKIN|")) {
+              const parts = value.split("|");
+              if (parts.length >= 4) {
+                const loc = parts[1];
+                const sig = parts[2];
+                const version = parts[3];
+                navigate(`/checkin?loc=${loc}&sig=${sig}&v=${version}`);
+              } else {
+                toast({
+                  title: "QR Code ไม่ถูกต้อง",
+                  description: "กรุณาสแกน QR Code ที่ถูกต้อง",
+                  variant: "destructive",
+                });
+              }
+            }
+            // Backward compatibility: support old URL format
+            else if (value.includes("/checkin?")) {
+              // Extract query parameters from URL
+              const url = new URL(value, window.location.origin);
+              const loc = url.searchParams.get("loc");
+              const sig = url.searchParams.get("sig");
+              const version = url.searchParams.get("v");
+              
+              if (loc && sig) {
+                navigate(`/checkin?loc=${loc}&sig=${sig}${version ? `&v=${version}` : ''}`);
+              } else {
+                toast({
+                  title: "QR Code ไม่ถูกต้อง",
+                  description: "กรุณาสแกน QR Code ที่ถูกต้อง",
+                  variant: "destructive",
+                });
+              }
+            }
+            else {
+              toast({
+                title: "QR Code ไม่ถูกต้อง",
+                description: "QR Code นี้ไม่ใช่ของระบบเช็กอิน",
+                variant: "destructive",
+              });
             }
           }}
         />
