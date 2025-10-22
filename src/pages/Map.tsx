@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Anchor, Compass, Trophy, ScanLine, CheckCircle2, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
+import jsQR from "jsqr";
 
 interface LocationEntry {
   id: number;
@@ -219,12 +220,12 @@ const Map = () => {
       </div>
       {participantId && (
         <>
-          <QrScannerDialog
-            open={scannerOpen}
-            onOpenChange={setScannerOpen}
-            onScan={(value) => {
-              setScannerOpen(false);
-              if (!value) return;
+        <QrScannerDialog
+          open={scannerOpen}
+          onOpenChange={setScannerOpen}
+          onScan={(value) => {
+            setScannerOpen(false);
+            if (!value) return;
               
               console.log("QR Code scanned:", value);
               
@@ -266,7 +267,7 @@ const Map = () => {
                       version: version || undefined,
                       isValid: true,
                     };
-                  } else {
+            } else {
                     parsedData.errorMessage = "ไม่พบข้อมูลที่จำเป็น (loc และ sig)";
                   }
                 } catch (error) {
@@ -415,7 +416,9 @@ interface QrScannerDialogProps {
 
 const QrScannerDialog = ({ open, onOpenChange, onScan }: QrScannerDialogProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [scanMethod, setScanMethod] = useState<'barcode' | 'jsqr' | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -444,22 +447,18 @@ const QrScannerDialog = ({ open, onOpenChange, onScan }: QrScannerDialogProps) =
     const start = async () => {
       setError(null);
 
-      if (typeof window === "undefined" || !('BarcodeDetector' in window)) {
-        setError('เบราว์เซอร์นี้ไม่รองรับการสแกน QR Code\n\nกรุณาใช้:\n• Chrome (แนะนำ)\n• Safari\n• Edge\n\n❌ Firefox ยังไม่รองรับ');
-        return;
+      // Detect which scanning method to use
+      const hasBarcodeDetector = typeof window !== "undefined" && 'BarcodeDetector' in window;
+      
+      if (hasBarcodeDetector) {
+        console.log('🔍 Using BarcodeDetector API');
+        setScanMethod('barcode');
+      } else {
+        console.log('🔍 Using jsQR fallback (iOS/Safari compatible)');
+        setScanMethod('jsqr');
       }
 
-      const Detector = (window as typeof window & { BarcodeDetector: BarcodeDetectorConstructor }).BarcodeDetector;
-
-      let detector: BarcodeDetectorInstance;
-      try {
-        detector = new Detector({ formats: ['qr_code'] });
-      } catch (detectorError) {
-        console.error('BarcodeDetector error', detectorError);
-        setError('❌ ไม่สามารถเริ่มตัวสแกน QR ได้\n\nกรุณาลองใหม่อีกครั้ง');
-        return;
-      }
-
+      // Get camera stream
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: { 
@@ -472,13 +471,13 @@ const QrScannerDialog = ({ open, onOpenChange, onScan }: QrScannerDialogProps) =
         console.error('Camera error', cameraError);
         const errorName = (cameraError as Error).name;
         if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
-          setError('❌ ไม่ได้รับอนุญาตให้เข้าถึงกล้อง\n\nวิธีแก้ไข:\n1. กดไอคอนกล้องในแถบ URL\n2. เลือก "อนุญาต"\n3. รีเฟรชหน้าเว็บ');
+          setError('❌ ไม่ได้รับอนุญาตให้เข้าถึงกล้อง\n\nวิธีแก้ไข (iOS):\n1. ไปที่ การตั้งค่า > Safari > กล้อง\n2. เลือก "ถาม" หรือ "อนุญาต"\n3. รีเฟรชหน้าเว็บและลองใหม่\n\nวิธีแก้ไข (Android):\n1. กดไอคอนกล้องในแถบ URL\n2. เลือก "อนุญาต"');
         } else if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError') {
           setError('❌ ไม่พบกล้อง\n\nกรุณาตรวจสอบว่าอุปกรณ์มีกล้อง');
         } else if (errorName === 'NotReadableError' || errorName === 'TrackStartError') {
           setError('❌ กล้องถูกใช้งานโดยแอปอื่น\n\nวิธีแก้ไข:\n1. ปิดแอปอื่นที่ใช้กล้อง\n2. ลองอีกครั้ง');
         } else {
-          setError('❌ ไม่สามารถเข้าถึงกล้องได้\n\nกรุณาตรวจสอบ:\n• อนุญาตให้เข้าถึงกล้อง\n• ไม่มีแอปอื่นใช้กล้องอยู่\n• รีเฟรชหน้าเว็บ');
+          setError('❌ ไม่สามารถเข้าถึงกล้องได้\n\nกรุณาตรวจสอบ:\n• อนุญาตให้เข้าถึงกล้อง\n• ไม่มีแอปอื่นใช้กล้องอยู่\n• ใช้ HTTPS หรือ localhost\n• รีเฟรชหน้าเว็บ');
         }
         return;
       }
@@ -492,6 +491,7 @@ const QrScannerDialog = ({ open, onOpenChange, onScan }: QrScannerDialogProps) =
       video.srcObject = stream;
       video.setAttribute('playsinline', 'true');
       video.setAttribute('autoplay', 'true');
+      video.setAttribute('muted', 'true');
 
       try {
         await video.play();
@@ -510,6 +510,20 @@ const QrScannerDialog = ({ open, onOpenChange, onScan }: QrScannerDialogProps) =
         }
       });
 
+      // Setup scanning based on method
+      if (hasBarcodeDetector) {
+        // Use BarcodeDetector API (Chrome, Edge)
+        const Detector = (window as typeof window & { BarcodeDetector: BarcodeDetectorConstructor }).BarcodeDetector;
+        let detector: BarcodeDetectorInstance;
+        
+        try {
+          detector = new Detector({ formats: ['qr_code'] });
+        } catch (detectorError) {
+          console.error('BarcodeDetector error', detectorError);
+          setError('❌ ไม่สามารถเริ่มตัวสแกน QR ได้\n\nกรุณาลองใหม่อีกครั้ง');
+        return;
+      }
+
       const scan = async () => {
         if (cancelled || !videoRef.current) {
           return;
@@ -518,6 +532,7 @@ const QrScannerDialog = ({ open, onOpenChange, onScan }: QrScannerDialogProps) =
           const detections = await detector.detect(videoRef.current);
           const value = detections.find((item) => item.rawValue)?.rawValue;
           if (value) {
+              console.log('✅ QR detected (BarcodeDetector):', value);
             stopStream();
             onScan(value);
             return;
@@ -529,6 +544,52 @@ const QrScannerDialog = ({ open, onOpenChange, onScan }: QrScannerDialogProps) =
       };
 
       raf = requestAnimationFrame(scan);
+      } else {
+        // Use jsQR fallback (iOS Safari, Firefox)
+        const canvas = canvasRef.current;
+        if (!canvas) {
+          setError('❌ เกิดข้อผิดพลาดภายใน\n\nกรุณาลองใหม่อีกครั้ง');
+          return;
+        }
+
+        const canvasContext = canvas.getContext('2d', { willReadFrequently: true });
+        if (!canvasContext) {
+          setError('❌ ไม่สามารถสร้าง canvas context ได้');
+          return;
+        }
+
+        const scan = () => {
+          if (cancelled || !videoRef.current || !canvasRef.current) {
+            return;
+          }
+
+          const video = videoRef.current;
+          
+          // Only scan if video is playing
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth;
+
+            canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
+            
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+              inversionAttempts: "dontInvert",
+            });
+
+            if (code && code.data) {
+              console.log('✅ QR detected (jsQR):', code.data);
+              stopStream();
+              onScan(code.data);
+              return;
+            }
+          }
+
+          raf = requestAnimationFrame(scan);
+        };
+
+        raf = requestAnimationFrame(scan);
+      }
     };
 
     start();
@@ -571,13 +632,16 @@ const QrScannerDialog = ({ open, onOpenChange, onScan }: QrScannerDialogProps) =
                 className="w-full"
               >
                 ปิด
-              </Button>
+            </Button>
             </div>
           </div>
         ) : (
           <div className="space-y-3">
             <div className="relative aspect-video overflow-hidden rounded-xl border-2 border-primary/20 bg-black">
               <video ref={videoRef} className="h-full w-full object-cover" muted playsInline autoPlay />
+              
+              {/* Hidden canvas for jsQR processing */}
+              <canvas ref={canvasRef} className="hidden" />
               
               {/* Scanning overlay with corner markers */}
               <div className="absolute inset-0 pointer-events-none">
@@ -592,9 +656,16 @@ const QrScannerDialog = ({ open, onOpenChange, onScan }: QrScannerDialogProps) =
               <p className="text-center text-sm text-primary font-medium">
                 🔍 กำลังสแกน QR Code...
               </p>
-              <p className="text-center text-xs text-foreground/60">
+            <p className="text-center text-xs text-foreground/60">
                 💡 วาง QR Code ให้อยู่ในกรอบสี่เหลี่ยม
               </p>
+              {scanMethod && (
+                <p className="text-center text-xs text-foreground/50">
+                  {scanMethod === 'barcode' 
+                    ? '⚡ ใช้ BarcodeDetector API' 
+                    : '🍎 ใช้ jsQR (iOS/Safari compatible)'}
+                </p>
+              )}
             </div>
           </div>
         )}
