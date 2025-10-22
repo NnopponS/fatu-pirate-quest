@@ -1,33 +1,21 @@
--- Enable RLS on locations table if not already enabled
-ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
+-- Disable RLS on locations table (it's public data and admin auth is handled by Firebase)
+ALTER TABLE locations DISABLE ROW LEVEL SECURITY;
 
--- Allow everyone to read locations (public access)
-CREATE POLICY IF NOT EXISTS "locations_public_read" ON locations
-  FOR SELECT
-  USING (true);
+-- Drop existing policies if any
+DROP POLICY IF EXISTS "locations_public_read" ON locations;
+DROP POLICY IF EXISTS "locations_allow_update" ON locations;
 
--- Allow anyone to update locations (admin authentication is handled at app level via Firebase)
-CREATE POLICY IF NOT EXISTS "locations_allow_update" ON locations
-  FOR UPDATE
-  USING (true)
-  WITH CHECK (true);
+-- Disable RLS on participants table (admin auth is handled by Firebase)
+ALTER TABLE participants DISABLE ROW LEVEL SECURITY;
 
--- Enable RLS on participants table if not already enabled
-ALTER TABLE participants ENABLE ROW LEVEL SECURITY;
+-- Drop existing policies if any
+DROP POLICY IF EXISTS "participants_public_read" ON participants;
+DROP POLICY IF EXISTS "participants_allow_update" ON participants;
+DROP POLICY IF EXISTS "participants_allow_insert" ON participants;
 
--- Allow everyone to read participants (needed for leaderboard, etc.)
-CREATE POLICY IF NOT EXISTS "participants_public_read" ON participants
-  FOR SELECT
-  USING (true);
+-- Disable RLS on event_settings table (admin auth is handled by Firebase)
+ALTER TABLE event_settings DISABLE ROW LEVEL SECURITY;
 
--- Allow anyone to update participants (admin authentication is handled at app level via Firebase)
-CREATE POLICY IF NOT EXISTS "participants_allow_update" ON participants
-  FOR UPDATE
-  USING (true)
-  WITH CHECK (true);
-
--- Allow anyone to insert participants (for signup)
-CREATE POLICY IF NOT EXISTS "participants_allow_insert" ON participants
-  FOR INSERT
-  WITH CHECK (true);
+-- Drop existing policies if any
+DROP POLICY IF EXISTS "event_settings_public_read" ON event_settings;
 
