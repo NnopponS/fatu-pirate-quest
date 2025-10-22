@@ -1,4 +1,6 @@
 import { firebaseDb } from "@/integrations/firebase/database";
+import { supabase } from "@/integrations/supabase/client";
+import { CHECKIN_SECRET } from "@/lib/constants";
 
 const encoder = new TextEncoder();
 
@@ -589,23 +591,24 @@ export const checkinParticipant = async (
 
   await ensureDefaults();
 
-  const secret = import.meta.env.VITE_CHECKIN_SECRET;
-  if (!secret) {
-    throw new Error("CHECKIN secret not configured");
-  }
-
   const signatures = await Promise.all([
-    signCheckin(locationId, todayStr(-1), secret),
-    signCheckin(locationId, todayStr(0), secret),
-    signCheckin(locationId, todayStr(1), secret),
+    signCheckin(locationId, todayStr(-1), CHECKIN_SECRET),
+    signCheckin(locationId, todayStr(0), CHECKIN_SECRET),
+    signCheckin(locationId, todayStr(1), CHECKIN_SECRET),
   ]);
 
   if (!signatures.includes(signature)) {
     throw new Error("Invalid QR code signature");
   }
 
-  const location = await firebaseDb.get<LocationRecord>(`locations/${locationId}`);
-  if (!location) {
+  // Get location from Supabase
+  const { data: location, error } = await supabase
+    .from('locations')
+    .select('*')
+    .eq('id', locationId)
+    .single();
+
+  if (error || !location) {
     throw new Error("Location not found");
   }
 
@@ -757,9 +760,14 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
     throw new Error("Invalid session");
   }
 
-  const [participantsRecord, locationsRecord, prizesRecord, pointsRequired] = await Promise.all([
+  // Get locations from Supabase instead of Firebase
+  const { data: locationsData } = await supabase
+    .from('locations')
+    .select('*')
+    .order('id');
+
+  const [participantsRecord, prizesRecord, pointsRequired] = await Promise.all([
     firebaseDb.get<Record<string, ParticipantRecord>>("participants"),
-    firebaseDb.get<Record<string, LocationRecord>>("locations"),
     firebaseDb.get<Record<string, PrizeRecord>>("prizes"),
     getPointsRequired(),
   ]);
@@ -767,9 +775,17 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
   console.log("Dashboard data loaded successfully");
 
   const participantsArr = objectValues(participantsRecord ?? {});
-  const locationsArr = (objectValues(locationsRecord ?? {}) as unknown as LocationRecord[]).filter(
-    (l) => l && typeof l.id === "number",
-  );
+  const locationsArr = (locationsData || []).map((loc: any) => ({
+    id: loc.id,
+    name: loc.name,
+    lat: loc.lat,
+    lng: loc.lng,
+    points: loc.points,
+    map_url: loc.map_url,
+    image_url: loc.image_url,
+    description: loc.description,
+    qr_code_version: loc.qr_code_version,
+  }));
   const prizesArr = objectValues(prizesRecord ?? {});
 
   return {
@@ -800,7 +816,15 @@ export const updateLocation = async (token: string, location: Partial<LocationRe
   if (location.image_url !== undefined) updates.image_url = location.image_url;
   if (location.description !== undefined) updates.description = location.description;
 
-  await firebaseDb.update(`locations/${location.id}`, updates);
+  // Update in Supabase
+  const { error } = await supabase
+    .from('locations')
+    .update(updates)
+    .eq('id', location.id);
+
+  if (error) {
+    throw new Error(`Failed to update location: ${error.message}`);
+  }
 };
 
 export const regenerateLocationQR = async (token: string, locationId: number) => {
@@ -809,12 +833,24 @@ export const regenerateLocationQR = async (token: string, locationId: number) =>
     throw new Error("Invalid session");
   }
 
-  const location = await firebaseDb.get<LocationRecord>(`locations/${locationId}`);
+  // Get current version from Supabase
+  const { data: location } = await supabase
+    .from('locations')
+    .select('qr_code_version')
+    .eq('id', locationId)
+    .single();
+
   const currentVersion = location?.qr_code_version ?? 1;
   
-  await firebaseDb.update(`locations/${locationId}`, {
-    qr_code_version: currentVersion + 1,
-  });
+  // Update in Supabase
+  const { error } = await supabase
+    .from('locations')
+    .update({ qr_code_version: currentVersion + 1 })
+    .eq('id', locationId);
+
+  if (error) {
+    throw new Error(`Failed to regenerate QR: ${error.message}`);
+  }
 
   return currentVersion + 1;
 };
