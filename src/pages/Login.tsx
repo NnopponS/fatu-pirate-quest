@@ -38,7 +38,15 @@ const Login = () => {
           title: "เข้าสู่ระบบสำเร็จ",
           description: "ยินดีต้อนรับสู่การผจญภัย!",
         });
-        navigate("/map");
+
+        // Check if there's a return URL (e.g., from checkin page)
+        const returnUrl = sessionStorage.getItem("returnUrl");
+        if (returnUrl) {
+          sessionStorage.removeItem("returnUrl");
+          navigate(returnUrl);
+        } else {
+          navigate("/map");
+        }
       } else {
         localStorage.setItem("adminToken", result.token);
         localStorage.setItem("adminUsername", result.username);

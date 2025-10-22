@@ -7,6 +7,7 @@ export const LOCATIONS = [
 
 export const EVENT_SLUG = "fatu2025";
 export const POINTS_REQUIRED_FOR_WHEEL = 300;
+export const CHECKIN_SECRET = "fatu-pirate-quest-2025-secret-key-v1";
 
 export const PRIZES = [
   { name: "สติ๊กเกอร์", weight: 40 },

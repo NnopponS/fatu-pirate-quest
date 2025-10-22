@@ -9,9 +9,11 @@ interface LocationCardProps {
   points: number;
   checkedIn: boolean;
   mapUrl?: string;
+  imageUrl?: string;
+  description?: string;
 }
 
-export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl }: LocationCardProps) => {
+export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageUrl, description }: LocationCardProps) => {
   const mapsUrl = mapUrl ?? `https://www.google.com/maps?q=${lat},${lng}`;
 
   return (
@@ -22,6 +24,16 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl }: Loca
           : "border-rope/40 bg-white/70 shadow-md hover:shadow-xl hover:shadow-secondary/10"
       }`}
     >
+      {imageUrl && (
+        <div className="relative h-48 overflow-hidden">
+          <img 
+            src={imageUrl} 
+            alt={name}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        </div>
+      )}
       <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/20 to-white/0 pointer-events-none" />
       <div className="relative p-6 space-y-3">
         <div className="flex items-center justify-between gap-3">
@@ -35,6 +47,10 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl }: Loca
             {checkedIn ? "เช็กอินแล้ว" : "ยังไม่ได้เช็กอิน"}
           </span>
         </div>
+
+        {description && (
+          <p className="text-sm text-foreground/80">{description}</p>
+        )}
 
         <p className="text-sm text-foreground/70">
           คะแนนเมื่อเช็กอิน: <span className="font-semibold text-primary">{points} แต้ม</span>

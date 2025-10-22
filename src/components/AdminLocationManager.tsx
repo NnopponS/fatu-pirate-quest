@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Save, Upload, QrCode, Loader2 } from "lucide-react";
 import QRCode from "qrcode";
+import { signCheckin, todayStr } from "@/lib/crypto";
+import { CHECKIN_SECRET } from "@/lib/constants";
 
 interface LocationRecord {
   id: number;
@@ -92,8 +94,12 @@ export const AdminLocationManager = ({ location, onSave, onGenerateQR }: Props) 
     try {
       await onGenerateQR(location.id);
       
-      // Generate QR code image for download
-      const checkinUrl = `${window.location.origin}/checkin?locationId=${location.id}&v=${(draft.qr_code_version ?? 1) + 1}`;
+      // Generate signed QR code URL
+      const secret = CHECKIN_SECRET;
+      const dateStr = todayStr();
+      const sig = await signCheckin(location.id, dateStr, secret);
+      const checkinUrl = `https://fatu-openhouse-2025.vercel.app/checkin?loc=${location.id}&sig=${sig}`;
+      
       const qrDataUrl = await QRCode.toDataURL(checkinUrl, {
         width: 512,
         margin: 2,

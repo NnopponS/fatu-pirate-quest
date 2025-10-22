@@ -21,6 +21,10 @@ const Checkin = () => {
     const performCheckin = async () => {
       const participantId = localStorage.getItem("participantId");
       if (!participantId) {
+        // Save current URL to return after login
+        const currentUrl = window.location.pathname + window.location.search;
+        sessionStorage.setItem("returnUrl", currentUrl);
+        
         toast({
           title: "ต้องเข้าสู่ระบบก่อน",
           description: "กรุณาเข้าสู่ระบบเพื่อใช้การเช็กอิน",

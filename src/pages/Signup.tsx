@@ -106,6 +106,14 @@ const Signup = () => {
 
       setCredentials({ username: result.username, password: result.password });
 
+      // Check if there's a return URL (e.g., from checkin page)
+      const returnUrl = sessionStorage.getItem("returnUrl");
+      if (returnUrl && !isAdminSignup) {
+        sessionStorage.removeItem("returnUrl");
+        // Delay navigation to show credentials first
+        setTimeout(() => navigate(returnUrl), 3000);
+      }
+
       toast({
         title: "สมัครสมาชิกสำเร็จ",
         description: "บันทึกข้อมูลไว้ให้เรียบร้อย อย่าลืมเก็บชื่อผู้ใช้และรหัสผ่านของคุณ",

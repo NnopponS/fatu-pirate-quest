@@ -16,6 +16,8 @@ interface LocationEntry {
   lng: number;
   points: number;
   mapUrl?: string;
+  imageUrl?: string;
+  description?: string;
 }
 
 type BarcodeDetectorInstance = {
@@ -54,6 +56,8 @@ const Map = () => {
             lng: location.lng,
             points: location.points,
             mapUrl: location.map_url,
+            imageUrl: location.image_url,
+            description: location.description,
           }))
         );
       }
@@ -148,6 +152,8 @@ const Map = () => {
                     lng={location.lng}
                     points={location.points}
                     mapUrl={location.mapUrl}
+                    imageUrl={location.imageUrl}
+                    description={location.description}
                     checkedIn={checkins.includes(location.id)}
                   />
                 </div>
