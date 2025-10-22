@@ -11,6 +11,11 @@ import {
   regenerateLocationQR as regenerateLocationQRApi,
   deleteParticipant as deleteParticipantApi,
   updateParticipant as updateParticipantApi,
+  getHeroCards,
+  createHeroCard,
+  saveHeroCard,
+  deleteHeroCard,
+  type HeroCardRecord,
 } from "@/services/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -36,10 +41,13 @@ import {
   MapPin,
   Gift,
   Users,
+  Layers,
 } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { AdminLocationManager } from "@/components/AdminLocationManager";
 import { AdminParticipantManager } from "@/components/AdminParticipantManager";
+import { AdminHeroCardManager } from "@/components/AdminHeroCardManager";
+import { HeroCardsTab } from "@/components/HeroCardsTabContent";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ParticipantRow {
@@ -102,6 +110,14 @@ const AdminDashboard = () => {
   const [savingPrizeId, setSavingPrizeId] = useState<string | null>(null);
   const [newPrize, setNewPrize] = useState({ name: "", weight: "10", stock: "10" });
   const [updatingThreshold, setUpdatingThreshold] = useState(false);
+  const [heroCards, setHeroCards] = useState<HeroCardRecord[]>([]);
+  const [heroCardDrafts, setHeroCardDrafts] = useState<HeroCardRecord[]>([]);
+  const [newHeroCard, setNewHeroCard] = useState({ 
+    title: "", 
+    description: "", 
+    icon: "🎯",
+    order: "1"
+  });
 
   const adminUsername = useMemo(() => localStorage.getItem("adminUsername") ?? "admin", []);
 
@@ -499,7 +515,7 @@ const AdminDashboard = () => {
           </div>
         ) : (
           <Tabs defaultValue="participants" className="space-y-8">
-            <TabsList className="grid w-full grid-cols-4 bg-white/80">
+            <TabsList className="grid w-full grid-cols-5 bg-white/80">
               <TabsTrigger value="participants" className="gap-2">
                 <Users className="h-4 w-4" />
                 ลูกเรือ
@@ -511,6 +527,10 @@ const AdminDashboard = () => {
               <TabsTrigger value="prizes" className="gap-2">
                 <Gift className="h-4 w-4" />
                 รางวัล
+              </TabsTrigger>
+              <TabsTrigger value="herocards" className="gap-2">
+                <Layers className="h-4 w-4" />
+                Hero Cards
               </TabsTrigger>
               <TabsTrigger value="settings" className="gap-2">
                 <Anchor className="h-4 w-4" />
@@ -714,6 +734,10 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="herocards" className="space-y-4">
+              <HeroCardsTab token={token} />
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-4">

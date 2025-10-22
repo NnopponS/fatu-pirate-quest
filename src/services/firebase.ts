@@ -45,6 +45,19 @@ export interface PrizeRecord {
   created_at: string;
 }
 
+export interface HeroCardRecord {
+  id: string;
+  title: string;
+  description: string;
+  icon: string; // emoji or icon name
+  image_url?: string;
+  link_url?: string;
+  link_text?: string;
+  order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface CheckinRecord {
   participant_id: string;
   location_id: number;
@@ -168,6 +181,36 @@ const DEFAULT_PRIZES: Array<Omit<PrizeRecord, "id" | "created_at">> = [
   { name: "Grand Prize Mystery Box", weight: 10, stock: 5 },
 ];
 
+const DEFAULT_HERO_CARDS: Array<Omit<HeroCardRecord, "id" | "created_at">> = [
+  {
+    title: "4 จุดล่าสมบัติ",
+    description: "ท่องดินแดน FATU เช็กอินด้วย QR เพื่อปลดล็อกจากจุดหมายสำคัญ พบกับกิจกรรมน่าสนใจมากมาย",
+    icon: "🗺️",
+    link_url: "/map",
+    link_text: "ดูแผนที่",
+    order: 1,
+    is_active: true,
+  },
+  {
+    title: "400 คะแนน",
+    description: "สะสมครบเพื่อหมุนวงล้อสมบัติ ลุ้นรับของรางวัลพิเศษเฉพาะงานนี้เท่านั้น",
+    icon: "🎁",
+    link_url: "/rewards",
+    link_text: "ดูรางวัล",
+    order: 2,
+    is_active: true,
+  },
+  {
+    title: "ขุมทรัพย์โจรสลัด",
+    description: "สติ๊กเกอร์, พวงกุญแจ, ของสะสม และอีกมากมายรอให้คุณครอบครอง พร้อมสิทธิพิเศษสุดพิเศษ!",
+    icon: "💎",
+    link_url: "/rewards",
+    link_text: "ดูสมบัติ",
+    order: 3,
+    is_active: true,
+  },
+];
+
 const DEFAULT_ADMIN_USERNAME = "admin";
 const DEFAULT_ADMIN_PASSWORD_HASH = "ac9689e2272427085e35b9d3e3e8bed88cb3434828b43b86fc0596cad4c6e270"; // sha256("admin1234")
 
@@ -232,10 +275,11 @@ let defaultsEnsured = false;
 const ensureDefaults = async () => {
   if (defaultsEnsured) return;
 
-  const [locations, settings, prizes, adminUser] = await Promise.all([
+  const [locations, settings, prizes, heroCards, adminUser] = await Promise.all([
     firebaseDb.get<Record<string, LocationRecord>>("locations"),
     firebaseDb.get<{ value: number }>("app_settings/points_required_for_wheel"),
     firebaseDb.get<Record<string, PrizeRecord>>("prizes"),
+    firebaseDb.get<Record<string, HeroCardRecord>>("hero_cards"),
     firebaseDb.get<AdminUserRecord>(`admin_users/${DEFAULT_ADMIN_USERNAME}`),
   ]);
 
@@ -255,6 +299,16 @@ const ensureDefaults = async () => {
       seeded[id] = { id, created_at: now, ...prize };
     });
     await firebaseDb.update("prizes", seeded);
+  }
+
+  if (!heroCards || Object.keys(heroCards).length === 0) {
+    const now = new Date().toISOString();
+    const seeded: Record<string, HeroCardRecord> = {};
+    DEFAULT_HERO_CARDS.forEach((card) => {
+      const id = randomUUID();
+      seeded[id] = { id, created_at: now, ...card };
+    });
+    await firebaseDb.update("hero_cards", seeded);
   }
 
   if (!adminUser) {
@@ -919,6 +973,69 @@ export const deletePrize = async (token: string, prizeId: string) => {
   }
 
   await firebaseDb.remove(`prizes/${prizeId}`);
+};
+
+// Hero Cards Management
+export const getHeroCards = async (): Promise<HeroCardRecord[]> => {
+  await ensureDefaults();
+  
+  const heroCardsRecord = await firebaseDb.get<Record<string, HeroCardRecord>>("hero_cards");
+  const cards = objectValues(heroCardsRecord);
+  
+  // Sort by order and filter active cards
+  return cards.sort((a, b) => a.order - b.order);
+};
+
+export const createHeroCard = async (token: string, card: Omit<HeroCardRecord, "id" | "created_at">) => {
+  const session = await validateAdminSession(token);
+  if (!session) {
+    throw new Error("Invalid session");
+  }
+
+  if (!card.title || !card.description) {
+    throw new Error("Invalid payload");
+  }
+
+  const id = randomUUID();
+  const record: HeroCardRecord = {
+    id,
+    ...card,
+    created_at: new Date().toISOString(),
+  };
+
+  await firebaseDb.set(`hero_cards/${id}`, record);
+  return record;
+};
+
+export const saveHeroCard = async (token: string, card: HeroCardRecord) => {
+  const session = await validateAdminSession(token);
+  if (!session) {
+    throw new Error("Invalid session");
+  }
+
+  if (!card.id || !card.title || !card.description) {
+    throw new Error("Invalid payload");
+  }
+
+  await firebaseDb.update(`hero_cards/${card.id}`, {
+    title: card.title,
+    description: card.description,
+    icon: card.icon,
+    image_url: card.image_url,
+    link_url: card.link_url,
+    link_text: card.link_text,
+    order: card.order,
+    is_active: card.is_active,
+  });
+};
+
+export const deleteHeroCard = async (token: string, cardId: string) => {
+  const session = await validateAdminSession(token);
+  if (!session) {
+    throw new Error("Invalid session");
+  }
+
+  await firebaseDb.remove(`hero_cards/${cardId}`);
 };
 
 export const setSpinThreshold = async (token: string, pointsRequired: number) => {
