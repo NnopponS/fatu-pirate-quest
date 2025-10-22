@@ -18,7 +18,7 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [credentials, setCredentials] = useState<Credentials>(null);
-  const [autoGenerate, setAutoGenerate] = useState(true);
+  const [autoGenerate, setAutoGenerate] = useState(false); // ✅ เปลี่ยนเป็น false = กรอกเอง (manual) เป็น default
   const [manualUsername, setManualUsername] = useState("");
   const [manualPassword, setManualPassword] = useState("");
   const [isAdminSignup, setIsAdminSignup] = useState(false);
@@ -31,6 +31,7 @@ const Signup = () => {
     gradeLevel: "",
     school: "",
     program: "",
+    phoneNumber: "", // ✅ เพิ่มเบอร์โทร
   });
 
   const handleCopy = async (field: "username" | "password", value: string) => {
@@ -84,6 +85,7 @@ const Signup = () => {
         gradeLevel: formData.gradeLevel || null,
         school: formData.school || null,
         program: formData.program || null,
+        phoneNumber: formData.phoneNumber || null, // ✅ ส่งเบอร์โทร
         username: autoGenerate ? null : manualUsername,
         password: autoGenerate ? null : manualPassword,
         autoGenerateCredentials: autoGenerate,
@@ -146,72 +148,6 @@ const Signup = () => {
           </p>
         </div>
 
-        {credentials && (
-          <div className="pirate-card px-6 py-8 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
-                <Check className="h-6 w-6" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold text-primary">บันทึกข้อมูลเข้าสู่ระบบ</h2>
-                <p className="text-sm text-foreground/70">
-                  เก็บชื่อผู้ใช้และรหัสผ่านไว้ให้ดี คุณสามารถคัดลอกเพื่อนำไปเข้าระบบได้ทันที
-                </p>
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>ชื่อผู้ใช้</Label>
-                <div className="flex items-center gap-2">
-                  <Input readOnly value={credentials.username} />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleCopy("username", credentials.username)}
-                    aria-label="คัดลอกชื่อผู้ใช้"
-                  >
-                    {copiedField === "username" ? (
-                      <Check className="h-5 w-5 text-primary" />
-                    ) : (
-                      <Copy className="h-5 w-5" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>รหัสผ่าน</Label>
-                <div className="flex items-center gap-2">
-                  <Input readOnly type="text" value={credentials.password} />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleCopy("password", credentials.password)}
-                    aria-label="คัดลอกรหัสผ่าน"
-                  >
-                    {copiedField === "password" ? (
-                      <Check className="h-5 w-5 text-primary" />
-                    ) : (
-                      <Copy className="h-5 w-5" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button className="flex-1" onClick={() => navigate("/map")}>
-                ไปแผนที่ภารกิจ
-              </Button>
-              <Button className="flex-1" variant="outline" onClick={() => navigate("/login")}>
-                ไปหน้าเข้าสู่ระบบ
-              </Button>
-            </div>
-          </div>
-        )}
-
         <form
           onSubmit={handleSubmit}
           className="pirate-card px-8 py-10 space-y-8 shadow-2xl shadow-primary/10"
@@ -244,6 +180,19 @@ const Signup = () => {
                 placeholder="นามสกุล"
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phoneNumber">
+              เบอร์โทรศัพท์ <span className="text-xs text-foreground/60"></span>
+            </Label>
+            <Input
+              id="phoneNumber"
+              type="tel"
+              value={formData.phoneNumber}
+              onChange={updateField("phoneNumber")}
+              placeholder="เช่น 08x-xxx-xxxx"
+            />
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
@@ -286,7 +235,7 @@ const Signup = () => {
                 id="program"
                 value={formData.program}
                 onChange={updateField("program")}
-                placeholder="เช่น วิศวกรรมศาสตร์, นิเทศศาสตร์"
+                placeholder="เช่น วิทย์-คณิต, ศิลป์-คำนวณ"
               />
             </div>
           </div>
@@ -380,6 +329,79 @@ const Signup = () => {
             {loading ? "กำลังสร้างบัญชี..." : "สมัครสมาชิก"}
           </Button>
         </form>
+
+        {/* ✅ ย้าย credentials popup มาไว้ด้านล่างสุด */}
+        {credentials && (
+          <div className="pirate-card px-6 py-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/15 text-accent">
+                <Check className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-semibold text-accent">🎉 สมัครสมาชิกสำเร็จ!</h2>
+                <p className="text-sm text-foreground/70">
+                  เก็บชื่อผู้ใช้และรหัสผ่านไว้ให้ดี คุณสามารถคัดลอกเพื่อนำไปเข้าระบบได้ทันที
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>ชื่อผู้ใช้</Label>
+                <div className="flex items-center gap-2">
+                  <Input readOnly value={credentials.username} className="bg-white" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleCopy("username", credentials.username)}
+                    aria-label="คัดลอกชื่อผู้ใช้"
+                  >
+                    {copiedField === "username" ? (
+                      <Check className="h-5 w-5 text-primary" />
+                    ) : (
+                      <Copy className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>รหัสผ่าน</Label>
+                <div className="flex items-center gap-2">
+                  <Input readOnly type="text" value={credentials.password} className="bg-white" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleCopy("password", credentials.password)}
+                    aria-label="คัดลอกรหัสผ่าน"
+                  >
+                    {copiedField === "password" ? (
+                      <Check className="h-5 w-5 text-primary" />
+                    ) : (
+                      <Copy className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border-2 border-accent/30 bg-accent/10 p-4">
+              <p className="text-sm font-semibold text-accent text-center">
+                ⚠️ สำคัญมาก: กรุณาถ่ายรูปหรือบันทึกข้อมูลนี้ไว้ เพื่อใช้เข้าสู่ระบบในครั้งถัดไป
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button className="flex-1" onClick={() => navigate("/map")}>
+                ไปแผนที่ภารกิจ
+              </Button>
+              <Button className="flex-1" variant="outline" onClick={() => navigate("/login")}>
+                ไปหน้าเข้าสู่ระบบ
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </PirateBackdrop>
   );

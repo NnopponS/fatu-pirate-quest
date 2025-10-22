@@ -21,6 +21,7 @@ export interface ParticipantRecord {
   username: string;
   password_hash: string;
   points: number;
+  phone_number?: string; // เบอร์โทรศัพท์เพื่อป้องกันการสมัครซ้ำ
   created_at: string;
   credentials_generated_at: string;
 }
@@ -95,6 +96,7 @@ export interface SignupPayload {
   program?: string | null;
   username?: string | null;
   password?: string | null;
+  phoneNumber?: string; // เบอร์โทรศัพท์
   autoGenerateCredentials?: boolean;
   isAdmin?: boolean;
 }
@@ -201,12 +203,21 @@ const DEFAULT_HERO_CARDS: Array<Omit<HeroCardRecord, "id" | "created_at">> = [
     is_active: true,
   },
   {
+    title: "ตรวจสอบรางวัล",
+    description: "ค้นหาชื่อหรือเบอร์โทรเพื่อตรวจสอบว่าได้รับรางวัลแล้วหรือยัง พร้อมแสดงรายละเอียดรางวัลที่ชนะ",
+    icon: "🔍",
+    link_url: "/prize-verification",
+    link_text: "ตรวจสอบ",
+    order: 3,
+    is_active: true,
+  },
+  {
     title: "ขุมทรัพย์โจรสลัด",
     description: "สติ๊กเกอร์, พวงกุญแจ, ของสะสม และอีกมากมายรอให้คุณครอบครอง พร้อมสิทธิพิเศษสุดพิเศษ!",
     icon: "💎",
     link_url: "/rewards",
     link_text: "ดูสมบัติ",
-    order: 3,
+    order: 4,
     is_active: true,
   },
   {
@@ -215,7 +226,7 @@ const DEFAULT_HERO_CARDS: Array<Omit<HeroCardRecord, "id" | "created_at">> = [
     icon: "📱",
     link_url: "https://linktr.ee/fineart.tusc",
     link_text: "ช่องทางติดต่อ",
-    order: 4,
+    order: 5,
     is_active: true,
   },
 ];
@@ -408,8 +419,60 @@ const getParticipantByUsername = async (username: string) => {
   return getParticipantById(participantId);
 };
 
+/**
+ * ตรวจสอบการสมัครซ้ำด้วยเบอร์โทรหรือชื่อ-นามสกุล
+ * @returns true ถ้าพบข้อมูลซ้ำ, false ถ้าไม่ซ้ำ
+ */
+const checkDuplicateParticipant = async (
+  firstName: string,
+  lastName: string,
+  phoneNumber?: string,
+): Promise<{ isDuplicate: boolean; reason?: string }> => {
+  const participants = await firebaseDb.get<Record<string, ParticipantRecord>>("participants");
+  if (!participants) {
+    return { isDuplicate: false };
+  }
+
+  const participantsArray = Object.values(participants);
+
+  // ตรวจสอบเบอร์โทรซ้ำ (ถ้ามีการกรอก)
+  if (phoneNumber) {
+    const normalizedPhone = phoneNumber.replace(/\D/g, ''); // เอาเฉพาะตัวเลข
+    if (normalizedPhone.length >= 9) { // อย่างน้อย 9 หลัก
+      const phoneExists = participantsArray.some(
+        (p) => p.phone_number && p.phone_number.replace(/\D/g, '') === normalizedPhone
+      );
+      if (phoneExists) {
+        return { 
+          isDuplicate: true, 
+          reason: "เบอร์โทรศัพท์นี้เคยลงทะเบียนแล้ว กรุณาติดต่อทีมงานหากต้องการความช่วยเหลือ" 
+        };
+      }
+    }
+  }
+
+  // ตรวจสอบชื่อ-นามสกุลซ้ำ
+  const normalizedFirstName = firstName.trim().toLowerCase();
+  const normalizedLastName = lastName.trim().toLowerCase();
+  
+  const nameExists = participantsArray.some(
+    (p) => 
+      p.first_name.trim().toLowerCase() === normalizedFirstName &&
+      p.last_name.trim().toLowerCase() === normalizedLastName
+  );
+  
+  if (nameExists) {
+    return { 
+      isDuplicate: true, 
+      reason: "ชื่อ-นามสกุลนี้เคยลงทะเบียนแล้ว หากเป็นคนคนเดียวกันไม่สามารถสมัครซ้ำได้ กรุณาติดต่อทีมงานหากลืมรหัสผ่าน" 
+    };
+  }
+
+  return { isDuplicate: false };
+};
+
 export const signupParticipant = async (payload: SignupPayload): Promise<SignupResponse> => {
-  const { firstName, lastName, isAdmin } = payload;
+  const { firstName, lastName, isAdmin, phoneNumber } = payload;
   if (!firstName || !lastName) {
     throw new Error("firstName and lastName are required");
   }
@@ -457,6 +520,17 @@ export const signupParticipant = async (payload: SignupPayload): Promise<SignupR
       username: trimmedUsername,
       password: trimmedPassword,
     };
+  }
+
+  // ✅ ตรวจสอบการสมัครซ้ำสำหรับ participant (ไม่ใช่ admin)
+  const duplicateCheck = await checkDuplicateParticipant(
+    firstName, 
+    lastName, 
+    phoneNumber
+  );
+  
+  if (duplicateCheck.isDuplicate) {
+    throw new Error(duplicateCheck.reason || "ไม่สามารถลงทะเบียนซ้ำได้");
   }
 
   const trimmedUsername = payload.username?.trim() ?? "";
@@ -509,6 +583,7 @@ export const signupParticipant = async (payload: SignupPayload): Promise<SignupR
     username,
     password_hash: passwordHash,
     points: 0,
+    phone_number: phoneNumber || null, // ✅ เพิ่มเบอร์โทร
     created_at: now,
     credentials_generated_at: now,
   };

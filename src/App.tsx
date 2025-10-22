@@ -10,6 +10,7 @@ import Map from "./pages/Map";
 import Checkin from "./pages/Checkin";
 import Rewards from "./pages/Rewards";
 import AdminDashboard from "./pages/AdminDashboard";
+import PrizeVerification from "./pages/PrizeVerification";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/checkin" element={<Checkin />} />
           <Route path="/rewards" element={<Rewards />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/prize-verification" element={<PrizeVerification />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
