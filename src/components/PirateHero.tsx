@@ -97,7 +97,15 @@ export const PirateHero = () => {
                       <div className="p-2">
                         <div 
                           className="group rounded-2xl border-2 border-rope/50 bg-gradient-to-br from-white/90 to-white/70 p-6 text-center shadow-xl backdrop-blur-sm transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:border-primary/50 cursor-pointer h-full flex flex-col"
-                          onClick={() => card.link_url && navigate(card.link_url)}
+                          onClick={() => {
+                            if (!card.link_url) return;
+                            // Check if external link
+                            if (card.link_url.startsWith('http://') || card.link_url.startsWith('https://')) {
+                              window.open(card.link_url, '_blank', 'noopener,noreferrer');
+                            } else {
+                              navigate(card.link_url);
+                            }
+                          }}
                         >
                           <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-5xl pirate-floating group-hover:bg-primary/20 transition-colors">
                             {card.icon}
@@ -127,6 +135,14 @@ export const PirateHero = () => {
                                 variant="outline" 
                                 size="sm" 
                                 className="gap-2 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all"
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent card click
+                                  if (card.link_url.startsWith('http://') || card.link_url.startsWith('https://')) {
+                                    window.open(card.link_url, '_blank', 'noopener,noreferrer');
+                                  } else {
+                                    navigate(card.link_url);
+                                  }
+                                }}
                               >
                                 {card.link_text}
                                 <ExternalLink className="h-4 w-4" />
