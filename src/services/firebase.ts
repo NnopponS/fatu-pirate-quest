@@ -552,7 +552,7 @@ export const login = async (
   };
 };
 
-const signCheckin = async (locationId: number, yyyymmdd: string, secret: string) => {
+const signCheckin = async (locationId: number, yyyymmdd: string, secret: string, version: number = 1) => {
   const cryptoRef = getCrypto();
   if (!cryptoRef.subtle) {
     throw new Error("Secure key operations require SubtleCrypto support.");
@@ -566,7 +566,7 @@ const signCheckin = async (locationId: number, yyyymmdd: string, secret: string)
     ["sign"],
   );
 
-  const message = encoder.encode(`${locationId}:${yyyymmdd}`);
+  const message = encoder.encode(`${locationId}:${yyyymmdd}:${version}`);
   const signature = await cryptoRef.subtle.sign("HMAC", key, message);
   return toHex(signature);
 };
@@ -584,6 +584,7 @@ export const checkinParticipant = async (
   participantId: string,
   locationId: number,
   signature: string,
+  qrVersion?: number,
 ): Promise<CheckinResponse> => {
   if (!participantId || !locationId || !signature) {
     throw new Error("Missing required fields");
@@ -591,17 +592,7 @@ export const checkinParticipant = async (
 
   await ensureDefaults();
 
-  const signatures = await Promise.all([
-    signCheckin(locationId, todayStr(-1), CHECKIN_SECRET),
-    signCheckin(locationId, todayStr(0), CHECKIN_SECRET),
-    signCheckin(locationId, todayStr(1), CHECKIN_SECRET),
-  ]);
-
-  if (!signatures.includes(signature)) {
-    throw new Error("Invalid QR code signature");
-  }
-
-  // Get location from Supabase
+  // Get location from Supabase to check version
   const { data: location, error } = await supabase
     .from('locations')
     .select('*')
@@ -610,6 +601,26 @@ export const checkinParticipant = async (
 
   if (error || !location) {
     throw new Error("Location not found");
+  }
+
+  // Use the current QR version from the database
+  const currentVersion = location.qr_code_version ?? 1;
+  
+  // If QR has a version parameter, validate it matches current version
+  if (qrVersion !== undefined && qrVersion !== currentVersion) {
+    throw new Error("QR code ไม่ถูกต้อง กรุณาใช้ QR code เวอร์ชันล่าสุด");
+  }
+
+  // Validate signature with the version
+  const versionToValidate = qrVersion ?? currentVersion;
+  const signatures = await Promise.all([
+    signCheckin(locationId, todayStr(-1), CHECKIN_SECRET, versionToValidate),
+    signCheckin(locationId, todayStr(0), CHECKIN_SECRET, versionToValidate),
+    signCheckin(locationId, todayStr(1), CHECKIN_SECRET, versionToValidate),
+  ]);
+
+  if (!signatures.includes(signature)) {
+    throw new Error("QR code ไม่ถูกต้องหรือหมดอายุแล้ว");
   }
 
   const existingCheckin = await firebaseDb.get<CheckinRecord>(

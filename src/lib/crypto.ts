@@ -1,6 +1,6 @@
-export async function signCheckin(locId: number, yyyymmdd: string, secret: string): Promise<string> {
+export async function signCheckin(locId: number, yyyymmdd: string, secret: string, version: number = 1): Promise<string> {
   const encoder = new TextEncoder();
-  const data = encoder.encode(`${locId}:${yyyymmdd}`);
+  const data = encoder.encode(`${locId}:${yyyymmdd}:${version}`);
   const keyData = encoder.encode(secret);
   
   const key = await crypto.subtle.importKey(
@@ -21,9 +21,10 @@ export async function verifyCheckinSig(
   locId: number,
   yyyymmdd: string,
   sig: string,
-  secret: string
+  secret: string,
+  version: number = 1
 ): Promise<boolean> {
-  const expected = await signCheckin(locId, yyyymmdd, secret);
+  const expected = await signCheckin(locId, yyyymmdd, secret, version);
   return expected === sig;
 }
 

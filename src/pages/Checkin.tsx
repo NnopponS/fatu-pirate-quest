@@ -36,6 +36,7 @@ const Checkin = () => {
 
       const loc = searchParams.get("loc");
       const sig = searchParams.get("sig");
+      const version = searchParams.get("v");
 
       if (!loc || !sig) {
         setStatus("error");
@@ -44,7 +45,12 @@ const Checkin = () => {
       }
 
       try {
-        const result = await checkinParticipant(participantId, parseInt(loc, 10), sig);
+        const result = await checkinParticipant(
+          participantId, 
+          parseInt(loc, 10), 
+          sig,
+          version ? parseInt(version, 10) : undefined
+        );
         setStatus("success");
         setPointsAdded(result.pointsAdded || 0);
         setMessage(

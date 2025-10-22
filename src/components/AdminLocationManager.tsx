@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Save, Upload, QrCode, Loader2 } from "lucide-react";
+import { Save, Upload, QrCode, Loader2, Download } from "lucide-react";
 import QRCode from "qrcode";
 import { signCheckin, todayStr } from "@/lib/crypto";
 import { CHECKIN_SECRET } from "@/lib/constants";
@@ -32,6 +32,40 @@ export const AdminLocationManager = ({ location, onSave, onGenerateQR }: Props) 
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [generatingQR, setGeneratingQR] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  // Sync draft state when location prop changes (after save/refresh)
+  useEffect(() => {
+    setDraft(location);
+  }, [location]);
+
+  // Generate QR code when component mounts or version changes
+  useEffect(() => {
+    const generateCurrentQR = async () => {
+      try {
+        const currentVersion = location.qr_code_version ?? 1;
+        const secret = CHECKIN_SECRET;
+        const dateStr = todayStr();
+        const sig = await signCheckin(location.id, dateStr, secret, currentVersion);
+        const checkinUrl = `https://fatu-openhouse-2025.vercel.app/checkin?loc=${location.id}&sig=${sig}&v=${currentVersion}`;
+        
+        const qrDataUrl = await QRCode.toDataURL(checkinUrl, {
+          width: 512,
+          margin: 2,
+          color: {
+            dark: "#000000",
+            light: "#FFFFFF",
+          },
+        });
+        
+        setQrDataUrl(qrDataUrl);
+      } catch (error) {
+        console.error("Failed to generate QR code preview:", error);
+      }
+    };
+
+    generateCurrentQR();
+  }, [location.id, location.qr_code_version]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -92,35 +126,11 @@ export const AdminLocationManager = ({ location, onSave, onGenerateQR }: Props) 
   const handleGenerateQR = async () => {
     setGeneratingQR(true);
     try {
+      // Regenerate QR version first (this will trigger useEffect to update the displayed QR)
       await onGenerateQR(location.id);
       
-      // Generate signed QR code URL
-      const secret = CHECKIN_SECRET;
-      const dateStr = todayStr();
-      const sig = await signCheckin(location.id, dateStr, secret);
-      const checkinUrl = `https://fatu-openhouse-2025.vercel.app/checkin?loc=${location.id}&sig=${sig}`;
-      
-      const qrDataUrl = await QRCode.toDataURL(checkinUrl, {
-        width: 512,
-        margin: 2,
-        color: {
-          dark: "#000000",
-          light: "#FFFFFF",
-        },
-      });
-
-      // Download QR code
-      const link = document.createElement("a");
-      link.href = qrDataUrl;
-      link.download = `qr-location-${location.id}-v${(draft.qr_code_version ?? 1) + 1}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      setDraft({ ...draft, qr_code_version: (draft.qr_code_version ?? 1) + 1 });
-      
       toast({
-        title: "สร้าง QR Code สำเร็จ",
+        title: "สร้าง QR Code ใหม่สำเร็จ",
         description: "QR code เวอร์ชันเก่าจะใช้ไม่ได้แล้ว",
       });
     } catch (error) {
@@ -135,6 +145,22 @@ export const AdminLocationManager = ({ location, onSave, onGenerateQR }: Props) 
     }
   };
 
+  const handleDownloadQR = () => {
+    if (!qrDataUrl) return;
+    
+    const link = document.createElement("a");
+    link.href = qrDataUrl;
+    link.download = `qr-location-${location.id}-v${location.qr_code_version ?? 1}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "ดาวน์โหลดสำเร็จ",
+      description: "QR code ถูกบันทึกลงเครื่องแล้ว",
+    });
+  };
+
   return (
     <div className="space-y-4 rounded-lg border border-primary/20 bg-card p-6">
       <div className="flex items-center justify-between">
@@ -144,9 +170,29 @@ export const AdminLocationManager = ({ location, onSave, onGenerateQR }: Props) 
         <span className="text-sm text-foreground/60">QR v{draft.qr_code_version ?? 1}</span>
       </div>
 
+      {/* QR Code Display */}
+      {qrDataUrl && (
+        <div className="space-y-3">
+          <Label>QR Code ปัจจุบัน (เวอร์ชัน {location.qr_code_version ?? 1})</Label>
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-primary/10 bg-white p-4">
+            <img 
+              src={qrDataUrl} 
+              alt={`QR Code for ${location.name}`} 
+              className="h-64 w-64 rounded-lg shadow-md"
+            />
+            <p className="text-center text-xs text-foreground/60">
+              สแกน QR code นี้เพื่อเช็กอินที่ {location.name}
+            </p>
+          </div>
+        </div>
+      )}
+
       {draft.image_url && (
-        <div className="aspect-video w-full overflow-hidden rounded-lg">
-          <img src={draft.image_url} alt={draft.name} className="h-full w-full object-cover" />
+        <div className="space-y-2">
+          <Label>รูปภาพปกสถานที่</Label>
+          <div className="aspect-video w-full overflow-hidden rounded-lg">
+            <img src={draft.image_url} alt={draft.name} className="h-full w-full object-cover" />
+          </div>
         </div>
       )}
 
@@ -204,7 +250,7 @@ export const AdminLocationManager = ({ location, onSave, onGenerateQR }: Props) 
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <Button
           onClick={handleSave}
           disabled={saving}
@@ -220,7 +266,16 @@ export const AdminLocationManager = ({ location, onSave, onGenerateQR }: Props) 
           className="gap-2"
         >
           {generatingQR ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
-          สร้าง QR Code
+          สร้าง QR ใหม่
+        </Button>
+        <Button
+          onClick={handleDownloadQR}
+          disabled={!qrDataUrl}
+          variant="outline"
+          className="gap-2"
+        >
+          <Download className="h-4 w-4" />
+          ดาวน์โหลด QR
         </Button>
       </div>
     </div>
