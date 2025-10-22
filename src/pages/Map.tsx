@@ -263,7 +263,7 @@ const QrScannerDialog = ({ open, onOpenChange, onScan }: QrScannerDialogProps) =
       setError(null);
 
       if (typeof window === "undefined" || !('BarcodeDetector' in window)) {
-        setError('อุปกรณ์นี้ไม่รองรับการสแกน QR Code');
+        setError('เบราว์เซอร์นี้ไม่รองรับการสแกน QR Code\n\nกรุณาใช้:\n• Chrome (แนะนำ)\n• Safari\n• Edge\n\n❌ Firefox ยังไม่รองรับ');
         return;
       }
 
@@ -274,36 +274,59 @@ const QrScannerDialog = ({ open, onOpenChange, onScan }: QrScannerDialogProps) =
         detector = new Detector({ formats: ['qr_code'] });
       } catch (detectorError) {
         console.error('BarcodeDetector error', detectorError);
-        setError('ไม่สามารถเริ่มตัวตรวจจับ QR Code ได้');
+        setError('❌ ไม่สามารถเริ่มตัวสแกน QR ได้\n\nกรุณาลองใหม่อีกครั้ง');
         return;
       }
 
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' } },
+          video: { 
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
         });
       } catch (cameraError) {
         console.error('Camera error', cameraError);
-        setError('ไม่สามารถเข้าถึงกล้องได้ โปรดอนุญาตการใช้งานกล้อง');
+        const errorName = (cameraError as Error).name;
+        if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
+          setError('❌ ไม่ได้รับอนุญาตให้เข้าถึงกล้อง\n\nวิธีแก้ไข:\n1. กดไอคอนกล้องในแถบ URL\n2. เลือก "อนุญาต"\n3. รีเฟรชหน้าเว็บ');
+        } else if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError') {
+          setError('❌ ไม่พบกล้อง\n\nกรุณาตรวจสอบว่าอุปกรณ์มีกล้อง');
+        } else if (errorName === 'NotReadableError' || errorName === 'TrackStartError') {
+          setError('❌ กล้องถูกใช้งานโดยแอปอื่น\n\nวิธีแก้ไข:\n1. ปิดแอปอื่นที่ใช้กล้อง\n2. ลองอีกครั้ง');
+        } else {
+          setError('❌ ไม่สามารถเข้าถึงกล้องได้\n\nกรุณาตรวจสอบ:\n• อนุญาตให้เข้าถึงกล้อง\n• ไม่มีแอปอื่นใช้กล้องอยู่\n• รีเฟรชหน้าเว็บ');
+        }
         return;
       }
 
       const video = videoRef.current;
       if (!video) {
-        setError('ไม่พบวิดีโอสำหรับแสดงผล');
+        setError('❌ เกิดข้อผิดพลาดภายใน\n\nกรุณาลองใหม่อีกครั้ง');
         return;
       }
 
       video.srcObject = stream;
       video.setAttribute('playsinline', 'true');
+      video.setAttribute('autoplay', 'true');
 
       try {
         await video.play();
       } catch (playError) {
         console.error('Play error', playError);
-        setError('ไม่สามารถเล่นวิดีโอจากกล้องได้');
+        setError('❌ ไม่สามารถเปิดกล้องได้\n\nกรุณา:\n1. รีเฟรชหน้าเว็บ\n2. ลองอีกครั้ง');
         return;
       }
+
+      // Wait for video to be ready
+      await new Promise<void>((resolve) => {
+        if (video.readyState >= 2) {
+          resolve();
+        } else {
+          video.onloadeddata = () => resolve();
+        }
+      });
 
       const scan = async () => {
         if (cancelled || !videoRef.current) {
@@ -346,27 +369,57 @@ const QrScannerDialog = ({ open, onOpenChange, onScan }: QrScannerDialogProps) =
 
         {error ? (
           <div className="space-y-4">
-            <div className="rounded-lg border border-dashed border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+            <div className="rounded-lg border border-dashed border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive whitespace-pre-line">
               {error}
             </div>
-            <Button asChild className="w-full" variant="secondary">
-              <a href="/checkin">ไปหน้ากรอกโค้ด</a>
-            </Button>
+            <div className="space-y-2">
+              <Button 
+                onClick={() => {
+                  setError(null);
+                  onOpenChange(false);
+                  setTimeout(() => onOpenChange(true), 100);
+                }} 
+                className="w-full"
+              >
+                ลองอีกครั้ง
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+                className="w-full"
+              >
+                ปิด
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="aspect-video overflow-hidden rounded-xl border bg-black/80">
-              <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
+            <div className="relative aspect-video overflow-hidden rounded-xl border-2 border-primary/20 bg-black">
+              <video ref={videoRef} className="h-full w-full object-cover" muted playsInline autoPlay />
+              
+              {/* Scanning overlay with corner markers */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-4 left-4 w-12 h-12 border-t-4 border-l-4 border-primary rounded-tl-lg" />
+                <div className="absolute top-4 right-4 w-12 h-12 border-t-4 border-r-4 border-primary rounded-tr-lg" />
+                <div className="absolute bottom-4 left-4 w-12 h-12 border-b-4 border-l-4 border-primary rounded-bl-lg" />
+                <div className="absolute bottom-4 right-4 w-12 h-12 border-b-4 border-r-4 border-primary rounded-br-lg" />
+              </div>
             </div>
-            <p className="text-center text-xs text-foreground/60">
-              เคล็ดลับ: วาง QR ไว้กึ่งกลางและให้มีแสงเพียงพอ
-            </p>
+            
+            <div className="space-y-2">
+              <p className="text-center text-sm text-primary font-medium">
+                🔍 กำลังสแกน QR Code...
+              </p>
+              <p className="text-center text-xs text-foreground/60">
+                💡 วาง QR Code ให้อยู่ในกรอบสี่เหลี่ยม
+              </p>
+            </div>
           </div>
         )}
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            ???????????
+            ปิด
           </Button>
         </DialogFooter>
       </DialogContent>
