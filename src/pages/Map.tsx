@@ -41,42 +41,40 @@ const Map = () => {
 
   const loadData = useCallback(async () => {
     try {
-      // Load locations for everyone (public access)
-      const { data: locationsData } = await supabase
-        .from('locations')
-        .select('*')
-        .order('id');
-
-      if (locationsData) {
+      // Load all data including locations from getMapData (Firebase source)
+      if (participantId) {
+        const data = await getMapData(participantId);
         setLocations(
-          locationsData.map((location: any) => ({
+          data.locations.map((location: any) => ({
             id: location.id,
             name: location.name,
             lat: location.lat,
             lng: location.lng,
             points: location.points,
-            mapUrl: location.map_url,
-            imageUrl: location.image_url,
+            mapUrl: location.mapUrl || location.map_url,
+            imageUrl: location.imageUrl || location.image_url,
             description: location.description,
           }))
         );
-      }
-
-      // Load event settings for everyone
-      const { data: settingsData } = await supabase
-        .from('event_settings')
-        .select('points_for_spin')
-        .single();
-
-      if (settingsData) {
-        setPointsRequired(settingsData.points_for_spin);
-      }
-
-      // Load participant-specific data if logged in
-      if (participantId) {
-        const data = await getMapData(participantId);
         setCheckins(data.checkins);
         setPoints(data.points ?? 0);
+        setPointsRequired(data.pointsRequired);
+      } else {
+        // Load locations from getMapData for anonymous users
+        const data = await getMapData('');
+        setLocations(
+          data.locations.map((location: any) => ({
+            id: location.id,
+            name: location.name,
+            lat: location.lat,
+            lng: location.lng,
+            points: location.points,
+            mapUrl: location.mapUrl || location.map_url,
+            imageUrl: location.imageUrl || location.image_url,
+            description: location.description,
+          }))
+        );
+        setPointsRequired(data.pointsRequired);
       }
     } catch (error: unknown) {
       toast({

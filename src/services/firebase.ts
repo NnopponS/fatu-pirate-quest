@@ -771,13 +771,9 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
     throw new Error("Invalid session");
   }
 
-  // Get locations from Supabase instead of Firebase
-  const { data: locationsData } = await supabase
-    .from('locations')
-    .select('*')
-    .order('id');
-
-  const [participantsRecord, prizesRecord, pointsRequired] = await Promise.all([
+  // Get locations from Firebase (source of truth for admin)
+  const [locationsRecord, participantsRecord, prizesRecord, pointsRequired] = await Promise.all([
+    firebaseDb.get<Record<string, LocationRecord>>("locations"),
     firebaseDb.get<Record<string, ParticipantRecord>>("participants"),
     firebaseDb.get<Record<string, PrizeRecord>>("prizes"),
     getPointsRequired(),
@@ -786,17 +782,7 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
   console.log("Dashboard data loaded successfully");
 
   const participantsArr = objectValues(participantsRecord ?? {});
-  const locationsArr = (locationsData || []).map((loc: any) => ({
-    id: loc.id,
-    name: loc.name,
-    lat: loc.lat,
-    lng: loc.lng,
-    points: loc.points,
-    map_url: loc.map_url,
-    image_url: loc.image_url,
-    description: loc.description,
-    qr_code_version: loc.qr_code_version,
-  }));
+  const locationsArr = objectValues(locationsRecord ?? {});
   const prizesArr = objectValues(prizesRecord ?? {});
 
   return {
@@ -827,14 +813,17 @@ export const updateLocation = async (token: string, location: Partial<LocationRe
   if (location.image_url !== undefined) updates.image_url = location.image_url;
   if (location.description !== undefined) updates.description = location.description;
 
-  // Update in Supabase
-  const { error } = await supabase
-    .from('locations')
-    .update(updates)
-    .eq('id', location.id);
-
-  if (error) {
-    throw new Error(`Failed to update location: ${error.message}`);
+  // Update in both Firebase (source of truth) and Supabase (for public display)
+  await firebaseDb.update(`locations/${location.id}`, updates);
+  
+  // Also update in Supabase (ignore errors if RLS blocks it)
+  try {
+    await supabase
+      .from('locations')
+      .update(updates)
+      .eq('id', location.id);
+  } catch (error) {
+    console.warn('Supabase update failed, but Firebase updated successfully:', error);
   }
 };
 
@@ -844,26 +833,25 @@ export const regenerateLocationQR = async (token: string, locationId: number) =>
     throw new Error("Invalid session");
   }
 
-  // Get current version from Supabase
-  const { data: location } = await supabase
-    .from('locations')
-    .select('qr_code_version')
-    .eq('id', locationId)
-    .single();
-
-  const currentVersion = location?.qr_code_version ?? 1;
+  // Get current version from Firebase first
+  const fbLocation = await firebaseDb.get<LocationRecord>(`locations/${locationId}`);
+  const currentVersion = fbLocation?.qr_code_version ?? 1;
+  const newVersion = currentVersion + 1;
   
-  // Update in Supabase
-  const { error } = await supabase
-    .from('locations')
-    .update({ qr_code_version: currentVersion + 1 })
-    .eq('id', locationId);
-
-  if (error) {
-    throw new Error(`Failed to regenerate QR: ${error.message}`);
+  // Update in Firebase (source of truth)
+  await firebaseDb.update(`locations/${locationId}`, { qr_code_version: newVersion });
+  
+  // Also update in Supabase (ignore errors if RLS blocks it)
+  try {
+    await supabase
+      .from('locations')
+      .update({ qr_code_version: newVersion })
+      .eq('id', locationId);
+  } catch (error) {
+    console.warn('Supabase QR version update failed, but Firebase updated successfully:', error);
   }
 
-  return currentVersion + 1;
+  return newVersion;
 };
 
 export const deleteParticipant = async (token: string, participantId: string) => {
