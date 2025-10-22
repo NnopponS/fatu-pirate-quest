@@ -50,7 +50,7 @@ export const PirateHero = () => {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-accent/10 pirate-floating-delayed">
                 <Gift className="h-8 w-8 text-accent" />
               </div>
-              <h3 className="text-xl font-semibold text-primary">300 คะแนน</h3>
+              <h3 className="text-xl font-semibold text-primary">400 คะแนน</h3>
               <p className="mt-2 text-sm text-foreground/70">
                 สะสมครบเพื่อหมุนวงล้อสมบัติ ลุ้นรับของรางวัลพิเศษเฉพาะงานนี้เท่านั้น
               </p>
