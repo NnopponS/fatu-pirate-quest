@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LocationCard } from "@/components/LocationCard";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Anchor, Compass, Trophy, ScanLine } from "lucide-react";
+import { Anchor, Compass, Trophy, ScanLine, CheckCircle2, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 
@@ -36,6 +36,15 @@ const Map = () => {
   const [pointsRequired, setPointsRequired] = useState(300);
   const [loading, setLoading] = useState(true);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [qrPreviewOpen, setQrPreviewOpen] = useState(false);
+  const [scannedQrData, setScannedQrData] = useState<{
+    raw: string;
+    loc?: string;
+    sig?: string;
+    version?: string;
+    isValid: boolean;
+    errorMessage?: string;
+  } | null>(null);
 
   const participantId = useMemo(() => localStorage.getItem("participantId"), []);
 
@@ -209,88 +218,190 @@ const Map = () => {
         </div>
       </div>
       {participantId && (
-        <QrScannerDialog
-          open={scannerOpen}
-          onOpenChange={setScannerOpen}
-          onScan={(value) => {
-            setScannerOpen(false);
-            if (!value) return;
-            
-            console.log("QR Code scanned:", value);
-            
-            // Parse QR code format: CHECKIN|loc|sig|version
-            if (value.startsWith("CHECKIN|")) {
-              const parts = value.split("|");
-              console.log("QR Code parsed:", { parts, length: parts.length });
+        <>
+          <QrScannerDialog
+            open={scannerOpen}
+            onOpenChange={setScannerOpen}
+            onScan={(value) => {
+              setScannerOpen(false);
+              if (!value) return;
               
-              if (parts.length >= 4) {
-                const loc = parts[1];
-                const sig = parts[2];
-                const version = parts[3];
-                
-                console.log("Navigating to checkin with:", { loc, sig, version });
-                
-                // Show preview toast
-                toast({
-                  title: "🔍 ตรวจพบ QR Code",
-                  description: `กำลังเช็กอินที่จุดที่ ${loc}...`,
-                });
-                
-                navigate(`/checkin?loc=${loc}&sig=${sig}&v=${version}`);
-              } else {
-                console.error("Invalid QR format:", value);
-                toast({
-                  title: "QR Code ไม่ถูกต้อง",
-                  description: `รูปแบบไม่ถูกต้อง\nสแกนได้: ${value.substring(0, 50)}...`,
-                  variant: "destructive",
-                });
-              }
-            }
-            // Backward compatibility: support old URL format
-            else if (value.includes("/checkin?")) {
-              console.log("Old URL format detected:", value);
+              console.log("QR Code scanned:", value);
               
-              try {
-                // Extract query parameters from URL
-                const url = new URL(value, window.location.origin);
-                const loc = url.searchParams.get("loc");
-                const sig = url.searchParams.get("sig");
-                const version = url.searchParams.get("v");
+              let parsedData: typeof scannedQrData = {
+                raw: value,
+                isValid: false,
+              };
+              
+              // Parse QR code format: CHECKIN|loc|sig|version
+              if (value.startsWith("CHECKIN|")) {
+                const parts = value.split("|");
+                console.log("QR Code parsed:", { parts, length: parts.length });
                 
-                console.log("Parsed URL params:", { loc, sig, version });
-                
-                if (loc && sig) {
-                  toast({
-                    title: "🔍 ตรวจพบ QR Code",
-                    description: `กำลังเช็กอินที่จุดที่ ${loc}...`,
-                  });
-                  navigate(`/checkin?loc=${loc}&sig=${sig}${version ? `&v=${version}` : ''}`);
+                if (parts.length >= 4) {
+                  parsedData = {
+                    raw: value,
+                    loc: parts[1],
+                    sig: parts[2],
+                    version: parts[3],
+                    isValid: true,
+                  };
                 } else {
-                  toast({
-                    title: "QR Code ไม่ถูกต้อง",
-                    description: `ไม่พบข้อมูลที่จำเป็น\nURL: ${value.substring(0, 50)}...`,
-                    variant: "destructive",
-                  });
+                  parsedData.errorMessage = `รูปแบบไม่ถูกต้อง (พบ ${parts.length} ส่วน, ต้องการ 4 ส่วน)`;
                 }
-              } catch (error) {
-                console.error("Failed to parse URL:", error);
-                toast({
-                  title: "QR Code ไม่ถูกต้อง",
-                  description: "ไม่สามารถอ่าน URL ได้",
-                  variant: "destructive",
-                });
               }
-            }
-            else {
-              console.error("Unknown QR format:", value);
-              toast({
-                title: "QR Code ไม่รองรับ",
-                description: `ไม่ใช่ QR Code ของระบบเช็กอิน\nสแกนได้: ${value.substring(0, 50)}...`,
-                variant: "destructive",
-              });
-            }
-          }}
-        />
+              // Backward compatibility: support old URL format
+              else if (value.includes("/checkin?")) {
+                try {
+                  const url = new URL(value, window.location.origin);
+                  const loc = url.searchParams.get("loc");
+                  const sig = url.searchParams.get("sig");
+                  const version = url.searchParams.get("v");
+                  
+                  if (loc && sig) {
+                    parsedData = {
+                      raw: value,
+                      loc,
+                      sig,
+                      version: version || undefined,
+                      isValid: true,
+                    };
+                  } else {
+                    parsedData.errorMessage = "ไม่พบข้อมูลที่จำเป็น (loc และ sig)";
+                  }
+                } catch (error) {
+                  parsedData.errorMessage = "ไม่สามารถอ่าน URL ได้";
+                }
+              }
+              else {
+                parsedData.errorMessage = "QR Code นี้ไม่ใช่ของระบบเช็กอิน";
+              }
+              
+              // Show preview dialog
+              setScannedQrData(parsedData);
+              setQrPreviewOpen(true);
+            }}
+          />
+
+          {/* QR Preview Dialog */}
+          <Dialog open={qrPreviewOpen} onOpenChange={setQrPreviewOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>
+                  {scannedQrData?.isValid ? "✅ อ่าน QR Code สำเร็จ" : "❌ QR Code ไม่ถูกต้อง"}
+                </DialogTitle>
+                <DialogDescription>
+                  {scannedQrData?.isValid 
+                    ? "ตรวจสอบข้อมูลด้านล่างก่อนยืนยันการเช็กอิน"
+                    : "QR Code ที่สแกนมีปัญหา กรุณาตรวจสอบ"
+                  }
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                {scannedQrData?.isValid ? (
+                  // Valid QR - Show parsed data
+                  <div className="space-y-3">
+                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs text-foreground/60 mb-1">จุดเช็กอิน</p>
+                          <p className="text-lg font-semibold text-primary">
+                            จุดที่ {scannedQrData.loc}
+                          </p>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <p className="text-foreground/60 mb-1">QR Version</p>
+                            <p className="font-mono font-semibold">v{scannedQrData.version || '1'}</p>
+                          </div>
+                          <div>
+                            <p className="text-foreground/60 mb-1">Signature</p>
+                            <p className="font-mono text-xs truncate">{scannedQrData.sig?.substring(0, 12)}...</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <details className="text-xs">
+                      <summary className="cursor-pointer text-foreground/60 hover:text-foreground">
+                        🔍 ดูข้อมูลดิบ (Raw Data)
+                      </summary>
+                      <div className="mt-2 rounded border border-primary/10 bg-muted/50 p-3">
+                        <code className="text-xs break-all">{scannedQrData.raw}</code>
+                      </div>
+                    </details>
+
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={() => {
+                          setQrPreviewOpen(false);
+                          if (scannedQrData.loc && scannedQrData.sig) {
+                            navigate(`/checkin?loc=${scannedQrData.loc}&sig=${scannedQrData.sig}&v=${scannedQrData.version || '1'}`);
+                          }
+                        }}
+                        className="flex-1 gap-2"
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                        ยืนยันและเช็กอิน
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setQrPreviewOpen(false);
+                          setScannerOpen(true);
+                        }}
+                      >
+                        สแกนใหม่
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  // Invalid QR - Show error
+                  <div className="space-y-3">
+                    <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+                      <div className="flex items-start gap-3">
+                        <XCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-semibold text-destructive mb-1">เกิดข้อผิดพลาด</p>
+                          <p className="text-sm text-destructive/90">{scannedQrData?.errorMessage}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <details className="text-xs">
+                      <summary className="cursor-pointer text-foreground/60 hover:text-foreground">
+                        🔍 ดูข้อมูลที่สแกนได้
+                      </summary>
+                      <div className="mt-2 rounded border border-destructive/20 bg-destructive/5 p-3">
+                        <code className="text-xs break-all">{scannedQrData?.raw}</code>
+                      </div>
+                    </details>
+
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={() => {
+                          setQrPreviewOpen(false);
+                          setScannerOpen(true);
+                        }}
+                        className="flex-1"
+                      >
+                        สแกนใหม่
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setQrPreviewOpen(false)}
+                      >
+                        ปิด
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        </>
       )}
     </PirateBackdrop>
   );
