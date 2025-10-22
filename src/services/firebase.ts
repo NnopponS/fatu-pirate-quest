@@ -1,6 +1,7 @@
 import { firebaseDb } from "@/integrations/firebase/database";
 import { supabase } from "@/integrations/supabase/client";
 import { CHECKIN_SECRET } from "@/lib/constants";
+import { signCheckin, todayStr } from "@/lib/crypto";
 
 const encoder = new TextEncoder();
 
@@ -552,33 +553,7 @@ export const login = async (
   };
 };
 
-const signCheckin = async (locationId: number, yyyymmdd: string, secret: string, version: number = 1) => {
-  const cryptoRef = getCrypto();
-  if (!cryptoRef.subtle) {
-    throw new Error("Secure key operations require SubtleCrypto support.");
-  }
-
-  const key = await cryptoRef.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-
-  const message = encoder.encode(`${locationId}:${yyyymmdd}:${version}`);
-  const signature = await cryptoRef.subtle.sign("HMAC", key, message);
-  return toHex(signature);
-};
-
-const todayStr = (offset = 0) => {
-  const date = new Date();
-  date.setUTCDate(date.getUTCDate() + offset);
-  const y = date.getUTCFullYear();
-  const m = `${date.getUTCMonth() + 1}`.padStart(2, "0");
-  const d = `${date.getUTCDate()}`.padStart(2, "0");
-  return `${y}${m}${d}`;
-};
+// Removed duplicate functions - using signCheckin and todayStr from @/lib/crypto instead
 
 export const checkinParticipant = async (
   participantId: string,
@@ -592,14 +567,10 @@ export const checkinParticipant = async (
 
   await ensureDefaults();
 
-  // Get location from Supabase to check version
-  const { data: location, error } = await supabase
-    .from('locations')
-    .select('*')
-    .eq('id', locationId)
-    .single();
+  // Get location from Firebase to check version (Firebase is source of truth)
+  const location = await firebaseDb.get<LocationRecord>(`locations/${locationId}`);
 
-  if (error || !location) {
+  if (!location) {
     throw new Error("Location not found");
   }
 
