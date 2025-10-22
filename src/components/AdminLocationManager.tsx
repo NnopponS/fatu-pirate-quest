@@ -47,7 +47,10 @@ export const AdminLocationManager = ({ location, onSave, onGenerateQR }: Props) 
         const secret = CHECKIN_SECRET;
         const dateStr = todayStr();
         const sig = await signCheckin(location.id, dateStr, secret, currentVersion);
-        const checkinUrl = `https://fatu-openhouse-2025.vercel.app/checkin?loc=${location.id}&sig=${sig}&v=${currentVersion}`;
+        
+        // Use current domain for QR code (works for both local and production)
+        const baseUrl = window.location.origin;
+        const checkinUrl = `${baseUrl}/checkin?loc=${location.id}&sig=${sig}&v=${currentVersion}`;
         
         const qrDataUrl = await QRCode.toDataURL(checkinUrl, {
           width: 512,
