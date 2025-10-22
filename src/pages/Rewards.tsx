@@ -10,6 +10,7 @@ import { PirateBackdrop } from "@/components/PirateBackdrop";
 interface PrizeOption {
   name: string;
   weight: number;
+  stock: number;
 }
 
 const Rewards = () => {

@@ -41,6 +41,7 @@ export interface PrizeRecord {
   id: string;
   name: string;
   weight: number;
+  stock: number; // จำนวนคงเหลือ
   created_at: string;
 }
 
@@ -161,10 +162,10 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
 };
 
 const DEFAULT_PRIZES: Array<Omit<PrizeRecord, "id" | "created_at">> = [
-  { name: "Pirate Sticker Set", weight: 40 },
-  { name: "FATU Tote Bag", weight: 30 },
-  { name: "Limited Edition T-Shirt", weight: 20 },
-  { name: "Grand Prize Mystery Box", weight: 10 },
+  { name: "Pirate Sticker Set", weight: 40, stock: 50 },
+  { name: "FATU Tote Bag", weight: 30, stock: 30 },
+  { name: "Limited Edition T-Shirt", weight: 20, stock: 20 },
+  { name: "Grand Prize Mystery Box", weight: 10, stock: 5 },
 ];
 
 const DEFAULT_ADMIN_USERNAME = "admin";
@@ -667,12 +668,13 @@ export const spinWheel = async (participantId: string): Promise<{ prize: string 
     throw new Error("Already spun");
   }
 
+  // Filter prizes with stock > 0
   const prizePool = objectValues(prizesRecord).filter(
-    (prize) => typeof prize.weight === "number" && prize.weight > 0,
+    (prize) => typeof prize.weight === "number" && prize.weight > 0 && prize.stock > 0,
   );
 
   if (prizePool.length === 0) {
-    throw new Error("No prizes configured");
+    throw new Error("No prizes available (all prizes out of stock)");
   }
 
   const prizeName = drawPrize(prizePool);
@@ -681,6 +683,14 @@ export const spinWheel = async (participantId: string): Promise<{ prize: string 
     prize: prizeName,
     created_at: new Date().toISOString(),
   };
+
+  // Find the prize that was won and reduce its stock
+  const wonPrize = prizePool.find((p) => p.name === prizeName);
+  if (wonPrize && wonPrize.stock > 0) {
+    await firebaseDb.update(`prizes/${wonPrize.id}`, {
+      stock: wonPrize.stock - 1,
+    });
+  }
 
   await firebaseDb.set(`spins/${participantId}`, record);
 
@@ -714,10 +724,14 @@ export const getRewardsData = async (participantId: string) => {
     getPointsRequired(),
   ]);
 
-  const prizes = objectValues(prizesRecord).map((prize) => ({
-    name: prize.name,
-    weight: prize.weight,
-  }));
+  // Filter prizes with stock > 0 and include stock information
+  const prizes = objectValues(prizesRecord)
+    .filter((prize) => prize.stock > 0)
+    .map((prize) => ({
+      name: prize.name,
+      weight: prize.weight,
+      stock: prize.stock,
+    }));
 
   return {
     points: participant?.points ?? 0,
@@ -859,13 +873,13 @@ export const updateParticipant = async (
   await firebaseDb.update(`participants/${participantId}`, updates);
 };
 
-export const createPrize = async (token: string, name: string, weight: number) => {
+export const createPrize = async (token: string, name: string, weight: number, stock: number = 10) => {
   const session = await validateAdminSession(token);
   if (!session) {
     throw new Error("Invalid session");
   }
 
-  if (!name || typeof weight !== "number" || weight <= 0) {
+  if (!name || typeof weight !== "number" || weight <= 0 || typeof stock !== "number" || stock < 0) {
     throw new Error("Invalid payload");
   }
 
@@ -874,6 +888,7 @@ export const createPrize = async (token: string, name: string, weight: number) =
     id,
     name,
     weight,
+    stock,
     created_at: new Date().toISOString(),
   };
 
@@ -886,13 +901,14 @@ export const savePrize = async (token: string, prize: PrizeRecord) => {
     throw new Error("Invalid session");
   }
 
-  if (!prize.id || !prize.name || !prize.weight || prize.weight <= 0) {
+  if (!prize.id || !prize.name || !prize.weight || prize.weight <= 0 || typeof prize.stock !== "number" || prize.stock < 0) {
     throw new Error("Invalid payload");
   }
 
   await firebaseDb.update(`prizes/${prize.id}`, {
     name: prize.name,
     weight: prize.weight,
+    stock: prize.stock,
   });
 };
 

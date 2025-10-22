@@ -71,6 +71,7 @@ interface PrizeRow {
   id: string;
   name: string;
   weight: number;
+  stock: number;
   created_at?: string;
 }
 
@@ -99,7 +100,7 @@ const AdminDashboard = () => {
   const [pointsRequired, setPointsRequired] = useState<number>(400);
   const [savingLocationId, setSavingLocationId] = useState<number | null>(null);
   const [savingPrizeId, setSavingPrizeId] = useState<string | null>(null);
-  const [newPrize, setNewPrize] = useState({ name: "", weight: "10" });
+  const [newPrize, setNewPrize] = useState({ name: "", weight: "10", stock: "10" });
   const [updatingThreshold, setUpdatingThreshold] = useState(false);
 
   const adminUsername = useMemo(() => localStorage.getItem("adminUsername") ?? "admin", []);
@@ -295,10 +296,10 @@ const AdminDashboard = () => {
 
   const savePrize = async (prize: PrizeRow) => {
     if (!token) return;
-    if (!prize.name.trim() || prize.weight <= 0) {
+    if (!prize.name.trim() || prize.weight <= 0 || prize.stock < 0) {
       toast({
         title: "ข้อมูลไม่ถูกต้อง",
-        description: "กรุณากรอกชื่อและน้ำหนักที่ถูกต้อง",
+        description: "กรุณากรอกชื่อ, น้ำหนัก และจำนวนที่ถูกต้อง",
         variant: "destructive",
       });
       return;
@@ -310,6 +311,7 @@ const AdminDashboard = () => {
         id: prize.id,
         name: prize.name.trim(),
         weight: Number(prize.weight),
+        stock: Number(prize.stock),
         created_at: prize.created_at || new Date().toISOString(),
       });
       toast({ title: "บันทึกรางวัลสำเร็จ" });
@@ -345,19 +347,20 @@ const AdminDashboard = () => {
 
     const trimmedName = newPrize.name.trim();
     const weightValue = Number(newPrize.weight);
-    if (!trimmedName || Number.isNaN(weightValue) || weightValue <= 0) {
+    const stockValue = Number(newPrize.stock);
+    if (!trimmedName || Number.isNaN(weightValue) || weightValue <= 0 || Number.isNaN(stockValue) || stockValue < 0) {
       toast({
         title: "ข้อมูลไม่ถูกต้อง",
-        description: "กรุณากรอกชื่อและน้ำหนักที่ถูกต้อง",
+        description: "กรุณากรอกชื่อ, น้ำหนัก และจำนวนที่ถูกต้อง",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      await createPrizeApi(token, trimmedName, weightValue);
+      await createPrizeApi(token, trimmedName, weightValue, stockValue);
       toast({ title: "เพิ่มรางวัลสำเร็จ" });
-      setNewPrize({ name: "", weight: "10" });
+      setNewPrize({ name: "", weight: "10", stock: "10" });
       fetchDashboard(token);
     } catch (error) {
       toast({
@@ -605,7 +608,7 @@ const AdminDashboard = () => {
                       key={prize.id}
                       className="rounded-2xl border border-rope/40 bg-white/70 px-6 py-6 shadow-sm"
                     >
-                      <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
+                      <div className="grid gap-4 md:grid-cols-[2fr_1fr_1fr]">
                         <div className="space-y-2">
                           <Label htmlFor={`prize-name-${prize.id}`}>ชื่อรางวัล</Label>
                           <Input
@@ -638,6 +641,25 @@ const AdminDashboard = () => {
                             }
                           />
                         </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`prize-stock-${prize.id}`}>จำนวนคงเหลือ</Label>
+                          <Input
+                            id={`prize-stock-${prize.id}`}
+                            type="number"
+                            min="0"
+                            value={prize.stock}
+                            onChange={(event) =>
+                              setPrizeDrafts((prev) => {
+                                const updated = [...prev];
+                                updated[index] = {
+                                  ...updated[index],
+                                  stock: Number(event.target.value),
+                                };
+                                return updated;
+                              })
+                            }
+                          />
+                        </div>
                       </div>
                       <div className="mt-4 flex gap-3">
                         <Button
@@ -659,7 +681,7 @@ const AdminDashboard = () => {
 
                 <div className="rounded-2xl border border-dashed border-rope/40 bg-white/60 px-6 py-6 shadow-inner">
                   <h3 className="text-lg font-semibold text-primary mb-4">เพิ่มรางวัลใหม่</h3>
-                  <div className="grid gap-4 md:grid-cols-[2fr_1fr_auto]">
+                  <div className="grid gap-4 md:grid-cols-[2fr_1fr_1fr_auto]">
                     <Input
                       placeholder="ชื่อรางวัล"
                       value={newPrize.name}
@@ -674,6 +696,15 @@ const AdminDashboard = () => {
                       value={newPrize.weight}
                       onChange={(event) =>
                         setNewPrize((prev) => ({ ...prev, weight: event.target.value }))
+                      }
+                    />
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="จำนวน"
+                      value={newPrize.stock}
+                      onChange={(event) =>
+                        setNewPrize((prev) => ({ ...prev, stock: event.target.value }))
                       }
                     />
                     <Button className="gap-2" onClick={addPrize}>
