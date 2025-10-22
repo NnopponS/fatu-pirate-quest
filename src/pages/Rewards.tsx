@@ -17,7 +17,7 @@ const Rewards = () => {
   const { toast } = useToast();
 
   const [points, setPoints] = useState(0);
-  const [pointsRequired, setPointsRequired] = useState(300);
+  const [pointsRequired, setPointsRequired] = useState(400);
   const [prizes, setPrizes] = useState<PrizeOption[]>([]);
   const [hasSpun, setHasSpun] = useState(false);
   const [loading, setLoading] = useState(true);

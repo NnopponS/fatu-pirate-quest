@@ -6,7 +6,7 @@ import { signCheckin, todayStr } from "@/lib/crypto";
 const encoder = new TextEncoder();
 
 const ADMIN_SESSION_TTL_HOURS = 12;
-const DEFAULT_POINTS_REQUIRED = 300;
+const DEFAULT_POINTS_REQUIRED = 400;
 
 type Nullable<T> = T | null | undefined;
 

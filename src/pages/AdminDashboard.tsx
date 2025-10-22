@@ -96,7 +96,7 @@ const AdminDashboard = () => {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [locationDrafts, setLocationDrafts] = useState<LocationRow[]>([]);
   const [prizeDrafts, setPrizeDrafts] = useState<PrizeRow[]>([]);
-  const [pointsRequired, setPointsRequired] = useState<number>(300);
+  const [pointsRequired, setPointsRequired] = useState<number>(400);
   const [savingLocationId, setSavingLocationId] = useState<number | null>(null);
   const [savingPrizeId, setSavingPrizeId] = useState<string | null>(null);
   const [newPrize, setNewPrize] = useState({ name: "", weight: "10" });
