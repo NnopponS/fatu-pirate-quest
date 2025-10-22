@@ -209,6 +209,15 @@ const DEFAULT_HERO_CARDS: Array<Omit<HeroCardRecord, "id" | "created_at">> = [
     order: 3,
     is_active: true,
   },
+  {
+    title: "ติดต่อเรา",
+    description: "ติดตามข่าวสารและกิจกรรมของคณะศิลปกรรมศาสตร์ ผ่าน Instagram, Facebook, TikTok และช่องทางอื่นๆ อัปเดตข้อมูลงาน FATU ได้ที่นี่!",
+    icon: "📱",
+    link_url: "https://linktr.ee/fineart.tusc",
+    link_text: "ช่องทางติดต่อ",
+    order: 4,
+    is_active: true,
+  },
 ];
 
 const DEFAULT_ADMIN_USERNAME = "admin";
