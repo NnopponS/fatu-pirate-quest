@@ -92,6 +92,48 @@ const Map = () => {
 
   useEffect(() => {
     loadData();
+
+    // Subscribe to real-time updates for locations table
+    const locationsSubscription = supabase
+      .channel('locations-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'locations',
+        },
+        (payload) => {
+          console.log('Location updated:', payload);
+          // Reload locations when any change happens
+          loadData();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to real-time updates for event_settings table
+    const settingsSubscription = supabase
+      .channel('settings-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'event_settings',
+        },
+        (payload) => {
+          console.log('Settings updated:', payload);
+          // Reload data when settings change
+          loadData();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      supabase.removeChannel(locationsSubscription);
+      supabase.removeChannel(settingsSubscription);
+    };
   }, [loadData]);
 
   return (
