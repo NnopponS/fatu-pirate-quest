@@ -93,46 +93,26 @@ const Map = () => {
   useEffect(() => {
     loadData();
 
-    // Subscribe to real-time updates for locations table
-    const locationsSubscription = supabase
-      .channel('locations-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'locations',
-        },
-        (payload) => {
-          console.log('Location updated:', payload);
-          // Reload locations when any change happens
-          loadData();
-        }
-      )
-      .subscribe();
+    // Poll for updates every 3 seconds (only when page is visible)
+    const pollInterval = setInterval(() => {
+      // Only reload if document is visible (not in background tab)
+      if (document.visibilityState === 'visible') {
+        loadData();
+      }
+    }, 3000);
 
-    // Subscribe to real-time updates for event_settings table
-    const settingsSubscription = supabase
-      .channel('settings-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'event_settings',
-        },
-        (payload) => {
-          console.log('Settings updated:', payload);
-          // Reload data when settings change
-          loadData();
-        }
-      )
-      .subscribe();
+    // Also reload when tab becomes visible again
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Cleanup subscriptions on unmount
+    // Cleanup on unmount
     return () => {
-      supabase.removeChannel(locationsSubscription);
-      supabase.removeChannel(settingsSubscription);
+      clearInterval(pollInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [loadData]);
 
