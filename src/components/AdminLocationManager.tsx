@@ -186,6 +186,33 @@ export const AdminLocationManager = ({ location, onSave, onGenerateQR }: Props) 
             <p className="text-center text-xs text-foreground/60">
               สแกน QR code นี้เพื่อเช็กอินที่ {location.name}
             </p>
+            
+            {/* Debug info */}
+            <details className="w-full text-xs">
+              <summary className="cursor-pointer text-foreground/60 hover:text-foreground text-center">
+                🔍 ดูข้อมูล QR Code
+              </summary>
+              <div className="mt-2 space-y-2 rounded border border-primary/10 bg-primary/5 p-3">
+                <div>
+                  <strong>Format:</strong> CHECKIN|loc|sig|version
+                </div>
+                <div>
+                  <strong>Location ID:</strong> {location.id}
+                </div>
+                <div>
+                  <strong>Version:</strong> {location.qr_code_version ?? 1}
+                </div>
+                <div className="pt-2 border-t border-primary/10">
+                  <strong>วิธีทดสอบ:</strong>
+                  <ol className="list-decimal list-inside mt-1 space-y-1 text-foreground/70">
+                    <li>เปิดหน้า /map บนมือถือ</li>
+                    <li>กดปุ่ม "เปิดกล้องสแกน QR"</li>
+                    <li>สแกน QR code นี้</li>
+                    <li>ตรวจสอบ Console (F12) เพื่อดู debug logs</li>
+                  </ol>
+                </div>
+              </div>
+            </details>
           </div>
         </div>
       )}

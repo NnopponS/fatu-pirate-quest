@@ -50,7 +50,14 @@ const Checkin = () => {
       const loc = searchParams.get("loc");
       const sig = searchParams.get("sig");
 
+      console.log("Checkin page params:", { 
+        loc, 
+        sig, 
+        allParams: Object.fromEntries(searchParams.entries())
+      });
+
       if (!loc || !sig) {
+        console.error("Missing required params", { loc: !!loc, sig: !!sig });
         setStatus("error");
         setMessage("ลิงก์เช็กอินไม่ถูกต้อง กรุณาสแกน QR ใหม่อีกครั้ง");
         return;

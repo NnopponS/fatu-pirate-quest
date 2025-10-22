@@ -141,10 +141,12 @@ const Map = () => {
                 </div>
               </div>
               <div className="flex flex-col items-center gap-2 text-center sm:items-end sm:text-right">
+              <div className="flex gap-2">
                 <Button size="sm" variant="secondary" className="gap-2 hover-scale" onClick={() => setScannerOpen(true)}>
                   <ScanLine className="h-4 w-4" />
                   เปิดกล้องสแกน QR
                 </Button>
+              </div>
                 <div className="text-center sm:text-right">
                   <p className="text-2xl font-bold text-primary">{pointsRequired} คะแนน</p>
                   <p className="text-sm text-foreground/70">สะสมครบเพื่อหมุนวงล้อสมบัติ</p>
@@ -214,44 +216,76 @@ const Map = () => {
             setScannerOpen(false);
             if (!value) return;
             
+            console.log("QR Code scanned:", value);
+            
             // Parse QR code format: CHECKIN|loc|sig|version
             if (value.startsWith("CHECKIN|")) {
               const parts = value.split("|");
+              console.log("QR Code parsed:", { parts, length: parts.length });
+              
               if (parts.length >= 4) {
                 const loc = parts[1];
                 const sig = parts[2];
                 const version = parts[3];
+                
+                console.log("Navigating to checkin with:", { loc, sig, version });
+                
+                // Show preview toast
+                toast({
+                  title: "🔍 ตรวจพบ QR Code",
+                  description: `กำลังเช็กอินที่จุดที่ ${loc}...`,
+                });
+                
                 navigate(`/checkin?loc=${loc}&sig=${sig}&v=${version}`);
               } else {
+                console.error("Invalid QR format:", value);
                 toast({
                   title: "QR Code ไม่ถูกต้อง",
-                  description: "กรุณาสแกน QR Code ที่ถูกต้อง",
+                  description: `รูปแบบไม่ถูกต้อง\nสแกนได้: ${value.substring(0, 50)}...`,
                   variant: "destructive",
                 });
               }
             }
             // Backward compatibility: support old URL format
             else if (value.includes("/checkin?")) {
-              // Extract query parameters from URL
-              const url = new URL(value, window.location.origin);
-              const loc = url.searchParams.get("loc");
-              const sig = url.searchParams.get("sig");
-              const version = url.searchParams.get("v");
+              console.log("Old URL format detected:", value);
               
-              if (loc && sig) {
-                navigate(`/checkin?loc=${loc}&sig=${sig}${version ? `&v=${version}` : ''}`);
-              } else {
+              try {
+                // Extract query parameters from URL
+                const url = new URL(value, window.location.origin);
+                const loc = url.searchParams.get("loc");
+                const sig = url.searchParams.get("sig");
+                const version = url.searchParams.get("v");
+                
+                console.log("Parsed URL params:", { loc, sig, version });
+                
+                if (loc && sig) {
+                  toast({
+                    title: "🔍 ตรวจพบ QR Code",
+                    description: `กำลังเช็กอินที่จุดที่ ${loc}...`,
+                  });
+                  navigate(`/checkin?loc=${loc}&sig=${sig}${version ? `&v=${version}` : ''}`);
+                } else {
+                  toast({
+                    title: "QR Code ไม่ถูกต้อง",
+                    description: `ไม่พบข้อมูลที่จำเป็น\nURL: ${value.substring(0, 50)}...`,
+                    variant: "destructive",
+                  });
+                }
+              } catch (error) {
+                console.error("Failed to parse URL:", error);
                 toast({
                   title: "QR Code ไม่ถูกต้อง",
-                  description: "กรุณาสแกน QR Code ที่ถูกต้อง",
+                  description: "ไม่สามารถอ่าน URL ได้",
                   variant: "destructive",
                 });
               }
             }
             else {
+              console.error("Unknown QR format:", value);
               toast({
-                title: "QR Code ไม่ถูกต้อง",
-                description: "QR Code นี้ไม่ใช่ของระบบเช็กอิน",
+                title: "QR Code ไม่รองรับ",
+                description: `ไม่ใช่ QR Code ของระบบเช็กอิน\nสแกนได้: ${value.substring(0, 50)}...`,
                 variant: "destructive",
               });
             }
