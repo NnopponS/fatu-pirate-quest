@@ -42,6 +42,7 @@ import {
   Gift,
   Users,
   Layers,
+  Search, // ✅ เพิ่ม Search icon
 } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { AdminLocationManager } from "@/components/AdminLocationManager";
@@ -60,6 +61,13 @@ interface ParticipantRow {
   grade_level: string | null;
   school: string | null;
   program: string | null;
+  phone_number?: string; // ✅ เพิ่มเบอร์โทร
+  created_at: string;
+}
+
+interface SpinRow {
+  participant_id: string;
+  prize: string;
   created_at: string;
 }
 
@@ -88,6 +96,7 @@ interface DashboardResponse {
   participants: ParticipantRow[];
   locations: LocationRow[];
   prizes: PrizeRow[];
+  spins: SpinRow[]; // ✅ เพิ่มข้อมูลรางวัล
   settings: {
     pointsRequiredForWheel: number;
   };
@@ -118,6 +127,7 @@ const AdminDashboard = () => {
     icon: "🎯",
     order: "1"
   });
+  const [searchQuery, setSearchQuery] = useState(""); // ✅ เพิ่ม search state
 
   const adminUsername = useMemo(() => localStorage.getItem("adminUsername") ?? "admin", []);
 
@@ -415,6 +425,27 @@ const AdminDashboard = () => {
     }
   };
 
+  // ✅ Filter participants ตาม search query
+  const filteredParticipants = useMemo(() => {
+    if (!dashboard) return [];
+    if (!searchQuery.trim()) return dashboard.participants;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return dashboard.participants.filter((p) => {
+      const fullName = `${p.first_name} ${p.last_name}`.toLowerCase();
+      const phone = p.phone_number?.replace(/\D/g, '') || '';
+      const queryPhone = query.replace(/\D/g, '');
+      
+      return (
+        fullName.includes(query) ||
+        p.first_name.toLowerCase().includes(query) ||
+        p.last_name.toLowerCase().includes(query) ||
+        p.username.toLowerCase().includes(query) ||
+        (phone && queryPhone && phone.includes(queryPhone))
+      );
+    });
+  }, [dashboard, searchQuery]);
+
   const exportParticipants = () => {
     if (!dashboard) return;
 
@@ -428,21 +459,30 @@ const AdminDashboard = () => {
       "ระดับชั้น",
       "สถานศึกษา",
       "โปรแกรม",
+      "เบอร์โทร", // ✅ เพิ่มเบอร์โทร
+      "สถานะรางวัล", // ✅ เพิ่มสถานะรางวัล
+      "รางวัลที่ได้", // ✅ เพิ่มรางวัลที่ได้
       "ลงทะเบียนเมื่อ",
     ];
 
-    const rows = dashboard.participants.map((p) => [
-      p.id,
-      p.username,
-      p.first_name,
-      p.last_name,
-      String(p.points),
-      p.age ? String(p.age) : "",
-      p.grade_level ?? "",
-      p.school ?? "",
-      p.program ?? "",
-      new Date(p.created_at).toISOString(),
-    ]);
+    const rows = dashboard.participants.map((p) => {
+      const spin = dashboard.spins.find((s) => s.participant_id === p.id);
+      return [
+        p.id,
+        p.username,
+        p.first_name,
+        p.last_name,
+        String(p.points),
+        p.age ? String(p.age) : "",
+        p.grade_level ?? "",
+        p.school ?? "",
+        p.program ?? "",
+        p.phone_number ?? "", // ✅ เบอร์โทร
+        spin ? "ได้รับแล้ว" : "ยังไม่ได้รับ", // ✅ สถานะ
+        spin ? spin.prize : "-", // ✅ รางวัล
+        new Date(p.created_at).toISOString(),
+      ];
+    });
 
     const csvContent = [header, ...rows]
       .map((row) =>
@@ -540,17 +580,43 @@ const AdminDashboard = () => {
 
             <TabsContent value="participants" className="space-y-4">
               <div className="pirate-card px-6 py-8 space-y-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h2 className="text-2xl font-semibold text-primary">ลูกเรือทั้งหมด</h2>
-                    <p className="text-sm text-foreground/70">
-                      มีลูกเรือ {dashboard.participants.length} คนร่วมออกล่าสมบัติ
-                    </p>
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-2xl font-semibold text-primary">ลูกเรือทั้งหมด</h2>
+                      <p className="text-sm text-foreground/70">
+                        มีลูกเรือ {dashboard.participants.length} คนร่วมออกล่าสมบัติ
+                        {searchQuery && ` (แสดง ${filteredParticipants.length} คนจากการค้นหา)`}
+                      </p>
+                    </div>
+                    <Button variant="outline" className="gap-2" onClick={exportParticipants}>
+                      <Download className="h-4 w-4" />
+                      ดาวน์โหลด CSV
+                    </Button>
                   </div>
-                  <Button variant="outline" className="gap-2" onClick={exportParticipants}>
-                    <Download className="h-4 w-4" />
-                    ดาวน์โหลด CSV
-                  </Button>
+
+                  {/* ✅ Search Box */}
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/50" />
+                      <Input
+                        type="text"
+                        placeholder="ค้นหาด้วยชื่อ, นามสกุล, เบอร์โทร หรือ Username..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    {searchQuery && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setSearchQuery("")}
+                      >
+                        ล้าง
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="overflow-x-auto rounded-lg border border-primary/10">
@@ -562,19 +628,33 @@ const AdminDashboard = () => {
                         <th className="p-3 text-left text-sm font-semibold">นามสกุล</th>
                         <th className="p-3 text-center text-sm font-semibold">คะแนน</th>
                         <th className="p-3 text-left text-sm font-semibold">สถานศึกษา</th>
+                        <th className="p-3 text-center text-sm font-semibold">สถานะรางวัล</th>
+                        <th className="p-3 text-left text-sm font-semibold">รางวัล</th>
                         <th className="p-3 text-left text-sm font-semibold">จัดการ</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {dashboard.participants.map((participant) => (
-                        <AdminParticipantManager
-                          key={participant.id}
-                          participant={participant}
-                          onUpdate={updateParticipant}
-                          onDelete={deleteParticipant}
-                          onAdjustPoints={adjustParticipantPoints}
-                        />
-                      ))}
+                      {filteredParticipants.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="p-8 text-center text-foreground/60">
+                            {searchQuery ? "ไม่พบผู้เข้าร่วมที่ตรงกับการค้นหา" : "ยังไม่มีผู้เข้าร่วม"}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredParticipants.map((participant) => {
+                          const spin = dashboard.spins.find((s) => s.participant_id === participant.id);
+                          return (
+                            <AdminParticipantManager
+                              key={participant.id}
+                              participant={participant}
+                              spin={spin} // ✅ ส่งข้อมูลรางวัล
+                              onUpdate={updateParticipant}
+                              onDelete={deleteParticipant}
+                              onAdjustPoints={adjustParticipantPoints}
+                            />
+                          );
+                        })
+                      )}
                     </tbody>
                   </table>
                 </div>

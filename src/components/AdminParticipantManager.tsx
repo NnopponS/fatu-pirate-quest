@@ -20,10 +20,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Edit, Trash2, Plus, Minus } from "lucide-react";
+import { Edit, Trash2, Plus, Minus, CheckCircle2, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-interface ParticipantRow {
+export interface ParticipantRow {
   id: string;
   username: string;
   first_name: string;
@@ -36,14 +36,21 @@ interface ParticipantRow {
   created_at: string;
 }
 
-interface Props {
+export interface SpinRow {
+  participant_id: string;
+  prize: string;
+  created_at: string;
+}
+
+export interface Props {
   participant: ParticipantRow;
+  spin?: SpinRow; // ✅ เพิ่ม spin prop (optional)
   onUpdate: (id: string, updates: Partial<ParticipantRow>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onAdjustPoints: (id: string, delta: number) => Promise<void>;
 }
 
-export const AdminParticipantManager = ({ participant, onUpdate, onDelete, onAdjustPoints }: Props) => {
+export const AdminParticipantManager = ({ participant, spin, onUpdate, onDelete, onAdjustPoints }: Props) => {
   const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -122,6 +129,31 @@ export const AdminParticipantManager = ({ participant, onUpdate, onDelete, onAdj
         <td className="p-3 text-sm">{participant.last_name}</td>
         <td className="p-3 text-center text-sm font-semibold text-primary">{participant.points}</td>
         <td className="p-3 text-sm">{participant.school || "-"}</td>
+        
+        {/* ✅ สถานะรางวัล */}
+        <td className="p-3 text-center text-sm">
+          {spin ? (
+            <div className="flex items-center justify-center gap-1 text-accent">
+              <CheckCircle2 className="h-4 w-4" />
+              <span className="font-semibold">ได้รับแล้ว</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-1 text-foreground/50">
+              <XCircle className="h-4 w-4" />
+              <span>ยังไม่ได้</span>
+            </div>
+          )}
+        </td>
+        
+        {/* ✅ รางวัลที่ได้ */}
+        <td className="p-3 text-sm">
+          {spin ? (
+            <span className="font-semibold text-accent">{spin.prize}</span>
+          ) : (
+            <span className="text-foreground/40">-</span>
+          )}
+        </td>
+        
         <td className="p-3">
           <div className="flex gap-2">
             <Button

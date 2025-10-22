@@ -136,6 +136,7 @@ export interface DashboardResponse {
   participants: ParticipantRecord[];
   locations: LocationRecord[];
   prizes: PrizeRecord[];
+  spins: SpinRecord[]; // ✅ เพิ่มข้อมูลรางวัลที่ได้
   settings: {
     pointsRequiredForWheel: number;
   };
@@ -895,10 +896,11 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
   }
 
   // Get locations from Firebase (source of truth for admin)
-  const [locationsRecord, participantsRecord, prizesRecord, pointsRequired] = await Promise.all([
+  const [locationsRecord, participantsRecord, prizesRecord, spinsRecord, pointsRequired] = await Promise.all([
     firebaseDb.get<Record<string, LocationRecord>>("locations"),
     firebaseDb.get<Record<string, ParticipantRecord>>("participants"),
     firebaseDb.get<Record<string, PrizeRecord>>("prizes"),
+    firebaseDb.get<Record<string, SpinRecord>>("spins"), // ✅ ดึงข้อมูลรางวัล
     getPointsRequired(),
   ]);
 
@@ -907,6 +909,7 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
   const participantsArr = objectValues(participantsRecord ?? {});
   const locationsArr = objectValues(locationsRecord ?? {});
   const prizesArr = objectValues(prizesRecord ?? {});
+  const spinsArr = objectValues(spinsRecord ?? {}); // ✅ แปลง spins เป็น array
 
   return {
     ok: true,
@@ -916,6 +919,9 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
     locations: locationsArr.sort((a, b) => a.id - b.id),
     prizes: prizesArr.sort(
       (a, b) => new Date((a as any).created_at).getTime() - new Date((b as any).created_at).getTime(),
+    ),
+    spins: spinsArr.sort( // ✅ ส่งข้อมูลรางวัล
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     ),
     settings: {
       pointsRequiredForWheel: pointsRequired,
