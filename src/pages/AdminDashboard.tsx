@@ -264,17 +264,24 @@ const AdminDashboard = () => {
     if (!token) return;
     
     try {
-      const { error } = await supabase.rpc('adjust_participant_points', {
-        p_participant_id: participantId,
-        p_points_delta: delta,
-      });
+      // Get current participant data from Firebase
+      const participant = dashboard?.participants.find(p => p.id === participantId);
+      if (!participant) {
+        throw new Error("ไม่พบข้อมูลลูกเรือ");
+      }
       
-      if (error) throw error;
+      // Calculate new points (minimum 0)
+      const newPoints = Math.max(0, participant.points + delta);
+      
+      // Update points using Firebase
+      await updateParticipant(participantId, { points: newPoints });
       
       toast({ 
         title: "ปรับคะแนนสำเร็จ",
-        description: `${delta > 0 ? '+' : ''}${delta} คะแนน`
+        description: `${delta > 0 ? '+' : ''}${delta} คะแนน (รวม: ${newPoints} คะแนน)`
       });
+      
+      // Refresh dashboard to show updated points
       fetchDashboard(token);
     } catch (error) {
       toast({
