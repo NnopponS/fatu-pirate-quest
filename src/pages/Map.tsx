@@ -5,8 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { LocationCard } from "@/components/LocationCard";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Anchor, Compass, Trophy, ScanLine, CheckCircle2, XCircle } from "lucide-react";
+import { Anchor, Compass, Trophy, ScanLine, CheckCircle2, XCircle, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import jsQR from "jsqr";
 
@@ -30,6 +31,7 @@ type BarcodeDetectorConstructor = new (options?: { formats?: string[] }) => Barc
 const Map = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logout } = useAuth();
 
   const [locations, setLocations] = useState<LocationEntry[]>([]);
   const [checkins, setCheckins] = useState<number[]>([]);
@@ -48,6 +50,15 @@ const Map = () => {
   } | null>(null);
 
   const participantId = useMemo(() => localStorage.getItem("participantId"), []);
+
+  const handleLogout = useCallback(() => {
+    logout();
+    toast({
+      title: "ออกจากระบบสำเร็จ",
+      description: "แล้วพบกันใหม่ในการผจญภัยครั้งหน้า!",
+    });
+    navigate("/login");
+  }, [logout, toast, navigate]);
 
   const loadData = useCallback(async () => {
     try {
@@ -198,11 +209,16 @@ const Map = () => {
           {participantId ? (
             <>
               <Button size="lg" variant="outline" onClick={() => navigate("/rewards")} className="hover-scale">
+                <Trophy className="mr-2 h-4 w-4" />
                 ไปหน้าวงล้อสมบัติ
               </Button>
               <Button size="lg" variant="ghost" onClick={() => navigate("/")} className="hover-scale">
                 <Anchor className="mr-2 h-4 w-4" />
                 กลับหน้าแรก
+              </Button>
+              <Button size="lg" variant="destructive" onClick={handleLogout} className="hover-scale">
+                <LogOut className="mr-2 h-4 w-4" />
+                ออกจากระบบ
               </Button>
             </>
           ) : (

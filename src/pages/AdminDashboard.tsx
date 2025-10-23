@@ -18,6 +18,7 @@ import {
   type HeroCardRecord,
 } from "@/services/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -130,18 +131,17 @@ const AdminDashboard = () => {
   const [searchQuery, setSearchQuery] = useState(""); // ✅ เพิ่ม search state
 
   const adminUsername = useMemo(() => localStorage.getItem("adminUsername") ?? "admin", []);
+  const { logout: authLogout } = useAuth();
 
   const logout = useCallback(() => {
     void invalidateAdminSession(localStorage.getItem("adminToken") ?? "");
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("adminUsername");
-    localStorage.removeItem("authRole");
+    authLogout();
     toast({
       title: "ออกจากระบบแล้ว",
       description: "ปิดการควบคุมเรือโจรสลัดเรียบร้อย",
     });
     navigate("/login");
-  }, [navigate, toast]);
+  }, [authLogout, navigate, toast]);
 
   const fetchDashboard = useCallback(
     async (sessionToken: string) => {

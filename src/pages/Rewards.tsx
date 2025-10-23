@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { getRewardsData, spinWheel } from "@/services/firebase";
 import { SpinWheel } from "@/components/SpinWheel";
 import { Button } from "@/components/ui/button";
-import { Anchor, Gift } from "lucide-react";
+import { Anchor, Gift, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 
 interface PrizeOption {
@@ -16,6 +17,7 @@ interface PrizeOption {
 const Rewards = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logout } = useAuth();
 
   const [points, setPoints] = useState(0);
   const [pointsRequired, setPointsRequired] = useState(400);
@@ -24,6 +26,15 @@ const Rewards = () => {
   const [loading, setLoading] = useState(true);
 
   const participantId = useMemo(() => localStorage.getItem("participantId"), []);
+
+  const handleLogout = useCallback(() => {
+    logout();
+    toast({
+      title: "ออกจากระบบสำเร็จ",
+      description: "แล้วพบกันใหม่ในการผจญภัยครั้งหน้า!",
+    });
+    navigate("/login");
+  }, [logout, toast, navigate]);
 
   const loadData = useCallback(async () => {
     if (!participantId) return;
@@ -147,9 +158,14 @@ const Rewards = () => {
           </>
         )}
 
-        <div className="text-center">
+        <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Button variant="ghost" onClick={() => navigate("/map")}>
+            <Anchor className="mr-2 h-4 w-4" />
             กลับไปที่แผนที่
+          </Button>
+          <Button variant="destructive" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            ออกจากระบบ
           </Button>
         </div>
       </div>

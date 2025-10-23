@@ -1,10 +1,11 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { login } from "@/services/firebase";
 import { Anchor, LogIn, Shield } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
@@ -14,10 +15,22 @@ type Role = "participant" | "admin";
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { login: setAuthLogin, isAuthenticated, isParticipant, isAdmin } = useAuth();
 
   const [activeRole, setActiveRole] = useState<Role>("participant");
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ username: "", password: "" });
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (isParticipant) {
+        navigate("/map", { replace: true });
+      } else if (isAdmin) {
+        navigate("/admin", { replace: true });
+      }
+    }
+  }, [isAuthenticated, isParticipant, isAdmin, navigate]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -27,12 +40,12 @@ const Login = () => {
       const result = await login(activeRole, formData.username.trim(), formData.password);
 
       if (result.role === "participant") {
-        localStorage.setItem("participantId", result.participantId);
-        localStorage.setItem("participantUsername", result.username);
-        localStorage.setItem("participantDisplayName", result.displayName);
-        localStorage.setItem("authRole", "participant");
-        localStorage.removeItem("adminToken");
-        localStorage.removeItem("adminUsername");
+        setAuthLogin({
+          role: "participant",
+          participantId: result.participantId,
+          username: result.username,
+          displayName: result.displayName,
+        });
 
         toast({
           title: "เข้าสู่ระบบสำเร็จ",
@@ -48,12 +61,11 @@ const Login = () => {
           navigate("/map");
         }
       } else {
-        localStorage.setItem("adminToken", result.token);
-        localStorage.setItem("adminUsername", result.username);
-        localStorage.setItem("authRole", "admin");
-        localStorage.removeItem("participantId");
-        localStorage.removeItem("participantUsername");
-        localStorage.removeItem("participantDisplayName");
+        setAuthLogin({
+          role: "admin",
+          token: result.token,
+          username: result.username,
+        });
 
         toast({
           title: "เข้าสู่ระบบผู้ดูแล",
