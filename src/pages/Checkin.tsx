@@ -30,7 +30,7 @@ const Checkin = () => {
   useEffect(() => {
     const loadCheckinInfo = async () => {
       const participantId = localStorage.getItem("participantId");
-      const displayName = localStorage.getItem("displayName");
+      const username = localStorage.getItem("participantUsername");
       
       if (!participantId) {
         // Save current URL to return after login
@@ -46,7 +46,7 @@ const Checkin = () => {
         return;
       }
 
-      setUserName(displayName || "ผู้ใช้งาน");
+      setUserName(username || "ผู้ใช้งาน");
 
       const loc = searchParams.get("loc");
       const sig = searchParams.get("sig");
