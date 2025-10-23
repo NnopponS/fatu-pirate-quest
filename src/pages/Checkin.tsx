@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, ShipWheel, XCircle, MapPin, User } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
+import { PirateCharacter } from "@/components/PirateCharacter";
 
 type Status = "loading" | "confirm" | "processing" | "success" | "error";
 
@@ -146,6 +147,15 @@ const Checkin = () => {
 
   return (
     <PirateBackdrop>
+      <PirateCharacter 
+        messages={[
+          "อาร์ร์! เช็กอินเพื่อรับคะแนน! 🏴‍☠️",
+          "ยืนยันข้อมูลก่อนเช็กอินนะ! ⚓",
+          "เยี่ยมมาก! คะแนนเพิ่มขึ้นแล้ว! 💎",
+          "สะสมต่อไปเรื่อยๆ! 🗺️",
+        ]}
+        interval={4000}
+      />
       <div className="container mx-auto max-w-3xl px-4 py-16">
         <div className="pirate-card px-8 py-12 text-center space-y-6">
           {status === "loading" && (
@@ -157,11 +167,14 @@ const Checkin = () => {
 
           {status === "confirm" && locationInfo && (
             <>
-              <MapPin className="mx-auto h-20 w-20 text-primary animate-in fade-in zoom-in" />
-              <h2 className="text-3xl font-semibold text-primary">ยืนยันการเช็กอิน</h2>
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full blur-3xl" />
+                <MapPin className="relative mx-auto h-20 w-20 text-blue-600 animate-in fade-in zoom-in" />
+              </div>
+              <h2 className="text-3xl font-semibold text-blue-600">ยืนยันการเช็กอิน</h2>
               
               {locationInfo.imageUrl && (
-                <div className="mx-auto w-full max-w-sm overflow-hidden rounded-lg">
+                <div className="mx-auto w-full max-w-sm overflow-hidden rounded-xl border-2 border-blue-200 shadow-lg">
                   <img 
                     src={locationInfo.imageUrl} 
                     alt={locationInfo.name}
@@ -171,34 +184,34 @@ const Checkin = () => {
               )}
 
               <div className="space-y-4 text-left">
-                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-                  <div className="flex items-center gap-2 text-sm text-foreground/70 mb-2">
-                    <User className="h-4 w-4" />
+                <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-5 shadow-md">
+                  <div className="flex items-center gap-2 text-sm text-blue-700 mb-2 font-semibold">
+                    <User className="h-5 w-5" />
                     <span>ผู้เช็กอิน</span>
                   </div>
-                  <p className="text-xl font-semibold text-primary">{userName}</p>
+                  <p className="text-2xl font-bold text-blue-900">{userName}</p>
                 </div>
 
-                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-                  <div className="flex items-center gap-2 text-sm text-foreground/70 mb-2">
-                    <MapPin className="h-4 w-4" />
+                <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-5 shadow-md">
+                  <div className="flex items-center gap-2 text-sm text-blue-700 mb-2 font-semibold">
+                    <MapPin className="h-5 w-5" />
                     <span>สถานที่</span>
                   </div>
-                  <p className="text-xl font-semibold text-primary">{locationInfo.name}</p>
-                  <p className="text-sm text-foreground/70 mt-2">
-                    คะแนนที่ได้รับ: <span className="font-semibold text-primary">{locationInfo.points} แต้ม</span>
+                  <p className="text-2xl font-bold text-blue-900">{locationInfo.name}</p>
+                  <p className="text-sm text-blue-700 mt-3 bg-blue-50 rounded-lg px-3 py-2 border border-blue-200">
+                    คะแนนที่ได้รับ: <span className="font-bold text-blue-900">{locationInfo.points} แต้ม</span>
                   </p>
                 </div>
               </div>
 
-              <p className="text-sm text-foreground/60">
+              <p className="text-sm text-blue-600 font-medium">
                 กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนยืนยันการเช็กอิน
               </p>
 
               <div className="flex gap-3">
                 <Button 
                   onClick={handleConfirmCheckin}
-                  className="flex-1 gap-2"
+                  className="flex-1 gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/30"
                   size="lg"
                 >
                   <CheckCircle2 className="h-5 w-5" />
@@ -208,6 +221,7 @@ const Checkin = () => {
                   variant="outline" 
                   onClick={() => navigate("/map")}
                   size="lg"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-50"
                 >
                   ยกเลิก
                 </Button>
@@ -224,13 +238,45 @@ const Checkin = () => {
 
           {status === "success" && (
             <>
-              <CheckCircle2 className="mx-auto h-20 w-20 text-primary animate-in fade-in zoom-in" />
-              <h2 className="text-3xl font-semibold text-primary">เช็กอินสำเร็จ</h2>
-              <p className="text-lg text-foreground/80">{message}</p>
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-400/30 to-green-600/30 rounded-full blur-3xl animate-pulse" />
+                <CheckCircle2 className="relative mx-auto h-24 w-24 text-green-600 animate-in fade-in zoom-in drop-shadow-lg" />
+              </div>
+              
+              <div className="space-y-3">
+                <h2 className="text-4xl font-bold text-green-600 animate-in fade-in slide-in-from-bottom-4">
+                  🎉 เช็กอินสำเร็จ! 🎉
+                </h2>
+                <p className="text-xl text-green-700 font-semibold">{message}</p>
+              </div>
+
               {pointsAdded > 0 && (
-                <div className="text-4xl font-bold text-accent">+{pointsAdded}</div>
+                <div className="rounded-2xl border-4 border-green-500 bg-gradient-to-br from-green-50 to-green-100 p-8 shadow-2xl shadow-green-500/30 animate-in fade-in zoom-in">
+                  <p className="text-sm text-green-700 font-semibold mb-2">คะแนนที่ได้รับ</p>
+                  <div className="text-6xl font-black text-green-600 animate-bounce">
+                    +{pointsAdded}
+                  </div>
+                  <p className="text-lg text-green-700 font-semibold mt-2">แต้ม</p>
+                </div>
               )}
-              <Button onClick={() => navigate("/map")}>กลับไปยังแผนที่</Button>
+
+              {locationInfo && (
+                <div className="rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-green-100 p-5 shadow-md">
+                  <div className="flex items-center gap-2 text-sm text-green-700 mb-2 font-semibold">
+                    <User className="h-5 w-5" />
+                    <span>ผู้เช็กอิน</span>
+                  </div>
+                  <p className="text-xl font-bold text-green-900">{userName}</p>
+                </div>
+              )}
+
+              <Button 
+                onClick={() => navigate("/map")}
+                size="lg"
+                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg shadow-green-500/30"
+              >
+                กลับไปยังแผนที่
+              </Button>
             </>
           )}
 

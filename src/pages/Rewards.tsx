@@ -7,6 +7,7 @@ import { Anchor, Gift, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
+import { PirateCharacter } from "@/components/PirateCharacter";
 
 interface PrizeOption {
   name: string;
@@ -101,6 +102,15 @@ const Rewards = () => {
 
   return (
     <PirateBackdrop>
+      <PirateCharacter 
+        messages={[
+          "อาร์ร์! คะแนนเจ้าครบแล้วหรือยัง? 🎰",
+          "หมุนวงล้อเพื่อรับสมบัติ! 💎",
+          "แต่ละคนหมุนได้ครั้งเดียวนะ! ⚓",
+          "โชคดีกับการลุ้นรางวัล! 🏴‍☠️",
+          "สมบัติรออยู่ข้างหน้า! 🎁",
+        ]}
+      />
       <div className="container mx-auto max-w-5xl px-4 py-16 space-y-10">
         <div className="flex flex-col items-center gap-4 text-center">
           <span className="pirate-highlight">

@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { login } from "@/services/firebase";
 import { Anchor, LogIn, Shield } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
+import { PirateCharacter } from "@/components/PirateCharacter";
 
 type Role = "participant" | "admin";
 
@@ -87,6 +88,14 @@ const Login = () => {
 
   return (
     <PirateBackdrop>
+      <PirateCharacter 
+        messages={[
+          "อาร์ร์! เข้าสู่ระบบเพื่อเริ่มล่าสมบัติ! 🏴‍☠️",
+          "ยินดีต้อนรับกลับมา! ⚓",
+          "เตรียมพร้อมสำหรับการผจญภัย! 🗺️",
+          "ลงชื่อเข้าใช้แล้วออกเดินทาง! 💎",
+        ]}
+      />
       <div className="container mx-auto max-w-3xl px-4 py-16 space-y-10 animate-fade-in">
         <div className="flex flex-col items-center gap-4 text-center">
           <span className="pirate-highlight animate-scale-in">

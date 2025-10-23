@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { signupParticipant } from "@/services/firebase";
 import { Anchor, Check, Copy, Sparkles } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
+import { PirateCharacter } from "@/components/PirateCharacter";
 
 type Credentials = { username: string; password: string } | null;
 
@@ -135,6 +136,14 @@ const Signup = () => {
 
   return (
     <PirateBackdrop>
+      <PirateCharacter 
+        messages={[
+          "อาร์ร์! มาร่วมลูกเรือกันเถอะ! 🏴‍☠️",
+          "ลงทะเบียนง่ายๆ แล้วเริ่มผจญภัย! ⚓",
+          "อย่าลืมบันทึก Username และ Password! 📝",
+          "เตรียมตัวล่าสมบัติให้พร้อม! 💎",
+        ]}
+      />
       <div className="container mx-auto max-w-4xl px-4 py-16 space-y-10">
         <div className="flex flex-col items-center gap-4 text-center">
           <span className="pirate-highlight">

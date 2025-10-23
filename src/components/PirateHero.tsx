@@ -3,6 +3,7 @@ import { Anchor, LogIn, ChevronLeft, ChevronRight, ExternalLink, Info } from "lu
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
+import { PirateCharacter } from "@/components/PirateCharacter";
 import { getHeroCards, type HeroCardRecord } from "@/services/firebase";
 import {
   Carousel,
@@ -10,12 +11,15 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 export const PirateHero = () => {
   const navigate = useNavigate();
   const [heroCards, setHeroCards] = useState<HeroCardRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [api, setApi] = useState<CarouselApi>();
 
   useEffect(() => {
     const loadCards = async () => {
@@ -33,6 +37,15 @@ export const PirateHero = () => {
 
   return (
     <PirateBackdrop>
+      <PirateCharacter 
+        messages={[
+          "อาร์ร์! ยินดีต้อนรับสู่ FATU Pirate Quest! 🏴‍☠️",
+          "พร้อมออกล่าสมบัติหรือยัง? 💎",
+          "ลงทะเบียนเข้าร่วมกันเถอะ! ⚓",
+          "เช็กอิน 4 จุด แล้วหมุนวงล้อลุ้นรางวัล! 🎰",
+          "ผจญภัยอย่างปลอดภัยนะ! 🗺️",
+        ]}
+      />
       <div className="container mx-auto px-4 py-8 lg:py-16 relative">
         {/* Decorative Elements */}
         <div className="absolute top-12 right-6 hidden lg:block pirate-coin">
@@ -90,7 +103,21 @@ export const PirateHero = () => {
             <div className="space-y-6">
               <h2 className="text-3xl font-bold text-center text-primary">🎯 ไฮไลท์กิจกรรม</h2>
               
-              <Carousel className="w-full">
+              <Carousel 
+                className="w-full"
+                setApi={setApi}
+                plugins={[
+                  Autoplay({
+                    delay: 3000,
+                    stopOnInteraction: true,
+                    stopOnMouseEnter: true,
+                  })
+                ]}
+                opts={{
+                  loop: true,
+                  align: "start",
+                }}
+              >
                 <CarouselContent>
                   {heroCards.map((card) => (
                     <CarouselItem key={card.id} className="md:basis-1/2 lg:basis-1/3">
@@ -260,32 +287,66 @@ export const PirateHero = () => {
 
           <div className="pirate-divider" />
 
-          {/* Action Buttons */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-center">
-            <Button
-              size="lg"
-              className="text-lg px-10 py-7 shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:scale-105 transition-all gap-3"
-              onClick={() => navigate("/signup")}
-            >
-              🏴‍☠️ ลงทะเบียนเข้าร่วม
-            </Button>
-            <Button
-              size="lg"
-              variant="secondary"
-              className="text-lg px-10 py-7 shadow-2xl shadow-secondary/40 hover:shadow-secondary/60 hover:scale-105 transition-all gap-3"
-              onClick={() => navigate("/map")}
-            >
-              🗺️ ดูแผนที่สมบัติ
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="text-lg px-10 py-7 shadow-xl hover:shadow-2xl hover:scale-105 transition-all gap-3"
-              onClick={() => navigate("/login")}
-            >
-              <LogIn className="h-5 w-5" />
-              เข้าสู่ระบบลูกเรือ
-            </Button>
+          {/* Action Buttons - Enhanced */}
+          <div className="space-y-8">
+            <div className="text-center space-y-2">
+              <h3 className="text-2xl font-bold text-primary">🚀 เริ่มต้นการผจญภัย</h3>
+              <p className="text-foreground/70">เลือกด้านล่างเพื่อเข้าร่วมกิจกรรม</p>
+            </div>
+            
+            <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
+              {/* ลงทะเบียน */}
+              <div className="group relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/40 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-70 group-hover:opacity-100" />
+                <Button
+                  size="lg"
+                  className="relative w-full h-auto flex-col gap-4 py-8 px-6 text-lg shadow-2xl shadow-primary/50 hover:shadow-primary/70 hover:scale-105 transition-all duration-300 bg-gradient-to-br from-primary to-primary/90 rounded-2xl"
+                  onClick={() => navigate("/signup")}
+                >
+                  <span className="text-6xl animate-bounce">🏴‍☠️</span>
+                  <div className="space-y-1">
+                    <div className="font-bold text-xl">ลงทะเบียนเข้าร่วม</div>
+                    <div className="text-xs text-white/80 font-normal">สมัครสมาชิกลูกเรือ</div>
+                  </div>
+                </Button>
+              </div>
+
+              {/* ดูแผนที่ */}
+              <div className="group relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 to-secondary/40 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-70 group-hover:opacity-100" />
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="relative w-full h-auto flex-col gap-4 py-8 px-6 text-lg shadow-2xl shadow-secondary/50 hover:shadow-secondary/70 hover:scale-105 transition-all duration-300 bg-gradient-to-br from-secondary to-secondary/90 rounded-2xl"
+                  onClick={() => navigate("/map")}
+                >
+                  <span className="text-6xl animate-bounce" style={{ animationDelay: '0.1s' }}>🗺️</span>
+                  <div className="space-y-1">
+                    <div className="font-bold text-xl">ดูแผนที่สมบัติ</div>
+                    <div className="text-xs text-white/80 font-normal">สำรวจจุดเช็กอิน</div>
+                  </div>
+                </Button>
+              </div>
+
+              {/* เข้าสู่ระบบ */}
+              <div className="group relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-accent/40 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-70 group-hover:opacity-100" />
+                <Button
+                  size="lg"
+                  className="relative w-full h-auto flex-col gap-4 py-8 px-6 text-lg shadow-2xl shadow-accent/50 hover:shadow-accent/70 hover:scale-105 transition-all duration-300 bg-gradient-to-br from-accent to-accent/90 rounded-2xl"
+                  onClick={() => navigate("/login")}
+                >
+                  <span className="text-6xl animate-bounce" style={{ animationDelay: '0.2s' }}>⚓</span>
+                  <div className="space-y-1">
+                    <div className="font-bold text-xl flex items-center justify-center gap-2">
+                      <LogIn className="h-5 w-5" />
+                      เข้าสู่ระบบ
+                    </div>
+                    <div className="text-xs text-white/80 font-normal">สำหรับลูกเรือ</div>
+                  </div>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

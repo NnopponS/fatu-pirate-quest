@@ -9,6 +9,7 @@ import { Anchor, Compass, Trophy, ScanLine, CheckCircle2, XCircle, LogOut } from
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
+import { PirateCharacter } from "@/components/PirateCharacter";
 import jsQR from "jsqr";
 
 interface LocationEntry {
@@ -137,6 +138,15 @@ const Map = () => {
 
   return (
     <PirateBackdrop>
+      <PirateCharacter 
+        messages={[
+          "อาร์ร์! นี่คือแผนที่สมบัติ! 🗺️",
+          "เช็กอินทั้ง 4 จุดเพื่อสะสมคะแนน! ⚓",
+          "สแกน QR Code ที่แต่ละจุดด้วยนะ! 📱",
+          "สะสมครบ 400 คะแนนแล้วหมุนวงล้อ! 🎰",
+          "โชคดีในการล่าสมบัติ! 💎",
+        ]}
+      />
       <div className="container mx-auto max-w-5xl px-4 py-16 space-y-12 animate-fade-in">
         <div className="flex flex-col items-center gap-4 text-center animate-scale-in">
           <span className="pirate-highlight">
