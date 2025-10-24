@@ -11,9 +11,10 @@ interface LocationCardProps {
   mapUrl?: string;
   imageUrl?: string;
   description?: string;
+  events?: string[];
 }
 
-export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageUrl, description }: LocationCardProps) => {
+export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageUrl, description, events }: LocationCardProps) => {
   const mapsUrl = mapUrl ?? `https://www.google.com/maps?q=${lat},${lng}`;
 
   return (
@@ -52,6 +53,22 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageU
 
         {description && (
           <p className={`text-sm ${checkedIn ? 'text-green-800' : 'text-red-800'}`}>{description}</p>
+        )}
+
+        {events && events.length > 0 && (
+          <div className={`rounded-lg border ${checkedIn ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50'} p-3 space-y-2`}>
+            <p className={`text-sm font-semibold ${checkedIn ? 'text-green-900' : 'text-red-900'}`}>
+              🎪 กิจกรรมในจุดนี้:
+            </p>
+            <ul className={`text-xs space-y-1.5 ${checkedIn ? 'text-green-800' : 'text-red-800'}`}>
+              {events.map((event, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="flex-shrink-0 mt-0.5">•</span>
+                  <span>{event}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
 
         <p className={`text-sm ${checkedIn ? 'text-green-700' : 'text-red-700'}`}>

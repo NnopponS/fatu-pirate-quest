@@ -36,6 +36,7 @@ export interface LocationRecord {
   image_url?: string;
   description?: string;
   qr_code_version?: number;
+  events?: string[];
 }
 
 export interface PrizeRecord {
@@ -150,6 +151,10 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     lng: 100.6033427,
     points: 100,
     map_url: "https://maps.app.goo.gl/hJB4uaVZJkAWoyE98",
+    events: [
+      "กิจกรรมสร้าง Mood Board จากนิตยสาร",
+      "ทำชุดจากเศษผ้าเหลือใช้",
+    ],
   },
   "2": {
     id: 2,
@@ -158,6 +163,11 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     lng: 100.604679,
     points: 100,
     map_url: "https://maps.app.goo.gl/eXgdntGV8D522TeQ6",
+    events: [
+      "Workshop การบริหารจัดการศิลปะ",
+      "บูธแนะนำหลักสูตร",
+      "ห้องแสดงผลงาน",
+    ],
   },
   "3": {
     id: 3,
@@ -166,6 +176,14 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     lng: 100.6076747,
     points: 100,
     map_url: "https://maps.app.goo.gl/RNUzznFv6bz82JYN6",
+    events: [
+      "Workshop Theatrical Design (รอบเช้า 10:00–11:30)",
+      "Workshop Theatrical Design (รอบบ่าย 13:00–14:30, 14:45–16:15)",
+      "การแสดง: Wicked The Musical (10:00–10:30)",
+      "การแสดง: ยักษ์ตัวแดง Akanoi (10:00–10:30)",
+      "การแสดง: ลา ลา แลนด์ (10:00–10:30)",
+      "การแสดง: มณโฑ (14:00–14:40)",
+    ],
   },
   "4": {
     id: 4,
@@ -174,6 +192,10 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     lng: 100.6067732,
     points: 100,
     map_url: "https://maps.app.goo.gl/kKjeJ4w8zqZdMECYA",
+    events: [
+      "กิจกรรมทำเข็มกลัด",
+      "กิจกรรมลองใช้กี่ทอผ้า",
+    ],
   },
 };
 
