@@ -166,7 +166,7 @@ export interface DashboardResponse {
 const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
   "1": {
     id: 1,
-    name: "Faculty of Fine and Applied Arts, Thammasat University",
+    name: "Gymnasium 4 Thammasat University",
     lat: 14.0661446,
     lng: 100.6033427,
     points: 100,
@@ -174,24 +174,31 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     display_order: 1,
     sub_events: [
       { 
-        id: "1-moodboard", 
-        name: "กิจกรรมสร้าง Mood Board จากนิตยสาร", 
+        id: "2-management", 
+        name: "Workshop การบริหารจัดการศิลปะ", 
         location_id: 1, 
-        description: "ร่วมสร้างสรรค์ Mood Board จากนิตยสารและสื่อต่างๆ เพื่อแสดงแนวคิดและแรงบันดาลใจ",
+        description: "เรียนรู้การบริหารจัดการงานศิลปะและวัฒนธรรมอย่างมืออาชีพ",
         qr_code_version: 1 
       },
       { 
-        id: "1-fabric", 
-        name: "ทำชุดจากเศษผ้าเหลือใช้", 
+        id: "2-booth", 
+        name: "บูธแนะนำหลักสูตร", 
         location_id: 1, 
-        description: "เรียนรู้การนำเศษผ้าเหลือใช้มาสร้างสรรค์เป็นชุดแฟชั่นที่ยั่งยืน",
+        description: "พบกับข้อมูลหลักสูตรและโอกาสการศึกษาในคณะศิลปกรรมศาสตร์",
+        qr_code_version: 1 
+      },
+      { 
+        id: "2-exhibition", 
+        name: "ห้องแสดงผลงาน", 
+        location_id: 1, 
+        description: "ชมผลงานศิลปะและการออกแบบจากนักศึกษาและศิษย์เก่า",
         qr_code_version: 1 
       },
     ],
   },
   "2": {
     id: 2,
-    name: "Gymnasium 4 Thammasat University",
+    name: "Faculty of Fine and Applied Arts, Thammasat University",
     lat: 14.06879,
     lng: 100.604679,
     points: 100,
@@ -199,31 +206,24 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     display_order: 2,
     sub_events: [
       { 
-        id: "2-management", 
-        name: "Workshop การบริหารจัดการศิลปะ", 
+        id: "1-moodboard", 
+        name: "กิจกรรมสร้าง Mood Board จากนิตยสาร", 
         location_id: 2, 
-        description: "เรียนรู้การบริหารจัดการงานศิลปะและวัฒนธรรมอย่างมืออาชีพ",
+        description: "ร่วมสร้างสรรค์ Mood Board จากนิตยสารและสื่อต่างๆ เพื่อแสดงแนวคิดและแรงบันดาลใจ",
         qr_code_version: 1 
       },
       { 
-        id: "2-booth", 
-        name: "บูธแนะนำหลักสูตร", 
+        id: "1-fabric", 
+        name: "ทำชุดจากเศษผ้าเหลือใช้", 
         location_id: 2, 
-        description: "พบกับข้อมูลหลักสูตรและโอกาสการศึกษาในคณะศิลปกรรมศาสตร์",
-        qr_code_version: 1 
-      },
-      { 
-        id: "2-exhibition", 
-        name: "ห้องแสดงผลงาน", 
-        location_id: 2, 
-        description: "ชมผลงานศิลปะและการออกแบบจากนักศึกษาและศิษย์เก่า",
+        description: "เรียนรู้การนำเศษผ้าเหลือใช้มาสร้างสรรค์เป็นชุดแฟชั่นที่ยั่งยืน",
         qr_code_version: 1 
       },
     ],
   },
   "3": {
     id: 3,
-    name: "Thammasat Playhouse",
+    name: "Textiles Workshop, Faculty of Fine and Applied Arts, Thammasat University",
     lat: 14.071901,
     lng: 100.6076747,
     points: 100,
@@ -231,9 +231,34 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     display_order: 3,
     sub_events: [
       { 
+        id: "4-badge", 
+        name: "กิจกรรมทำเข็มกลัด", 
+        location_id: 3, 
+        description: "สร้างสรรค์เข็มกลัดด้วยมือจากผ้าและวัสดุต่างๆ",
+        qr_code_version: 1 
+      },
+      { 
+        id: "4-weaving", 
+        name: "กิจกรรมลองใช้กี่ทอผ้า", 
+        location_id: 3, 
+        description: "ลองสัมผัสประสบการณ์การทอผ้าด้วยกี่ทอแบบดั้งเดิม",
+        qr_code_version: 1 
+      },
+    ],
+  },
+  "4": {
+    id: 4,
+    name: "Thammasat Playhouse",
+    lat: 14.0671832,
+    lng: 100.6067732,
+    points: 100,
+    map_url: "https://maps.app.goo.gl/kKjeJ4w8zqZdMECYA",
+    display_order: 4,
+    sub_events: [
+      { 
         id: "3-workshop-am", 
         name: "Workshop Theatrical Design", 
-        location_id: 3, 
+        location_id: 4, 
         time: "รอบเช้า 10:00–11:30",
         description: "เรียนรู้การออกแบบและจัดแสดงเวทีละครอย่างมืออาชีพ",
         qr_code_version: 1 
@@ -241,7 +266,7 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
       { 
         id: "3-workshop-pm", 
         name: "Workshop Theatrical Design", 
-        location_id: 3, 
+        location_id: 4, 
         time: "รอบบ่าย 13:00–14:30, 14:45–16:15",
         description: "เรียนรู้การออกแบบและจัดแสดงเวทีละครอย่างมืออาชีพ",
         qr_code_version: 1 
@@ -249,7 +274,7 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
       { 
         id: "3-show-wicked", 
         name: "Wicked The Musical", 
-        location_id: 3, 
+        location_id: 4, 
         time: "10:00–10:30",
         description: "การแสดงละครเพลงชื่อดัง Wicked",
         qr_code_version: 1,
@@ -258,7 +283,7 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
       { 
         id: "3-show-akanoi", 
         name: "ยักษ์ตัวแดง Akanoi", 
-        location_id: 3, 
+        location_id: 4, 
         time: "10:00–10:30",
         description: "การแสดงละครยักษ์ตัวแดง Akanoi",
         qr_code_version: 1,
@@ -267,7 +292,7 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
       { 
         id: "3-show-lalaland", 
         name: "ลา ลา แลนด์", 
-        location_id: 3, 
+        location_id: 4, 
         time: "10:00–10:30",
         description: "การแสดงละครเพลง La La Land",
         qr_code_version: 1,
@@ -276,36 +301,11 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
       { 
         id: "3-show-mondo", 
         name: "มณโฑ", 
-        location_id: 3, 
+        location_id: 4, 
         time: "14:00–14:40",
         description: "การแสดงละครมณโฑ",
         qr_code_version: 1,
         points_awarded: 0 // การแสดงไม่ให้คะแนน
-      },
-    ],
-  },
-  "4": {
-    id: 4,
-    name: "Textiles Workshop, Faculty of Fine and Applied Arts, Thammasat University",
-    lat: 14.0671832,
-    lng: 100.6067732,
-    points: 100,
-    map_url: "https://maps.app.goo.gl/kKjeJ4w8zqZdMECYA",
-    display_order: 4,
-    sub_events: [
-      { 
-        id: "4-badge", 
-        name: "กิจกรรมทำเข็มกลัด", 
-        location_id: 4, 
-        description: "สร้างสรรค์เข็มกลัดด้วยมือจากผ้าและวัสดุต่างๆ",
-        qr_code_version: 1 
-      },
-      { 
-        id: "4-weaving", 
-        name: "กิจกรรมลองใช้กี่ทอผ้า", 
-        location_id: 4, 
-        description: "ลองสัมผัสประสบการณ์การทอผ้าด้วยกี่ทอแบบดั้งเดิม",
-        qr_code_version: 1 
       },
     ],
   },
