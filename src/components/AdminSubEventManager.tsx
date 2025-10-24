@@ -361,7 +361,11 @@ export const AdminSubEventManager = ({ locations, onSave }: Props) => {
                                     <p className="font-semibold mb-1">ℹ️ ข้อมูล:</p>
                                     <p>• ID: {subEvent.id}</p>
                                     <p>• Version: {subEvent.qr_code_version || 1}</p>
-                                    <p>• คะแนน: +100 (ครั้งแรกต่อสถานที่)</p>
+                                    {(subEvent.points_awarded ?? 100) > 0 ? (
+                                      <p>• คะแนน: +{subEvent.points_awarded ?? 100} (ครั้งแรกต่อสถานที่)</p>
+                                    ) : (
+                                      <p>• คะแนน: ไม่มีคะแนน (บันทึกการเข้าร่วมเท่านั้น)</p>
+                                    )}
                                   </div>
                                 </div>
                               </>

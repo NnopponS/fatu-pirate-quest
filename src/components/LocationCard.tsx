@@ -121,6 +121,11 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageU
                       <div className="flex-1 text-left">
                         <p className={`text-sm font-semibold ${checkedIn ? 'text-green-900' : 'text-amber-900'}`}>
                           ⚓ {subEvent.name}
+                          {(subEvent.points_awarded ?? 100) === 0 && (
+                            <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                              ไม่มีคะแนน
+                            </span>
+                          )}
                         </p>
                         {subEvent.time && (
                           <p className={`text-xs mt-0.5 ${checkedIn ? 'text-green-700' : 'text-amber-700'}`}>

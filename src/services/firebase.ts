@@ -34,6 +34,7 @@ export interface SubEvent {
   image_url?: string; // รูปภาพกิจกรรม
   time?: string; // เวลากิจกรรม (optional)
   qr_code_version?: number; // version ของ QR สำหรับ sub-event นี้
+  points_awarded?: number; // คะแนนที่ได้ (default = 100, ถ้าเป็น 0 = ไม่ให้คะแนน)
 }
 
 export interface LocationRecord {
@@ -247,7 +248,8 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
         location_id: 3, 
         time: "10:00–10:30",
         description: "การแสดงละครเพลงชื่อดัง Wicked",
-        qr_code_version: 1 
+        qr_code_version: 1,
+        points_awarded: 0 // การแสดงไม่ให้คะแนน
       },
       { 
         id: "3-show-akanoi", 
@@ -255,7 +257,8 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
         location_id: 3, 
         time: "10:00–10:30",
         description: "การแสดงละครยักษ์ตัวแดง Akanoi",
-        qr_code_version: 1 
+        qr_code_version: 1,
+        points_awarded: 0 // การแสดงไม่ให้คะแนน
       },
       { 
         id: "3-show-lalaland", 
@@ -263,7 +266,8 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
         location_id: 3, 
         time: "10:00–10:30",
         description: "การแสดงละครเพลง La La Land",
-        qr_code_version: 1 
+        qr_code_version: 1,
+        points_awarded: 0 // การแสดงไม่ให้คะแนน
       },
       { 
         id: "3-show-mondo", 
@@ -271,7 +275,8 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
         location_id: 3, 
         time: "14:00–14:40",
         description: "การแสดงละครมณโฑ",
-        qr_code_version: 1 
+        qr_code_version: 1,
+        points_awarded: 0 // การแสดงไม่ให้คะแนน
       },
     ],
   },
@@ -975,8 +980,11 @@ export const checkinSubEvent = async (
   }
 
   // คำนวณคะแนนที่จะได้รับ
-  const SUB_EVENT_POINTS = 100;
-  const pointsToAward = hasGottenPointsFromThisLocation ? 0 : SUB_EVENT_POINTS;
+  // ถ้า sub-event กำหนด points_awarded = 0 → ไม่ให้คะแนนเลย
+  // ถ้าไม่ได้กำหนด → default = 100
+  // แต่ถ้าเคยได้คะแนนจากสถานที่นี้แล้ว → ให้ 0
+  const SUB_EVENT_BASE_POINTS = foundSubEvent.points_awarded ?? 100;
+  const pointsToAward = SUB_EVENT_BASE_POINTS === 0 ? 0 : (hasGottenPointsFromThisLocation ? 0 : SUB_EVENT_BASE_POINTS);
 
   // บันทึก sub-event checkin
   const subEventCheckin: SubEventCheckinRecord = {

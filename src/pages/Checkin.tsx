@@ -26,6 +26,7 @@ interface SubEventInfo {
   time?: string;
   location_id: number;
   location_name: string;
+  points_awarded?: number;
 }
 
 const Checkin = () => {
@@ -107,6 +108,7 @@ const Checkin = () => {
             time: foundSubEvent.time,
             location_id: parentLocation.id,
             location_name: parentLocation.name,
+            points_awarded: foundSubEvent.points_awarded,
           });
 
           // Show confirmation page
@@ -373,9 +375,15 @@ const Checkin = () => {
                     <span>สถานที่</span>
                   </div>
                   <p className="text-lg font-bold text-amber-900">{subEventInfo.location_name}</p>
-                  <p className="text-sm text-amber-800 mt-3 bg-yellow-50 rounded-lg px-3 py-2 border border-yellow-300">
-                    💎 คะแนนพิเศษ: <span className="font-bold text-amber-900">+100 แต้ม</span> (ครั้งแรกต่อสถานที่)
-                  </p>
+                  {(subEventInfo.points_awarded ?? 100) > 0 ? (
+                    <p className="text-sm text-amber-800 mt-3 bg-yellow-50 rounded-lg px-3 py-2 border border-yellow-300">
+                      💎 คะแนนพิเศษ: <span className="font-bold text-amber-900">+{subEventInfo.points_awarded ?? 100} แต้ม</span> (ครั้งแรกต่อสถานที่)
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-600 mt-3 bg-gray-50 rounded-lg px-3 py-2 border border-gray-300">
+                      ℹ️ กิจกรรมนี้ไม่มีคะแนน (บันทึกการเข้าร่วมเท่านั้น)
+                    </p>
+                  )}
                 </div>
               </div>
 
