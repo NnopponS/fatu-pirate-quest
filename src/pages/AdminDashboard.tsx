@@ -84,6 +84,8 @@ interface LocationRow {
   image_url?: string;
   description?: string;
   qr_code_version?: number;
+  display_order?: number;
+  sub_events?: any[];
 }
 
 interface PrizeRow {
@@ -224,6 +226,7 @@ const AdminDashboard = () => {
         map_url: location.map_url,
         image_url: location.image_url,
         description: location.description,
+        display_order: location.display_order,
       });
       toast({ title: "อัปเดตจุดเช็กอินแล้ว" });
       fetchDashboard(token);

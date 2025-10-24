@@ -48,6 +48,7 @@ export interface LocationRecord {
   description?: string;
   qr_code_version?: number;
   sub_events?: SubEvent[]; // ✨ เปลี่ยนจาก events เป็น sub_events
+  display_order?: number; // ลำดับการแสดงผล (เล็กไปใหญ่)
 }
 
 export interface PrizeRecord {
@@ -165,11 +166,12 @@ export interface DashboardResponse {
 const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
   "1": {
     id: 1,
-    name: "จุดลงทะเบียนหลัก FATU 2025",
+    name: "Faculty of Fine and Applied Arts, Thammasat University",
     lat: 14.0661446,
     lng: 100.6033427,
     points: 100,
     map_url: "https://maps.app.goo.gl/hJB4uaVZJkAWoyE98",
+    display_order: 1,
     sub_events: [
       { 
         id: "1-moodboard", 
@@ -189,11 +191,12 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
   },
   "2": {
     id: 2,
-    name: "โซนกิจกรรมกลาง ลานพระบิดา",
+    name: "Gymnasium 4 Thammasat University",
     lat: 14.06879,
     lng: 100.604679,
     points: 100,
     map_url: "https://maps.app.goo.gl/eXgdntGV8D522TeQ6",
+    display_order: 2,
     sub_events: [
       { 
         id: "2-management", 
@@ -220,11 +223,12 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
   },
   "3": {
     id: 3,
-    name: "เวที Thammasat Playhouse",
+    name: "Thammasat Playhouse",
     lat: 14.071901,
     lng: 100.6076747,
     points: 100,
     map_url: "https://maps.app.goo.gl/RNUzznFv6bz82JYN6",
+    display_order: 3,
     sub_events: [
       { 
         id: "3-workshop-am", 
@@ -282,11 +286,12 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
   },
   "4": {
     id: 4,
-    name: "เวิร์กช็อปสิ่งทอ (Textiles Workshop)",
+    name: "Textiles Workshop, Faculty of Fine and Applied Arts, Thammasat University",
     lat: 14.0671832,
     lng: 100.6067732,
     points: 100,
     map_url: "https://maps.app.goo.gl/kKjeJ4w8zqZdMECYA",
+    display_order: 4,
     sub_events: [
       { 
         id: "4-badge", 
@@ -1094,7 +1099,7 @@ export const getMapData = async (participantId: string) => {
     getPointsRequired(),
   ]);
 
-  const locations = objectValues(locationsRecord).sort((a, b) => a.id - b.id);
+  const locations = objectValues(locationsRecord).sort((a, b) => (a.display_order ?? a.id) - (b.display_order ?? b.id));
   const checkins = Object.keys(checkinsRecord ?? {}).map((id) => Number(id));
   const points = participant?.points ?? 0;
 
@@ -1164,7 +1169,7 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
     participants: participantsArr.sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     ),
-    locations: locationsArr.sort((a, b) => a.id - b.id),
+    locations: locationsArr.sort((a, b) => (a.display_order ?? a.id) - (b.display_order ?? b.id)),
     prizes: prizesArr.sort(
       (a, b) => new Date((a as any).created_at).getTime() - new Date((b as any).created_at).getTime(),
     ),
@@ -1190,6 +1195,7 @@ export const updateLocation = async (token: string, location: Partial<LocationRe
   if (location.image_url !== undefined) updates.image_url = location.image_url;
   if (location.description !== undefined) updates.description = location.description;
   if (location.sub_events !== undefined) updates.sub_events = location.sub_events;
+  if (location.display_order !== undefined) updates.display_order = location.display_order;
 
   // Update in both Firebase (source of truth) and Supabase (for public display)
   await firebaseDb.update(`locations/${location.id}`, updates);

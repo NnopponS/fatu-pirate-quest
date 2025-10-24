@@ -18,6 +18,7 @@ interface LocationRecord {
   image_url?: string;
   description?: string;
   qr_code_version?: number;
+  display_order?: number;
 }
 
 interface Props {
@@ -226,7 +227,7 @@ export const AdminLocationManager = ({ location, onSave, onGenerateQR }: Props) 
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
           <Label>ชื่อสถานที่ *</Label>
           <Input
@@ -244,6 +245,17 @@ export const AdminLocationManager = ({ location, onSave, onGenerateQR }: Props) 
             onChange={(e) => setDraft({ ...draft, points: Number(e.target.value) })}
             placeholder="คะแนน"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label>ลำดับการแสดง</Label>
+          <Input
+            type="number"
+            value={draft.display_order ?? location.id}
+            onChange={(e) => setDraft({ ...draft, display_order: Number(e.target.value) })}
+            placeholder="1, 2, 3..."
+          />
+          <p className="text-xs text-gray-500">เล็ก → ใหญ่ (แสดงก่อน → หลัง)</p>
         </div>
       </div>
 
