@@ -441,12 +441,19 @@ const ensureDefaults = async () => {
   if (!locations || Object.keys(locations).length === 0) {
     await firebaseDb.update("locations", DEFAULT_LOCATIONS);
   } else {
-    // Update existing locations with sub_events if they don't have them
+    // Always update all location data to ensure sync with DEFAULT_LOCATIONS
     const updates: Record<string, any> = {};
     Object.entries(DEFAULT_LOCATIONS).forEach(([key, defaultLoc]) => {
       const existingLoc = locations[key];
-      if (existingLoc && (!existingLoc.sub_events || existingLoc.sub_events.length === 0) && defaultLoc.sub_events) {
-        updates[`${key}/sub_events`] = defaultLoc.sub_events;
+      if (existingLoc) {
+        // Update name, sub_events, display_order, and other fields
+        updates[`${key}/name`] = defaultLoc.name;
+        updates[`${key}/sub_events`] = defaultLoc.sub_events || [];
+        updates[`${key}/display_order`] = defaultLoc.display_order || defaultLoc.id;
+        if (defaultLoc.description) updates[`${key}/description`] = defaultLoc.description;
+      } else {
+        // Create new location if it doesn't exist
+        updates[key] = defaultLoc;
       }
     });
     if (Object.keys(updates).length > 0) {
