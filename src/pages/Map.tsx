@@ -12,6 +12,13 @@ import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { PirateCharacter } from "@/components/PirateCharacter";
 import jsQR from "jsqr";
 
+interface SubEventEntry {
+  id: string;
+  name: string;
+  location_id: number;
+  qr_code_version?: number;
+}
+
 interface LocationEntry {
   id: number;
   name: string;
@@ -21,7 +28,7 @@ interface LocationEntry {
   mapUrl?: string;
   imageUrl?: string;
   description?: string;
-  events?: string[];
+  sub_events?: SubEventEntry[];
 }
 
 type BarcodeDetectorInstance = {
@@ -77,7 +84,7 @@ const Map = () => {
             mapUrl: location.mapUrl || location.map_url,
             imageUrl: location.imageUrl || location.image_url,
             description: location.description,
-            events: location.events,
+            sub_events: location.sub_events,
           }))
         );
         setCheckins(data.checkins);
@@ -96,7 +103,7 @@ const Map = () => {
             mapUrl: location.mapUrl || location.map_url,
             imageUrl: location.imageUrl || location.image_url,
             description: location.description,
-            events: location.events,
+            sub_events: location.sub_events,
           }))
         );
         setPointsRequired(data.pointsRequired);
@@ -152,23 +159,20 @@ const Map = () => {
       />
       <div className="container mx-auto max-w-5xl px-4 py-16 space-y-12 animate-fade-in">
         <div className="flex flex-col items-center gap-4 text-center animate-scale-in">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-2 border-blue-400/50">
-            <Compass className="h-5 w-5 text-blue-600 animate-spin" style={{ animationDuration: '8s' }} />
-            <span className="text-sm font-bold text-blue-800">4 จุดล่าสมบัติ</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-2 border-amber-400/50">
+            <Compass className="h-5 w-5 text-amber-700 animate-spin" style={{ animationDuration: '8s' }} />
+            <span className="text-sm font-bold text-amber-900">🏴‍☠️ 4 จุดล่าสมบัติ</span>
           </div>
-          <h1 className="pirate-heading md:text-5xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            ท่องดินแดน FATU
+          <h1 className="pirate-heading md:text-5xl">
+            ท่องดินแดน FATU เช็กอินด้วย QR
           </h1>
           <p className="pirate-subheading max-w-2xl">
-            เช็กอินด้วย QR Code เพื่อสะสมคะแนนและปลดล็อกของรางวัลพิเศษ 🎁
+            สะสมคะแนนจากการเช็กอินและร่วมกิจกรรม เพื่อปลดล็อกสมบัติ! ⚓💎
           </p>
         </div>
 
         {participantId && (
-          <div className="relative overflow-hidden rounded-2xl border-2 border-purple-400 bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 p-6 shadow-xl shadow-purple-500/20 animate-slide-in">
-            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br from-purple-400/20 to-pink-400/20 blur-3xl" />
-            <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 blur-3xl" />
-            
+          <div className="pirate-card p-6 shadow-xl animate-slide-in">
             <div className="relative space-y-4">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
@@ -176,8 +180,8 @@ const Map = () => {
                     <Trophy className="h-7 w-7 text-white" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-purple-700">คะแนนสะสมของคุณ</p>
-                    <h2 className="text-3xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-primary/70">⚔️ คะแนนสะสมของคุณ</p>
+                    <h2 className="text-3xl font-black text-primary">
                       {points} แต้ม
                     </h2>
                   </div>
@@ -185,36 +189,36 @@ const Map = () => {
                 
                 <Button 
                   size="lg" 
-                  className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
+                  className="gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all"
                   onClick={() => setScannerOpen(true)}
                 >
                   <ScanLine className="h-5 w-5" />
-                  เปิดกล้องสแกน QR
+                  🏴‍☠️ สแกน QR
                 </Button>
               </div>
 
-              <div className="flex items-center gap-3 rounded-xl border-2 border-purple-300 bg-white/60 backdrop-blur-sm px-4 py-3">
+              <div className="flex items-center gap-3 rounded-xl border-2 border-amber-300 bg-amber-50/50 backdrop-blur-sm px-4 py-3">
                 <div className="flex-1">
                   <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="font-semibold text-purple-900">ความคืบหน้า</span>
-                    <span className="font-bold text-purple-700">{points}/{pointsRequired}</span>
+                    <span className="font-semibold text-amber-900">⚓ ความคืบหน้า</span>
+                    <span className="font-bold text-amber-800">{points}/{pointsRequired}</span>
                   </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-purple-200">
+                  <div className="h-3 overflow-hidden rounded-full bg-amber-200">
                     <div 
-                      className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-500"
+                      className="h-full rounded-full bg-gradient-to-r from-yellow-500 to-orange-600 transition-all duration-500"
                       style={{ width: `${Math.min((points / pointsRequired) * 100, 100)}%` }}
                     />
                   </div>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-purple-700">เหลืออีก</p>
-                  <p className="text-lg font-black text-purple-900">{Math.max(pointsRequired - points, 0)}</p>
+                  <p className="text-xs text-amber-800">เหลืออีก</p>
+                  <p className="text-lg font-black text-amber-900">{Math.max(pointsRequired - points, 0)}</p>
                 </div>
               </div>
 
               {points >= pointsRequired && (
                 <div className="rounded-xl border-2 border-green-400 bg-gradient-to-r from-green-50 to-emerald-50 p-4 text-center animate-pulse">
-                  <p className="text-sm font-bold text-green-800">🎉 ครบแล้ว! ไปหมุนวงล้อรับรางวัลได้เลย!</p>
+                  <p className="text-sm font-bold text-green-800">🎉 อาร์ร์! ครบแล้ว! ไปหมุนวงล้อรับสมบัติได้เลย!</p>
                 </div>
               )}
             </div>
@@ -224,15 +228,15 @@ const Map = () => {
         <div className="space-y-4">
           {loading ? (
             <div className="pirate-card p-12 text-center">
-              <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
-              <p className="text-lg font-semibold text-purple-700">กำลังโหลดข้อมูลสถานที่...</p>
+              <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              <p className="text-lg font-semibold text-primary">⚓ กำลังโหลดแผนที่สมบัติ...</p>
             </div>
           ) : (
             <>
               <div className="flex items-center justify-between px-2">
-                <h2 className="text-2xl font-bold text-gray-800">📍 จุดเช็กอินทั้งหมด</h2>
-                <span className="rounded-full bg-purple-100 px-4 py-1 text-sm font-bold text-purple-700">
-                  {checkins.length}/{locations.length} จุด
+                <h2 className="text-2xl font-bold text-gray-800">🗺️ จุดล่าสมบัติทั้งหมด</h2>
+                <span className="rounded-full bg-amber-100 px-4 py-1 text-sm font-bold text-amber-800 border-2 border-amber-300">
+                  ⚓ {checkins.length}/{locations.length} จุด
                 </span>
               </div>
               
@@ -252,7 +256,7 @@ const Map = () => {
                       mapUrl={location.mapUrl}
                       imageUrl={location.imageUrl}
                       description={location.description}
-                      events={location.events}
+                      subEvents={location.sub_events}
                       checkedIn={checkins.includes(location.id)}
                     />
                   </div>
@@ -268,17 +272,17 @@ const Map = () => {
               <Button 
                 size="lg" 
                 onClick={() => navigate("/rewards")} 
-                className="w-full gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 shadow-lg"
+                className="w-full gap-2 pirate-button shadow-lg"
               >
                 <Trophy className="h-5 w-5" />
-                ไปหน้าวงล้อสมบัติ
+                🎰 หมุนวงล้อสมบัติ
               </Button>
               <div className="flex gap-3">
                 <Button 
                   size="lg" 
                   variant="outline" 
                   onClick={() => navigate("/")} 
-                  className="flex-1 border-2 border-blue-300 hover:bg-blue-50"
+                  className="flex-1 border-2 border-primary/30 hover:bg-primary/10"
                 >
                   <Anchor className="mr-2 h-4 w-4" />
                   หน้าแรก
@@ -299,15 +303,15 @@ const Map = () => {
               <Button 
                 size="lg" 
                 onClick={() => navigate("/login")} 
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg"
+                className="w-full pirate-button shadow-lg"
               >
-                เข้าสู่ระบบเพื่อเช็กอิน
+                🏴‍☠️ เข้าสู่ระบบเพื่อล่าสมบัติ
               </Button>
               <Button 
                 size="lg" 
                 variant="outline" 
                 onClick={() => navigate("/")} 
-                className="w-full border-2 border-blue-300 hover:bg-blue-50"
+                className="w-full border-2 border-primary/30 hover:bg-primary/10"
               >
                 <Anchor className="mr-2 h-4 w-4" />
                 กลับหน้าแรก

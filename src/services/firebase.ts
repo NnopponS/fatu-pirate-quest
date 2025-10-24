@@ -1,7 +1,7 @@
 import { firebaseDb } from "@/integrations/firebase/database";
 import { supabase } from "@/integrations/supabase/client";
 import { CHECKIN_SECRET } from "@/lib/constants";
-import { signCheckin, todayStr } from "@/lib/crypto";
+import { signCheckin, signSubEventCheckin, todayStr } from "@/lib/crypto";
 
 const encoder = new TextEncoder();
 
@@ -26,6 +26,13 @@ export interface ParticipantRecord {
   credentials_generated_at: string;
 }
 
+export interface SubEvent {
+  id: string; // unique ID per sub-event (e.g., "1-workshop-am", "1-workshop-pm")
+  name: string; // ชื่อกิจกรรม
+  location_id: number; // สถานที่ที่กิจกรรมนี้อยู่
+  qr_code_version?: number; // version ของ QR สำหรับ sub-event นี้
+}
+
 export interface LocationRecord {
   id: number;
   name: string;
@@ -36,7 +43,7 @@ export interface LocationRecord {
   image_url?: string;
   description?: string;
   qr_code_version?: number;
-  events?: string[];
+  sub_events?: SubEvent[]; // ✨ เปลี่ยนจาก events เป็น sub_events
 }
 
 export interface PrizeRecord {
@@ -64,6 +71,14 @@ export interface CheckinRecord {
   participant_id: string;
   location_id: number;
   method: string;
+  created_at: string;
+}
+
+export interface SubEventCheckinRecord {
+  participant_id: string;
+  sub_event_id: string; // ID ของ sub-event
+  location_id: number; // สถานที่ที่ sub-event นี้อยู่
+  points_awarded: number; // คะแนนที่ได้ (100 หรือ 0)
   created_at: string;
 }
 
@@ -151,9 +166,9 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     lng: 100.6033427,
     points: 100,
     map_url: "https://maps.app.goo.gl/hJB4uaVZJkAWoyE98",
-    events: [
-      "กิจกรรมสร้าง Mood Board จากนิตยสาร",
-      "ทำชุดจากเศษผ้าเหลือใช้",
+    sub_events: [
+      { id: "1-moodboard", name: "กิจกรรมสร้าง Mood Board จากนิตยสาร", location_id: 1, qr_code_version: 1 },
+      { id: "1-fabric", name: "ทำชุดจากเศษผ้าเหลือใช้", location_id: 1, qr_code_version: 1 },
     ],
   },
   "2": {
@@ -163,10 +178,10 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     lng: 100.604679,
     points: 100,
     map_url: "https://maps.app.goo.gl/eXgdntGV8D522TeQ6",
-    events: [
-      "Workshop การบริหารจัดการศิลปะ",
-      "บูธแนะนำหลักสูตร",
-      "ห้องแสดงผลงาน",
+    sub_events: [
+      { id: "2-management", name: "Workshop การบริหารจัดการศิลปะ", location_id: 2, qr_code_version: 1 },
+      { id: "2-booth", name: "บูธแนะนำหลักสูตร", location_id: 2, qr_code_version: 1 },
+      { id: "2-exhibition", name: "ห้องแสดงผลงาน", location_id: 2, qr_code_version: 1 },
     ],
   },
   "3": {
@@ -176,13 +191,13 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     lng: 100.6076747,
     points: 100,
     map_url: "https://maps.app.goo.gl/RNUzznFv6bz82JYN6",
-    events: [
-      "Workshop Theatrical Design (รอบเช้า 10:00–11:30)",
-      "Workshop Theatrical Design (รอบบ่าย 13:00–14:30, 14:45–16:15)",
-      "การแสดง: Wicked The Musical (10:00–10:30)",
-      "การแสดง: ยักษ์ตัวแดง Akanoi (10:00–10:30)",
-      "การแสดง: ลา ลา แลนด์ (10:00–10:30)",
-      "การแสดง: มณโฑ (14:00–14:40)",
+    sub_events: [
+      { id: "3-workshop-am", name: "Workshop Theatrical Design (รอบเช้า 10:00–11:30)", location_id: 3, qr_code_version: 1 },
+      { id: "3-workshop-pm", name: "Workshop Theatrical Design (รอบบ่าย 13:00–14:30, 14:45–16:15)", location_id: 3, qr_code_version: 1 },
+      { id: "3-show-wicked", name: "การแสดง: Wicked The Musical (10:00–10:30)", location_id: 3, qr_code_version: 1 },
+      { id: "3-show-akanoi", name: "การแสดง: ยักษ์ตัวแดง Akanoi (10:00–10:30)", location_id: 3, qr_code_version: 1 },
+      { id: "3-show-lalaland", name: "การแสดง: ลา ลา แลนด์ (10:00–10:30)", location_id: 3, qr_code_version: 1 },
+      { id: "3-show-mondo", name: "การแสดง: มณโฑ (14:00–14:40)", location_id: 3, qr_code_version: 1 },
     ],
   },
   "4": {
@@ -192,9 +207,9 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     lng: 100.6067732,
     points: 100,
     map_url: "https://maps.app.goo.gl/kKjeJ4w8zqZdMECYA",
-    events: [
-      "กิจกรรมทำเข็มกลัด",
-      "กิจกรรมลองใช้กี่ทอผ้า",
+    sub_events: [
+      { id: "4-badge", name: "กิจกรรมทำเข็มกลัด", location_id: 4, qr_code_version: 1 },
+      { id: "4-weaving", name: "กิจกรรมลองใช้กี่ทอผ้า", location_id: 4, qr_code_version: 1 },
     ],
   },
 };
@@ -329,12 +344,12 @@ const ensureDefaults = async () => {
   if (!locations || Object.keys(locations).length === 0) {
     await firebaseDb.update("locations", DEFAULT_LOCATIONS);
   } else {
-    // Update existing locations with events if they don't have them
+    // Update existing locations with sub_events if they don't have them
     const updates: Record<string, any> = {};
     Object.entries(DEFAULT_LOCATIONS).forEach(([key, defaultLoc]) => {
       const existingLoc = locations[key];
-      if (existingLoc && (!existingLoc.events || existingLoc.events.length === 0) && defaultLoc.events) {
-        updates[`${key}/events`] = defaultLoc.events;
+      if (existingLoc && (!existingLoc.sub_events || existingLoc.sub_events.length === 0) && defaultLoc.sub_events) {
+        updates[`${key}/sub_events`] = defaultLoc.sub_events;
       }
     });
     if (Object.keys(updates).length > 0) {
@@ -796,6 +811,110 @@ export const checkinParticipant = async (
   ]);
 
   return { ok: true, pointsAdded: location.points ?? 0 };
+};
+
+// ✨ Checkin Sub-Event (ร่วมกิจกรรมเพื่อเพิ่มคะแนน +100)
+export const checkinSubEvent = async (
+  participantId: string,
+  subEventId: string,
+  signature: string,
+  qrVersion?: number,
+): Promise<CheckinResponse> => {
+  if (!participantId || !subEventId || !signature) {
+    throw new Error("Missing required fields");
+  }
+
+  await ensureDefaults();
+
+  // ค้นหา sub-event จากทุก location
+  let foundSubEvent: SubEvent | null = null;
+  let parentLocation: LocationRecord | null = null;
+
+  const locationsRecord = await firebaseDb.get<Record<string, LocationRecord>>("locations");
+  const locations = objectValues(locationsRecord);
+
+  for (const location of locations) {
+    if (location.sub_events) {
+      const subEvent = location.sub_events.find((se) => se.id === subEventId);
+      if (subEvent) {
+        foundSubEvent = subEvent;
+        parentLocation = location;
+        break;
+      }
+    }
+  }
+
+  if (!foundSubEvent || !parentLocation) {
+    throw new Error("Sub-event not found");
+  }
+
+  // Validate signature
+  const currentVersion = foundSubEvent.qr_code_version ?? 1;
+  
+  if (qrVersion !== undefined && qrVersion !== currentVersion) {
+    throw new Error("QR code ไม่ถูกต้อง กรุณาใช้ QR code เวอร์ชันล่าสุด");
+  }
+
+  const versionToValidate = qrVersion ?? currentVersion;
+  const signatures = await Promise.all([
+    signSubEventCheckin(subEventId, todayStr(-1), CHECKIN_SECRET, versionToValidate),
+    signSubEventCheckin(subEventId, todayStr(0), CHECKIN_SECRET, versionToValidate),
+    signSubEventCheckin(subEventId, todayStr(1), CHECKIN_SECRET, versionToValidate),
+  ]);
+
+  if (!signatures.includes(signature)) {
+    throw new Error("QR code ไม่ถูกต้องหรือหมดอายุแล้ว");
+  }
+
+  // ตรวจสอบว่าเคย scan sub-event นี้แล้วหรือไม่
+  const existingSubEventCheckin = await firebaseDb.get<SubEventCheckinRecord>(
+    `sub_event_checkins/${participantId}/${subEventId}`
+  );
+
+  if (existingSubEventCheckin) {
+    return { ok: true, pointsAdded: 0 }; // เคย scan แล้ว ไม่ได้คะแนนเพิ่ม
+  }
+
+  // ตรวจสอบว่าเคยได้คะแนนจาก sub-event ของสถานที่นี้แล้วหรือไม่
+  const allSubEventCheckins = await firebaseDb.get<Record<string, SubEventCheckinRecord>>(
+    `sub_event_checkins/${participantId}`
+  );
+
+  let hasGottenPointsFromThisLocation = false;
+  if (allSubEventCheckins) {
+    hasGottenPointsFromThisLocation = objectValues(allSubEventCheckins).some(
+      (checkin) => checkin.location_id === parentLocation.id && checkin.points_awarded > 0
+    );
+  }
+
+  // คำนวณคะแนนที่จะได้รับ
+  const SUB_EVENT_POINTS = 100;
+  const pointsToAward = hasGottenPointsFromThisLocation ? 0 : SUB_EVENT_POINTS;
+
+  // บันทึก sub-event checkin
+  const subEventCheckin: SubEventCheckinRecord = {
+    participant_id: participantId,
+    sub_event_id: subEventId,
+    location_id: parentLocation.id,
+    points_awarded: pointsToAward,
+    created_at: new Date().toISOString(),
+  };
+
+  const participant = await getParticipantById(participantId);
+  if (!participant) {
+    throw new Error("Participant not found");
+  }
+
+  const updatedPoints = participant.points + pointsToAward;
+
+  await Promise.all([
+    firebaseDb.set(`sub_event_checkins/${participantId}/${subEventId}`, subEventCheckin),
+    pointsToAward > 0 
+      ? firebaseDb.update(`participants/${participantId}`, { points: updatedPoints })
+      : Promise.resolve(),
+  ]);
+
+  return { ok: true, pointsAdded: pointsToAward };
 };
 
 const getPointsRequired = async () => {
