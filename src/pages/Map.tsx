@@ -152,99 +152,167 @@ const Map = () => {
       />
       <div className="container mx-auto max-w-5xl px-4 py-16 space-y-12 animate-fade-in">
         <div className="flex flex-col items-center gap-4 text-center animate-scale-in">
-          <span className="pirate-highlight">
-            <Compass className="h-4 w-4 text-secondary" />
-            4 จุดล่าสมบัติ
-          </span>
-          <h1 className="pirate-heading md:text-5xl">ท่องดินแดน FATU เช็กอินด้วย QR</h1>
-          <p className="pirate-subheading">
-            เพื่อปลดล็อกจากจุดหมายสำคัญ
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-2 border-blue-400/50">
+            <Compass className="h-5 w-5 text-blue-600 animate-spin" style={{ animationDuration: '8s' }} />
+            <span className="text-sm font-bold text-blue-800">4 จุดล่าสมบัติ</span>
+          </div>
+          <h1 className="pirate-heading md:text-5xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            ท่องดินแดน FATU
+          </h1>
+          <p className="pirate-subheading max-w-2xl">
+            เช็กอินด้วย QR Code เพื่อสะสมคะแนนและปลดล็อกของรางวัลพิเศษ 🎁
           </p>
         </div>
 
         {participantId && (
-          <div className="pirate-card p-8 space-y-6 animate-slide-in">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
-                  <Trophy className="h-6 w-6" />
+          <div className="relative overflow-hidden rounded-2xl border-2 border-purple-400 bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 p-6 shadow-xl shadow-purple-500/20 animate-slide-in">
+            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br from-purple-400/20 to-pink-400/20 blur-3xl" />
+            <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 blur-3xl" />
+            
+            <div className="relative space-y-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 shadow-lg">
+                    <Trophy className="h-7 w-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-purple-700">คะแนนสะสมของคุณ</p>
+                    <h2 className="text-3xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      {points} แต้ม
+                    </h2>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm uppercase tracking-wider text-foreground/60">คะแนนสะสมทั้งหมด</p>
-                  <h2 className="text-3xl font-semibold text-primary">{points} คะแนน</h2>
-                </div>
-              </div>
-              <div className="flex flex-col items-center gap-2 text-center sm:items-end sm:text-right">
-              <div className="flex gap-2">
-                <Button size="sm" variant="secondary" className="gap-2 hover-scale" onClick={() => setScannerOpen(true)}>
-                  <ScanLine className="h-4 w-4" />
+                
+                <Button 
+                  size="lg" 
+                  className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
+                  onClick={() => setScannerOpen(true)}
+                >
+                  <ScanLine className="h-5 w-5" />
                   เปิดกล้องสแกน QR
                 </Button>
               </div>
-                <div className="text-center sm:text-right">
-                  <p className="text-2xl font-bold text-primary">{pointsRequired} คะแนน</p>
-                  <p className="text-sm text-foreground/70">สะสมครบเพื่อหมุนวงล้อสมบัติ</p>
-                  <p className="text-xs text-foreground/60 mt-1">ลุ้นรับของรางวัลพิเศษเฉพาะงานนี้เท่านั้น</p>
+
+              <div className="flex items-center gap-3 rounded-xl border-2 border-purple-300 bg-white/60 backdrop-blur-sm px-4 py-3">
+                <div className="flex-1">
+                  <div className="mb-1 flex items-center justify-between text-sm">
+                    <span className="font-semibold text-purple-900">ความคืบหน้า</span>
+                    <span className="font-bold text-purple-700">{points}/{pointsRequired}</span>
+                  </div>
+                  <div className="h-3 overflow-hidden rounded-full bg-purple-200">
+                    <div 
+                      className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-500"
+                      style={{ width: `${Math.min((points / pointsRequired) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-purple-700">เหลืออีก</p>
+                  <p className="text-lg font-black text-purple-900">{Math.max(pointsRequired - points, 0)}</p>
                 </div>
               </div>
+
+              {points >= pointsRequired && (
+                <div className="rounded-xl border-2 border-green-400 bg-gradient-to-r from-green-50 to-emerald-50 p-4 text-center animate-pulse">
+                  <p className="text-sm font-bold text-green-800">🎉 ครบแล้ว! ไปหมุนวงล้อรับรางวัลได้เลย!</p>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        <div className="pirate-card p-8 space-y-6">
+        <div className="space-y-4">
           {loading ? (
-            <div className="py-16 text-center text-foreground/70">
-              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              กำลังโหลดข้อมูลสถานที่...
+            <div className="pirate-card p-12 text-center">
+              <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
+              <p className="text-lg font-semibold text-purple-700">กำลังโหลดข้อมูลสถานที่...</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {locations.map((location, idx) => (
-                <div key={location.id} style={{ animationDelay: `${idx * 100}ms` }}>
-                  <LocationCard
-                    id={location.id}
-                    name={location.name}
-                    lat={location.lat}
-                    lng={location.lng}
-                    points={location.points}
-                    mapUrl={location.mapUrl}
-                    imageUrl={location.imageUrl}
-                    description={location.description}
-                    events={location.events}
-                    checkedIn={checkins.includes(location.id)}
-                  />
-                </div>
-              ))}
-            </div>
+            <>
+              <div className="flex items-center justify-between px-2">
+                <h2 className="text-2xl font-bold text-gray-800">📍 จุดเช็กอินทั้งหมด</h2>
+                <span className="rounded-full bg-purple-100 px-4 py-1 text-sm font-bold text-purple-700">
+                  {checkins.length}/{locations.length} จุด
+                </span>
+              </div>
+              
+              <div className="grid gap-4 md:grid-cols-2">
+                {locations.map((location, idx) => (
+                  <div 
+                    key={location.id} 
+                    className="animate-fade-in"
+                    style={{ animationDelay: `${idx * 100}ms` }}
+                  >
+                    <LocationCard
+                      id={location.id}
+                      name={location.name}
+                      lat={location.lat}
+                      lng={location.lng}
+                      points={location.points}
+                      mapUrl={location.mapUrl}
+                      imageUrl={location.imageUrl}
+                      description={location.description}
+                      events={location.events}
+                      checkedIn={checkins.includes(location.id)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
 
-        <div className="flex flex-col items-center justify-center gap-4 sm:flex-row animate-fade-in">
+        <div className="flex flex-col items-center justify-center gap-3 animate-fade-in">
           {participantId ? (
-            <>
-              <Button size="lg" variant="outline" onClick={() => navigate("/rewards")} className="hover-scale">
-                <Trophy className="mr-2 h-4 w-4" />
+            <div className="flex flex-col w-full max-w-md gap-3">
+              <Button 
+                size="lg" 
+                onClick={() => navigate("/rewards")} 
+                className="w-full gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 shadow-lg"
+              >
+                <Trophy className="h-5 w-5" />
                 ไปหน้าวงล้อสมบัติ
               </Button>
-              <Button size="lg" variant="ghost" onClick={() => navigate("/")} className="hover-scale">
-                <Anchor className="mr-2 h-4 w-4" />
-                กลับหน้าแรก
-              </Button>
-              <Button size="lg" variant="destructive" onClick={handleLogout} className="hover-scale">
-                <LogOut className="mr-2 h-4 w-4" />
-                ออกจากระบบ
-              </Button>
-            </>
+              <div className="flex gap-3">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  onClick={() => navigate("/")} 
+                  className="flex-1 border-2 border-blue-300 hover:bg-blue-50"
+                >
+                  <Anchor className="mr-2 h-4 w-4" />
+                  หน้าแรก
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  onClick={handleLogout} 
+                  className="flex-1 border-2 border-red-300 text-red-600 hover:bg-red-50"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  ออกจากระบบ
+                </Button>
+              </div>
+            </div>
           ) : (
-            <>
-              <Button size="lg" onClick={() => navigate("/login")} className="hover-scale">
+            <div className="flex flex-col w-full max-w-md gap-3">
+              <Button 
+                size="lg" 
+                onClick={() => navigate("/login")} 
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg"
+              >
                 เข้าสู่ระบบเพื่อเช็กอิน
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate("/")} className="hover-scale">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                onClick={() => navigate("/")} 
+                className="w-full border-2 border-blue-300 hover:bg-blue-50"
+              >
                 <Anchor className="mr-2 h-4 w-4" />
                 กลับหน้าแรก
               </Button>
-            </>
+            </div>
           )}
         </div>
       </div>
