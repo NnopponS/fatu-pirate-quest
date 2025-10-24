@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { checkinParticipant, getMapData } from "@/services/firebase";
+import { checkinParticipant, checkinSubEvent, getMapData } from "@/services/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, ShipWheel, XCircle, MapPin, User } from "lucide-react";
+import { CheckCircle2, ShipWheel, XCircle, MapPin, User, Calendar } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { PirateCharacter } from "@/components/PirateCharacter";
+import { signSubEventCheckin, todayStr } from "@/lib/crypto";
+import { CHECKIN_SECRET } from "@/lib/constants";
 
 type Status = "loading" | "confirm" | "processing" | "success" | "error";
 
@@ -14,6 +16,16 @@ interface LocationInfo {
   name: string;
   points: number;
   imageUrl?: string;
+}
+
+interface SubEventInfo {
+  id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+  time?: string;
+  location_id: number;
+  location_name: string;
 }
 
 const Checkin = () => {
@@ -25,7 +37,9 @@ const Checkin = () => {
   const [message, setMessage] = useState("");
   const [pointsAdded, setPointsAdded] = useState(0);
   const [locationInfo, setLocationInfo] = useState<LocationInfo | null>(null);
+  const [subEventInfo, setSubEventInfo] = useState<SubEventInfo | null>(null);
   const [userName, setUserName] = useState("");
+  const [isSubEvent, setIsSubEvent] = useState(false);
 
   useEffect(() => {
     const loadCheckinInfo = async () => {
@@ -48,47 +62,96 @@ const Checkin = () => {
 
       setUserName(username || "ผู้ใช้งาน");
 
+      const subEventId = searchParams.get("subevent");
       const loc = searchParams.get("loc");
       const sig = searchParams.get("sig");
 
       console.log("Checkin page params:", { 
+        subEventId,
         loc, 
         sig, 
         allParams: Object.fromEntries(searchParams.entries())
       });
 
-      if (!loc || !sig) {
-        console.error("Missing required params", { loc: !!loc, sig: !!sig });
-        setStatus("error");
-        setMessage("ลิงก์เช็กอินไม่ถูกต้อง กรุณาสแกน QR ใหม่อีกครั้ง");
-        return;
-      }
+      // Check if this is a sub-event checkin
+      if (subEventId) {
+        setIsSubEvent(true);
+        try {
+          // Load sub-event info
+          const mapData = await getMapData(participantId);
+          let foundSubEvent: any = null;
+          let parentLocation: any = null;
 
-      try {
-        // Load location info
-        const mapData = await getMapData(participantId);
-        const location = mapData.locations.find((l: any) => l.id === parseInt(loc, 10));
-        
-        if (!location) {
+          for (const location of mapData.locations) {
+            if (location.sub_events) {
+              const subEvent = location.sub_events.find((se: any) => se.id === subEventId);
+              if (subEvent) {
+                foundSubEvent = subEvent;
+                parentLocation = location;
+                break;
+              }
+            }
+          }
+
+          if (!foundSubEvent || !parentLocation) {
+            setStatus("error");
+            setMessage("ไม่พบข้อมูลกิจกรรมนี้");
+            return;
+          }
+
+          setSubEventInfo({
+            id: foundSubEvent.id,
+            name: foundSubEvent.name,
+            description: foundSubEvent.description,
+            image_url: foundSubEvent.image_url,
+            time: foundSubEvent.time,
+            location_id: parentLocation.id,
+            location_name: parentLocation.name,
+          });
+
+          // Show confirmation page
+          setStatus("confirm");
+        } catch (error: unknown) {
+          const message =
+            error instanceof Error ? error.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
           setStatus("error");
-          setMessage("ไม่พบข้อมูลจุดเช็กอินนี้");
+          setMessage(message);
+        }
+      } else {
+        // Regular location checkin
+        if (!loc || !sig) {
+          console.error("Missing required params", { loc: !!loc, sig: !!sig });
+          setStatus("error");
+          setMessage("ลิงก์เช็กอินไม่ถูกต้อง กรุณาสแกน QR ใหม่อีกครั้ง");
           return;
         }
 
-        setLocationInfo({
-          id: location.id,
-          name: location.name,
-          points: location.points,
-          imageUrl: location.imageUrl || location.image_url,
-        });
+        try {
+          // Load location info
+          const mapData = await getMapData(participantId);
+          const location = mapData.locations.find((l: any) => l.id === parseInt(loc, 10));
+          
+          if (!location) {
+            setStatus("error");
+            setMessage("ไม่พบข้อมูลจุดเช็กอินนี้");
+            return;
+          }
 
-        // Show confirmation page
-        setStatus("confirm");
-      } catch (error: unknown) {
-        const message =
-          error instanceof Error ? error.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
-        setStatus("error");
-        setMessage(message);
+          setLocationInfo({
+            id: location.id,
+            name: location.name,
+            points: location.points,
+            imageUrl: location.imageUrl || location.image_url,
+          });
+
+          // Show confirmation page
+          setStatus("confirm");
+        } catch (error: unknown) {
+          const message =
+            error instanceof Error ? error.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
+          setStatus("error");
+          setMessage(message);
+        }
       }
     };
 
@@ -97,39 +160,73 @@ const Checkin = () => {
 
   const handleConfirmCheckin = async () => {
     const participantId = localStorage.getItem("participantId");
-    if (!participantId || !locationInfo) return;
-
-    const sig = searchParams.get("sig");
-    const version = searchParams.get("v");
-
-    if (!sig) {
-      setStatus("error");
-      setMessage("ลิงก์เช็กอินไม่ถูกต้อง");
-      return;
-    }
+    if (!participantId) return;
 
     setStatus("processing");
 
     try {
-      const result = await checkinParticipant(
-        participantId,
-        locationInfo.id,
-        sig,
-        version ? parseInt(version, 10) : undefined
-      );
-      
-      setStatus("success");
-      setPointsAdded(result.pointsAdded || 0);
-      setMessage(
-        result.pointsAdded > 0
-          ? `เช็กอินสำเร็จ! ได้รับ +${result.pointsAdded} คะแนน`
-          : "คุณเคยเช็กอินสถานีนี้แล้ว"
-      );
+      if (isSubEvent && subEventInfo) {
+        // Sub-event checkin
+        const version = searchParams.get("v");
+        
+        // Generate signature for sub-event
+        const sig = await signSubEventCheckin(
+          subEventInfo.id,
+          todayStr(0),
+          CHECKIN_SECRET,
+          version ? parseInt(version, 10) : 1
+        );
 
-      toast({
-        title: "เช็กอินสำเร็จ",
-        description: result.pointsAdded > 0 ? `+${result.pointsAdded} คะแนน` : undefined,
-      });
+        const result = await checkinSubEvent(
+          participantId,
+          subEventInfo.id,
+          sig,
+          version ? parseInt(version, 10) : undefined
+        );
+        
+        setStatus("success");
+        setPointsAdded(result.pointsAdded || 0);
+        setMessage(
+          result.pointsAdded > 0
+            ? `เข้าร่วมกิจกรรมสำเร็จ! ได้รับ +${result.pointsAdded} คะแนน`
+            : "คุณเคยเข้าร่วมกิจกรรมในสถานที่นี้แล้ว (ได้คะแนนแล้ว)"
+        );
+
+        toast({
+          title: "เข้าร่วมกิจกรรมสำเร็จ",
+          description: result.pointsAdded > 0 ? `+${result.pointsAdded} คะแนน` : "บันทึกการเข้าร่วมแล้ว",
+        });
+      } else if (locationInfo) {
+        // Regular location checkin
+        const sig = searchParams.get("sig");
+        const version = searchParams.get("v");
+
+        if (!sig) {
+          setStatus("error");
+          setMessage("ลิงก์เช็กอินไม่ถูกต้อง");
+          return;
+        }
+
+        const result = await checkinParticipant(
+          participantId,
+          locationInfo.id,
+          sig,
+          version ? parseInt(version, 10) : undefined
+        );
+        
+        setStatus("success");
+        setPointsAdded(result.pointsAdded || 0);
+        setMessage(
+          result.pointsAdded > 0
+            ? `เช็กอินสำเร็จ! ได้รับ +${result.pointsAdded} คะแนน`
+            : "คุณเคยเช็กอินสถานีนี้แล้ว"
+        );
+
+        toast({
+          title: "เช็กอินสำเร็จ",
+          description: result.pointsAdded > 0 ? `+${result.pointsAdded} คะแนน` : undefined,
+        });
+      }
 
       setTimeout(() => navigate("/map"), 2500);
     } catch (error: unknown) {
@@ -138,7 +235,7 @@ const Checkin = () => {
       setStatus("error");
       setMessage(message);
       toast({
-        title: "เช็กอินไม่สำเร็จ",
+        title: isSubEvent ? "เข้าร่วมกิจกรรมไม่สำเร็จ" : "เช็กอินไม่สำเร็จ",
         description: message,
         variant: "destructive",
       });
@@ -165,16 +262,16 @@ const Checkin = () => {
             </>
           )}
 
-          {status === "confirm" && locationInfo && (
+          {status === "confirm" && !isSubEvent && locationInfo && (
             <>
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full blur-3xl" />
-                <MapPin className="relative mx-auto h-20 w-20 text-blue-600 animate-in fade-in zoom-in" />
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-400/20 to-orange-600/20 rounded-full blur-3xl" />
+                <MapPin className="relative mx-auto h-20 w-20 text-amber-600 animate-in fade-in zoom-in" />
               </div>
-              <h2 className="text-3xl font-semibold text-blue-600">ยืนยันการเช็กอิน</h2>
+              <h2 className="text-3xl font-semibold text-amber-600">ยืนยันการเช็กอิน</h2>
               
               {locationInfo.imageUrl && (
-                <div className="mx-auto w-full max-w-sm overflow-hidden rounded-xl border-2 border-blue-200 shadow-lg">
+                <div className="mx-auto w-full max-w-sm overflow-hidden rounded-xl border-2 border-amber-300 shadow-lg">
                   <img 
                     src={locationInfo.imageUrl} 
                     alt={locationInfo.name}
@@ -184,34 +281,34 @@ const Checkin = () => {
               )}
 
               <div className="space-y-4 text-left">
-                <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-5 shadow-md">
-                  <div className="flex items-center gap-2 text-sm text-blue-700 mb-2 font-semibold">
+                <div className="rounded-xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-orange-100 p-5 shadow-md">
+                  <div className="flex items-center gap-2 text-sm text-amber-700 mb-2 font-semibold">
                     <User className="h-5 w-5" />
                     <span>ผู้เช็กอิน</span>
                   </div>
-                  <p className="text-2xl font-bold text-blue-900">{userName}</p>
+                  <p className="text-2xl font-bold text-amber-900">{userName}</p>
                 </div>
 
-                <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-5 shadow-md">
-                  <div className="flex items-center gap-2 text-sm text-blue-700 mb-2 font-semibold">
+                <div className="rounded-xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-orange-100 p-5 shadow-md">
+                  <div className="flex items-center gap-2 text-sm text-amber-700 mb-2 font-semibold">
                     <MapPin className="h-5 w-5" />
                     <span>สถานที่</span>
                   </div>
-                  <p className="text-2xl font-bold text-blue-900">{locationInfo.name}</p>
-                  <p className="text-sm text-blue-700 mt-3 bg-blue-50 rounded-lg px-3 py-2 border border-blue-200">
-                    คะแนนที่ได้รับ: <span className="font-bold text-blue-900">{locationInfo.points} แต้ม</span>
+                  <p className="text-2xl font-bold text-amber-900">{locationInfo.name}</p>
+                  <p className="text-sm text-amber-800 mt-3 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
+                    คะแนนที่ได้รับ: <span className="font-bold text-amber-900">⚓ {locationInfo.points} แต้ม</span>
                   </p>
                 </div>
               </div>
 
-              <p className="text-sm text-blue-600 font-medium">
+              <p className="text-sm text-amber-700 font-medium">
                 กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนยืนยันการเช็กอิน
               </p>
 
               <div className="flex gap-3">
                 <Button 
                   onClick={handleConfirmCheckin}
-                  className="flex-1 gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/30"
+                  className="flex-1 gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg"
                   size="lg"
                 >
                   <CheckCircle2 className="h-5 w-5" />
@@ -221,7 +318,85 @@ const Checkin = () => {
                   variant="outline" 
                   onClick={() => navigate("/map")}
                   size="lg"
-                  className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                  className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                >
+                  ยกเลิก
+                </Button>
+              </div>
+            </>
+          )}
+
+          {status === "confirm" && isSubEvent && subEventInfo && (
+            <>
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-amber-600/20 rounded-full blur-3xl" />
+                <Calendar className="relative mx-auto h-20 w-20 text-amber-600 animate-in fade-in zoom-in" />
+              </div>
+              <h2 className="text-3xl font-semibold text-amber-600">🏴‍☠️ ยืนยันการเข้าร่วมกิจกรรม</h2>
+              
+              {subEventInfo.image_url && (
+                <div className="mx-auto w-full max-w-sm overflow-hidden rounded-xl border-2 border-amber-300 shadow-lg">
+                  <img 
+                    src={subEventInfo.image_url} 
+                    alt={subEventInfo.name}
+                    className="h-48 w-full object-cover"
+                  />
+                </div>
+              )}
+
+              <div className="space-y-4 text-left">
+                <div className="rounded-xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-orange-100 p-5 shadow-md">
+                  <div className="flex items-center gap-2 text-sm text-amber-700 mb-2 font-semibold">
+                    <User className="h-5 w-5" />
+                    <span>ผู้เข้าร่วม</span>
+                  </div>
+                  <p className="text-2xl font-bold text-amber-900">{userName}</p>
+                </div>
+
+                <div className="rounded-xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-orange-100 p-5 shadow-md">
+                  <div className="flex items-center gap-2 text-sm text-amber-700 mb-2 font-semibold">
+                    <Calendar className="h-5 w-5" />
+                    <span>กิจกรรม</span>
+                  </div>
+                  <p className="text-2xl font-bold text-amber-900">⚓ {subEventInfo.name}</p>
+                  {subEventInfo.time && (
+                    <p className="text-sm text-amber-800 mt-2">🕐 {subEventInfo.time}</p>
+                  )}
+                  {subEventInfo.description && (
+                    <p className="text-sm text-amber-800 mt-2 leading-relaxed">{subEventInfo.description}</p>
+                  )}
+                </div>
+
+                <div className="rounded-xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-orange-100 p-5 shadow-md">
+                  <div className="flex items-center gap-2 text-sm text-amber-700 mb-2 font-semibold">
+                    <MapPin className="h-5 w-5" />
+                    <span>สถานที่</span>
+                  </div>
+                  <p className="text-lg font-bold text-amber-900">{subEventInfo.location_name}</p>
+                  <p className="text-sm text-amber-800 mt-3 bg-yellow-50 rounded-lg px-3 py-2 border border-yellow-300">
+                    💎 คะแนนพิเศษ: <span className="font-bold text-amber-900">+100 แต้ม</span> (ครั้งแรกต่อสถานที่)
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-sm text-amber-700 font-medium">
+                กรุณาตรวจสอบข้อมูลก่อนยืนยันการเข้าร่วมกิจกรรม
+              </p>
+
+              <div className="flex gap-3">
+                <Button 
+                  onClick={handleConfirmCheckin}
+                  className="flex-1 gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg"
+                  size="lg"
+                >
+                  <CheckCircle2 className="h-5 w-5" />
+                  ยืนยันเข้าร่วมกิจกรรม
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/map")}
+                  size="lg"
+                  className="border-amber-300 text-amber-700 hover:bg-amber-50"
                 >
                   ยกเลิก
                 </Button>

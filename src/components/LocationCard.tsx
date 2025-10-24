@@ -1,14 +1,16 @@
-import { MapPin, CheckCircle2, Clock, Calendar, ChevronDown, QrCode } from "lucide-react";
+import { MapPin, CheckCircle2, Clock, Calendar, ChevronDown, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useState } from "react";
-import QRCode from "react-qr-code";
 
 interface SubEvent {
   id: string;
   name: string;
   location_id: number;
+  description?: string;
+  image_url?: string;
+  time?: string;
   qr_code_version?: number;
 }
 
@@ -29,7 +31,7 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageU
   const mapsUrl = mapUrl ?? `https://www.google.com/maps?q=${lat},${lng}`;
   const [isEventsOpen, setIsEventsOpen] = useState(false);
   const [selectedSubEvent, setSelectedSubEvent] = useState<SubEvent | null>(null);
-  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
   return (
     <div
@@ -104,29 +106,30 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageU
                 </p>
                 <div className="space-y-2">
                   {subEvents.map((subEvent) => (
-                    <div 
-                      key={subEvent.id} 
-                      className={`flex items-center justify-between rounded-lg border p-2 ${
+                    <button
+                      key={subEvent.id}
+                      onClick={() => {
+                        setSelectedSubEvent(subEvent);
+                        setDetailDialogOpen(true);
+                      }}
+                      className={`w-full flex items-center justify-between rounded-lg border p-3 transition-all hover:shadow-md ${
                         checkedIn 
-                          ? 'border-green-200 bg-white/50' 
-                          : 'border-amber-200 bg-white/50'
+                          ? 'border-green-200 bg-white/50 hover:border-green-300 hover:bg-green-50' 
+                          : 'border-amber-200 bg-white/50 hover:border-amber-300 hover:bg-amber-50'
                       }`}
                     >
-                      <span className={`text-sm ${checkedIn ? 'text-green-900' : 'text-amber-900'}`}>
-                        ⚓ {subEvent.name}
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0"
-                        onClick={() => {
-                          setSelectedSubEvent(subEvent);
-                          setQrDialogOpen(true);
-                        }}
-                      >
-                        <QrCode className="h-4 w-4" />
-                      </Button>
-                    </div>
+                      <div className="flex-1 text-left">
+                        <p className={`text-sm font-semibold ${checkedIn ? 'text-green-900' : 'text-amber-900'}`}>
+                          ⚓ {subEvent.name}
+                        </p>
+                        {subEvent.time && (
+                          <p className={`text-xs mt-0.5 ${checkedIn ? 'text-green-700' : 'text-amber-700'}`}>
+                            🕐 {subEvent.time}
+                          </p>
+                        )}
+                      </div>
+                      <Info className={`h-4 w-4 flex-shrink-0 ml-2 ${checkedIn ? 'text-green-600' : 'text-amber-600'}`} />
+                    </button>
                   ))}
                 </div>
               </div>
@@ -164,38 +167,52 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageU
         </Button>
       </div>
 
-      {/* QR Dialog for Sub-Events */}
-      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
-        <DialogContent className="max-w-sm">
+      {/* Detail Dialog for Sub-Events */}
+      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-center">🏴‍☠️ QR Code กิจกรรม</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <span>🏴‍☠️ {selectedSubEvent?.name}</span>
+            </DialogTitle>
+            {selectedSubEvent?.time && (
+              <DialogDescription className="text-amber-700 font-semibold">
+                🕐 {selectedSubEvent.time}
+              </DialogDescription>
+            )}
           </DialogHeader>
           {selectedSubEvent && (
             <div className="space-y-4">
-              <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-4">
-                <p className="text-sm font-semibold text-amber-900 mb-2">
-                  ⚓ {selectedSubEvent.name}
-                </p>
-                <p className="text-xs text-amber-800">
-                  สแกน QR Code นี้เพื่อรับคะแนนเพิ่ม +100 (ครั้งแรกต่อสถานที่)
-                </p>
-              </div>
+              {selectedSubEvent.image_url && (
+                <div className="relative aspect-video rounded-xl overflow-hidden border-2 border-amber-300">
+                  <img 
+                    src={selectedSubEvent.image_url} 
+                    alt={selectedSubEvent.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
               
-              <div className="bg-white p-6 rounded-xl border-2 border-amber-300 flex items-center justify-center">
-                <QRCode
-                  value={`SUBEVENT|${selectedSubEvent.id}|${selectedSubEvent.qr_code_version || 1}`}
-                  size={200}
-                  level="H"
-                />
+              {selectedSubEvent.description && (
+                <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-4">
+                  <p className="text-sm text-amber-900 leading-relaxed">
+                    {selectedSubEvent.description}
+                  </p>
+                </div>
+              )}
+
+              <div className="rounded-lg bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-amber-300 p-4">
+                <p className="text-xs font-semibold text-amber-900 mb-1">💎 โบนัสคะแนน</p>
+                <p className="text-sm text-amber-800">
+                  ร่วมกิจกรรมนี้เพื่อรับคะแนนเพิ่ม <span className="font-bold text-amber-900">+100 คะแนน</span> (ครั้งแรกต่อสถานที่)
+                </p>
               </div>
 
               <div className="text-center">
                 <Button
-                  variant="outline"
-                  onClick={() => setQrDialogOpen(false)}
-                  className="border-amber-300"
+                  onClick={() => setDetailDialogOpen(false)}
+                  className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
                 >
-                  ปิด
+                  เข้าใจแล้ว
                 </Button>
               </div>
             </div>

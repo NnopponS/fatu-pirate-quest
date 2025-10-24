@@ -16,6 +16,9 @@ interface SubEventEntry {
   id: string;
   name: string;
   location_id: number;
+  description?: string;
+  image_url?: string;
+  time?: string;
   qr_code_version?: number;
 }
 
@@ -51,8 +54,10 @@ const Map = () => {
   const [qrPreviewOpen, setQrPreviewOpen] = useState(false);
   const [scannedQrData, setScannedQrData] = useState<{
     raw: string;
+    type?: 'checkin' | 'subevent';
     loc?: string;
     sig?: string;
+    subEventId?: string;
     version?: string;
     isValid: boolean;
     errorMessage?: string;
@@ -339,11 +344,12 @@ const Map = () => {
               // Parse QR code format: CHECKIN|loc|sig|version
               if (value.startsWith("CHECKIN|")) {
                 const parts = value.split("|");
-                console.log("QR Code parsed:", { parts, length: parts.length });
+                console.log("CHECKIN QR Code parsed:", { parts, length: parts.length });
                 
                 if (parts.length >= 4) {
                   parsedData = {
                     raw: value,
+                    type: 'checkin',
                     loc: parts[1],
                     sig: parts[2],
                     version: parts[3],
@@ -351,6 +357,23 @@ const Map = () => {
                   };
                 } else {
                   parsedData.errorMessage = `รูปแบบไม่ถูกต้อง (พบ ${parts.length} ส่วน, ต้องการ 4 ส่วน)`;
+                }
+              }
+              // Parse Sub-Event QR code format: SUBEVENT|subEventId|version
+              else if (value.startsWith("SUBEVENT|")) {
+                const parts = value.split("|");
+                console.log("SUBEVENT QR Code parsed:", { parts, length: parts.length });
+                
+                if (parts.length >= 3) {
+                  parsedData = {
+                    raw: value,
+                    type: 'subevent',
+                    subEventId: parts[1],
+                    version: parts[2],
+                    isValid: true,
+                  };
+                } else {
+                  parsedData.errorMessage = `รูปแบบไม่ถูกต้อง (พบ ${parts.length} ส่วน, ต้องการ 3 ส่วน)`;
                 }
               }
               // Backward compatibility: support old URL format
@@ -364,6 +387,7 @@ const Map = () => {
                   if (loc && sig) {
                     parsedData = {
                       raw: value,
+                      type: 'checkin',
                       loc,
                       sig,
                       version: version || undefined,
@@ -405,27 +429,111 @@ const Map = () => {
                 {scannedQrData?.isValid ? (
                   // Valid QR - Show parsed data
                   <div className="space-y-3">
-                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-xs text-foreground/60 mb-1">จุดเช็กอิน</p>
-                          <p className="text-lg font-semibold text-primary">
-                            จุดที่ {scannedQrData.loc}
+                    {scannedQrData.type === 'checkin' ? (
+                      // Checkin QR
+                      <>
+                        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-xs text-foreground/60 mb-1">📍 จุดเช็กอิน</p>
+                              <p className="text-lg font-semibold text-primary">
+                                จุดที่ {scannedQrData.loc}
+                              </p>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div>
+                                <p className="text-foreground/60 mb-1">QR Version</p>
+                                <p className="font-mono font-semibold">v{scannedQrData.version || '1'}</p>
+                              </div>
+                              <div>
+                                <p className="text-foreground/60 mb-1">Signature</p>
+                                <p className="font-mono text-xs truncate">{scannedQrData.sig?.substring(0, 12)}...</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => {
+                              setQrPreviewOpen(false);
+                              if (scannedQrData.loc && scannedQrData.sig) {
+                                navigate(`/checkin?loc=${scannedQrData.loc}&sig=${scannedQrData.sig}&v=${scannedQrData.version || '1'}`);
+                              }
+                            }}
+                            className="flex-1 gap-2"
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                            ยืนยันและเช็กอิน
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => {
+                              setQrPreviewOpen(false);
+                              setScannerOpen(true);
+                            }}
+                          >
+                            สแกนใหม่
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      // Sub-Event QR
+                      <>
+                        <div className="rounded-lg border-2 border-amber-400 bg-amber-50 p-4">
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-xs text-amber-700 mb-1">🏴‍☠️ กิจกรรมพิเศษ</p>
+                              <p className="text-lg font-semibold text-amber-900">
+                                {scannedQrData.subEventId}
+                              </p>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div>
+                                <p className="text-amber-700 mb-1">QR Version</p>
+                                <p className="font-mono font-semibold text-amber-900">v{scannedQrData.version || '1'}</p>
+                              </div>
+                              <div>
+                                <p className="text-amber-700 mb-1">คะแนนพิเศษ</p>
+                                <p className="font-semibold text-amber-900">+100</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="rounded-lg bg-yellow-50 border border-yellow-300 p-3">
+                          <p className="text-xs text-yellow-800">
+                            💎 คะแนนพิเศษ +100 จะได้รับ<span className="font-bold">เฉพาะครั้งแรกต่อสถานที่</span>
                           </p>
                         </div>
-                        
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                          <div>
-                            <p className="text-foreground/60 mb-1">QR Version</p>
-                            <p className="font-mono font-semibold">v{scannedQrData.version || '1'}</p>
-                          </div>
-                          <div>
-                            <p className="text-foreground/60 mb-1">Signature</p>
-                            <p className="font-mono text-xs truncate">{scannedQrData.sig?.substring(0, 12)}...</p>
-                          </div>
+
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => {
+                              setQrPreviewOpen(false);
+                              if (scannedQrData.subEventId) {
+                                navigate(`/checkin?subevent=${scannedQrData.subEventId}&v=${scannedQrData.version || '1'}`);
+                              }
+                            }}
+                            className="flex-1 gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                            เข้าร่วมกิจกรรม
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => {
+                              setQrPreviewOpen(false);
+                              setScannerOpen(true);
+                            }}
+                          >
+                            สแกนใหม่
+                          </Button>
                         </div>
-                      </div>
-                    </div>
+                      </>
+                    )}
 
                     <details className="text-xs">
                       <summary className="cursor-pointer text-foreground/60 hover:text-foreground">
@@ -435,30 +543,6 @@ const Map = () => {
                         <code className="text-xs break-all">{scannedQrData.raw}</code>
                       </div>
                     </details>
-
-                    <div className="flex gap-2">
-                      <Button 
-                        onClick={() => {
-                          setQrPreviewOpen(false);
-                          if (scannedQrData.loc && scannedQrData.sig) {
-                            navigate(`/checkin?loc=${scannedQrData.loc}&sig=${scannedQrData.sig}&v=${scannedQrData.version || '1'}`);
-                          }
-                        }}
-                        className="flex-1 gap-2"
-                      >
-                        <CheckCircle2 className="h-4 w-4" />
-                        ยืนยันและเช็กอิน
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          setQrPreviewOpen(false);
-                          setScannerOpen(true);
-                        }}
-                      >
-                        สแกนใหม่
-                      </Button>
-                    </div>
                   </div>
                 ) : (
                   // Invalid QR - Show error

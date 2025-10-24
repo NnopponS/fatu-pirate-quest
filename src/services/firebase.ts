@@ -30,6 +30,9 @@ export interface SubEvent {
   id: string; // unique ID per sub-event (e.g., "1-workshop-am", "1-workshop-pm")
   name: string; // ชื่อกิจกรรม
   location_id: number; // สถานที่ที่กิจกรรมนี้อยู่
+  description?: string; // รายละเอียดกิจกรรม
+  image_url?: string; // รูปภาพกิจกรรม
+  time?: string; // เวลากิจกรรม (optional)
   qr_code_version?: number; // version ของ QR สำหรับ sub-event นี้
 }
 
@@ -167,8 +170,20 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     points: 100,
     map_url: "https://maps.app.goo.gl/hJB4uaVZJkAWoyE98",
     sub_events: [
-      { id: "1-moodboard", name: "กิจกรรมสร้าง Mood Board จากนิตยสาร", location_id: 1, qr_code_version: 1 },
-      { id: "1-fabric", name: "ทำชุดจากเศษผ้าเหลือใช้", location_id: 1, qr_code_version: 1 },
+      { 
+        id: "1-moodboard", 
+        name: "กิจกรรมสร้าง Mood Board จากนิตยสาร", 
+        location_id: 1, 
+        description: "ร่วมสร้างสรรค์ Mood Board จากนิตยสารและสื่อต่างๆ เพื่อแสดงแนวคิดและแรงบันดาลใจ",
+        qr_code_version: 1 
+      },
+      { 
+        id: "1-fabric", 
+        name: "ทำชุดจากเศษผ้าเหลือใช้", 
+        location_id: 1, 
+        description: "เรียนรู้การนำเศษผ้าเหลือใช้มาสร้างสรรค์เป็นชุดแฟชั่นที่ยั่งยืน",
+        qr_code_version: 1 
+      },
     ],
   },
   "2": {
@@ -179,9 +194,27 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     points: 100,
     map_url: "https://maps.app.goo.gl/eXgdntGV8D522TeQ6",
     sub_events: [
-      { id: "2-management", name: "Workshop การบริหารจัดการศิลปะ", location_id: 2, qr_code_version: 1 },
-      { id: "2-booth", name: "บูธแนะนำหลักสูตร", location_id: 2, qr_code_version: 1 },
-      { id: "2-exhibition", name: "ห้องแสดงผลงาน", location_id: 2, qr_code_version: 1 },
+      { 
+        id: "2-management", 
+        name: "Workshop การบริหารจัดการศิลปะ", 
+        location_id: 2, 
+        description: "เรียนรู้การบริหารจัดการงานศิลปะและวัฒนธรรมอย่างมืออาชีพ",
+        qr_code_version: 1 
+      },
+      { 
+        id: "2-booth", 
+        name: "บูธแนะนำหลักสูตร", 
+        location_id: 2, 
+        description: "พบกับข้อมูลหลักสูตรและโอกาสการศึกษาในคณะศิลปกรรมศาสตร์",
+        qr_code_version: 1 
+      },
+      { 
+        id: "2-exhibition", 
+        name: "ห้องแสดงผลงาน", 
+        location_id: 2, 
+        description: "ชมผลงานศิลปะและการออกแบบจากนักศึกษาและศิษย์เก่า",
+        qr_code_version: 1 
+      },
     ],
   },
   "3": {
@@ -192,12 +225,54 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     points: 100,
     map_url: "https://maps.app.goo.gl/RNUzznFv6bz82JYN6",
     sub_events: [
-      { id: "3-workshop-am", name: "Workshop Theatrical Design (รอบเช้า 10:00–11:30)", location_id: 3, qr_code_version: 1 },
-      { id: "3-workshop-pm", name: "Workshop Theatrical Design (รอบบ่าย 13:00–14:30, 14:45–16:15)", location_id: 3, qr_code_version: 1 },
-      { id: "3-show-wicked", name: "การแสดง: Wicked The Musical (10:00–10:30)", location_id: 3, qr_code_version: 1 },
-      { id: "3-show-akanoi", name: "การแสดง: ยักษ์ตัวแดง Akanoi (10:00–10:30)", location_id: 3, qr_code_version: 1 },
-      { id: "3-show-lalaland", name: "การแสดง: ลา ลา แลนด์ (10:00–10:30)", location_id: 3, qr_code_version: 1 },
-      { id: "3-show-mondo", name: "การแสดง: มณโฑ (14:00–14:40)", location_id: 3, qr_code_version: 1 },
+      { 
+        id: "3-workshop-am", 
+        name: "Workshop Theatrical Design", 
+        location_id: 3, 
+        time: "รอบเช้า 10:00–11:30",
+        description: "เรียนรู้การออกแบบและจัดแสดงเวทีละครอย่างมืออาชีพ",
+        qr_code_version: 1 
+      },
+      { 
+        id: "3-workshop-pm", 
+        name: "Workshop Theatrical Design", 
+        location_id: 3, 
+        time: "รอบบ่าย 13:00–14:30, 14:45–16:15",
+        description: "เรียนรู้การออกแบบและจัดแสดงเวทีละครอย่างมืออาชีพ",
+        qr_code_version: 1 
+      },
+      { 
+        id: "3-show-wicked", 
+        name: "Wicked The Musical", 
+        location_id: 3, 
+        time: "10:00–10:30",
+        description: "การแสดงละครเพลงชื่อดัง Wicked",
+        qr_code_version: 1 
+      },
+      { 
+        id: "3-show-akanoi", 
+        name: "ยักษ์ตัวแดง Akanoi", 
+        location_id: 3, 
+        time: "10:00–10:30",
+        description: "การแสดงละครยักษ์ตัวแดง Akanoi",
+        qr_code_version: 1 
+      },
+      { 
+        id: "3-show-lalaland", 
+        name: "ลา ลา แลนด์", 
+        location_id: 3, 
+        time: "10:00–10:30",
+        description: "การแสดงละครเพลง La La Land",
+        qr_code_version: 1 
+      },
+      { 
+        id: "3-show-mondo", 
+        name: "มณโฑ", 
+        location_id: 3, 
+        time: "14:00–14:40",
+        description: "การแสดงละครมณโฑ",
+        qr_code_version: 1 
+      },
     ],
   },
   "4": {
@@ -208,8 +283,20 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     points: 100,
     map_url: "https://maps.app.goo.gl/kKjeJ4w8zqZdMECYA",
     sub_events: [
-      { id: "4-badge", name: "กิจกรรมทำเข็มกลัด", location_id: 4, qr_code_version: 1 },
-      { id: "4-weaving", name: "กิจกรรมลองใช้กี่ทอผ้า", location_id: 4, qr_code_version: 1 },
+      { 
+        id: "4-badge", 
+        name: "กิจกรรมทำเข็มกลัด", 
+        location_id: 4, 
+        description: "สร้างสรรค์เข็มกลัดด้วยมือจากผ้าและวัสดุต่างๆ",
+        qr_code_version: 1 
+      },
+      { 
+        id: "4-weaving", 
+        name: "กิจกรรมลองใช้กี่ทอผ้า", 
+        location_id: 4, 
+        description: "ลองสัมผัสประสบการณ์การทอผ้าด้วยกี่ทอแบบดั้งเดิม",
+        qr_code_version: 1 
+      },
     ],
   },
 };
@@ -1094,6 +1181,7 @@ export const updateLocation = async (token: string, location: Partial<LocationRe
   if (location.map_url !== undefined) updates.map_url = location.map_url;
   if (location.image_url !== undefined) updates.image_url = location.image_url;
   if (location.description !== undefined) updates.description = location.description;
+  if (location.sub_events !== undefined) updates.sub_events = location.sub_events;
 
   // Update in both Firebase (source of truth) and Supabase (for public display)
   await firebaseDb.update(`locations/${location.id}`, updates);

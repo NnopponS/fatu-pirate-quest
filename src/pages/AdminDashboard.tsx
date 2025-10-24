@@ -43,12 +43,14 @@ import {
   Gift,
   Users,
   Layers,
-  Search, // ✅ เพิ่ม Search icon
+  Search,
+  Calendar, // ✅ เพิ่ม Calendar icon สำหรับ sub-events
 } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { AdminLocationManager } from "@/components/AdminLocationManager";
 import { AdminParticipantManager } from "@/components/AdminParticipantManager";
 import { AdminHeroCardManager } from "@/components/AdminHeroCardManager";
+import { AdminSubEventManager } from "@/components/AdminSubEventManager";
 import { HeroCardsTab } from "@/components/HeroCardsTabContent";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -252,6 +254,26 @@ const AdminDashboard = () => {
         description: errorMessage(error),
         variant: "destructive",
       });
+    }
+  };
+
+  const saveSubEvents = async (locationId: number, subEvents: any[]) => {
+    if (!token) return;
+    
+    try {
+      await updateLocationApi(token, {
+        id: locationId,
+        sub_events: subEvents,
+      });
+      toast({ title: "อัปเดตกิจกรรมย่อยแล้ว" });
+      fetchDashboard(token);
+    } catch (error) {
+      toast({
+        title: "บันทึกกิจกรรมย่อยไม่สำเร็จ",
+        description: errorMessage(error),
+        variant: "destructive",
+      });
+      throw error;
     }
   };
 
@@ -555,7 +577,7 @@ const AdminDashboard = () => {
           </div>
         ) : (
           <Tabs defaultValue="participants" className="space-y-8">
-            <TabsList className="grid w-full grid-cols-5 bg-white/80">
+            <TabsList className="grid w-full grid-cols-6 bg-white/80">
               <TabsTrigger value="participants" className="gap-2">
                 <Users className="h-4 w-4" />
                 ลูกเรือ
@@ -563,6 +585,10 @@ const AdminDashboard = () => {
               <TabsTrigger value="locations" className="gap-2">
                 <MapPin className="h-4 w-4" />
                 จุดเช็กอิน
+              </TabsTrigger>
+              <TabsTrigger value="subevents" className="gap-2">
+                <Calendar className="h-4 w-4" />
+                กิจกรรมย่อย
               </TabsTrigger>
               <TabsTrigger value="prizes" className="gap-2">
                 <Gift className="h-4 w-4" />
@@ -686,6 +712,13 @@ const AdminDashboard = () => {
                   ))}
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="subevents" className="space-y-4">
+              <AdminSubEventManager
+                locations={dashboard.locations}
+                onSave={saveSubEvents}
+              />
             </TabsContent>
 
             <TabsContent value="prizes" className="space-y-4">
