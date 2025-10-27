@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMapData } from "@/services/firebase";
+import { firebaseDb } from "@/integrations/firebase/database";
 import { Button } from "@/components/ui/button";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { PirateCharacter } from "@/components/PirateCharacter";
 import { PirateChatbot } from "@/components/PirateChatbot";
+import { BottleQuestModal } from "@/components/BottleQuestModal";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
@@ -18,7 +20,9 @@ import {
   LogOut,
   Gift,
   Target,
-  Calendar
+  Calendar,
+  QrCode,
+  Ticket
 } from "lucide-react";
 
 interface Location {
@@ -54,12 +58,15 @@ const Dashboard = () => {
   const [subEventCheckins, setSubEventCheckins] = useState<SubEventCheckin[]>([]);
   const [participantName, setParticipantName] = useState("");
   const [chatbotOpen, setChatbotOpen] = useState(false);
+  const [prizeInfo, setPrizeInfo] = useState<{prize: string; claimCode: string; claimed: boolean} | null>(null);
+  const [questModalOpen, setQuestModalOpen] = useState(false);
+  const [questLocation, setQuestLocation] = useState<any>(null);
 
   const handleLogout = useCallback(() => {
     logout();
     toast({
       title: "ออกจากระบบสำเร็จ",
-      description: "แล้วพบกันใหม่ในการผจญภัยครั้งหน้า ข้า!",
+      description: "แล้วพบกันใหม่ในการผจญภัยครั้งหน้า!",
     });
     navigate("/");
   }, [logout, toast, navigate]);
@@ -84,6 +91,20 @@ const Dashboard = () => {
       
       if (data.subEventCheckins) {
         setSubEventCheckins(data.subEventCheckins);
+      }
+
+      // Load prize info (claim code)
+      try {
+        const spin = await firebaseDb.get<{prize: string; claim_code: string; claimed: boolean}>(`spins/${participantId}`);
+        if (spin && spin.claim_code) {
+          setPrizeInfo({
+            prize: spin.prize,
+            claimCode: spin.claim_code,
+            claimed: spin.claimed || false
+          });
+        }
+      } catch (err) {
+        console.log("No prize yet");
       }
     } catch (error) {
       toast({
@@ -212,6 +233,42 @@ const Dashboard = () => {
               ออกจากระบบ
             </Button>
           </div>
+
+          {/* Claim Code Display - Only show if user has won a prize */}
+          {prizeInfo && (
+            <div className="p-4 rounded-xl bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-amber-300 shadow-lg">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Ticket className="h-5 w-5 text-amber-600" />
+                    <h3 className="font-bold text-amber-900">
+                      {prizeInfo.claimed ? '✅ รางวัลที่ได้รับ' : '🎁 รหัสรับรางวัล'}
+                    </h3>
+                  </div>
+                  <p className="text-lg font-bold text-amber-700 mb-1">{prizeInfo.prize}</p>
+                  <div className="flex items-center gap-3">
+                    <code className="text-3xl font-mono font-bold text-amber-900 bg-white px-4 py-2 rounded-lg border-2 border-amber-400">
+                      {prizeInfo.claimCode}
+                    </code>
+                    {prizeInfo.claimed ? (
+                      <span className="px-3 py-1 bg-green-100 border-2 border-green-500 rounded-full text-green-800 text-sm font-bold">
+                        รับแล้ว ✓
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 bg-red-100 border-2 border-red-500 rounded-full text-red-800 text-sm font-bold animate-pulse">
+                        ยังไม่ได้รับ
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-amber-700 mt-2">
+                    {prizeInfo.claimed 
+                      ? '✨ เจ้าได้รับรางวัลนี้ไปแล้ว' 
+                      : '💡 แสดงรหัสนี้กับเจ้าหน้าที่เพื่อรับรางวัล'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -428,6 +485,48 @@ const Dashboard = () => {
           )}
         </div>
 
+        {/* Quick Action Buttons */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Button
+            size="lg"
+            onClick={() => navigate("/map")}
+            className="pirate-button gap-2 h-20"
+          >
+            <MapPin className="h-6 w-6" />
+            <div className="text-left">
+              <p className="font-bold">แผนที่</p>
+              <p className="text-xs opacity-90">ไปหาสมบัติ</p>
+            </div>
+          </Button>
+
+          <Button
+            size="lg"
+            onClick={() => navigate("/map")}
+            variant="secondary"
+            className="gap-2 h-20"
+          >
+            <QrCode className="h-6 w-6" />
+            <div className="text-left">
+              <p className="font-bold">สแกน QR</p>
+              <p className="text-xs opacity-90">เช็กอิน/กิจกรรม</p>
+            </div>
+          </Button>
+
+          <Button
+            size="lg"
+            onClick={() => navigate("/rewards")}
+            className={`gap-2 h-20 ${canSpin ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 hover:bg-gray-500'}`}
+          >
+            <Trophy className="h-6 w-6" />
+            <div className="text-left">
+              <p className="font-bold">หมุนวงล้อ</p>
+              <p className="text-xs opacity-90">
+                {canSpin ? 'พร้อมหมุนแล้ว!' : `อีก ${pointsRequired - points} คะแนน`}
+              </p>
+            </div>
+          </Button>
+        </div>
+
         {/* Call to Action */}
         {!canSpin && (
           <div className="pirate-card px-6 py-8 text-center bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300">
@@ -438,17 +537,22 @@ const Dashboard = () => {
             <p className="text-amber-800 mb-4">
               ต้องการอีก <span className="font-bold text-2xl">{pointsRequired - points}</span> คะแนน
             </p>
-            <Button
-              size="lg"
-              onClick={() => navigate("/map")}
-              className="pirate-button gap-2"
-            >
-              <Anchor className="h-5 w-5" />
-              ออกเดินทางต่อ!
-            </Button>
+            <p className="text-sm text-amber-700">
+              สแกน QR code เพื่อเช็กอินและร่วมกิจกรรมเพื่อรับคะแนน!
+            </p>
           </div>
         )}
       </div>
+
+      {/* Quest Modal */}
+      <BottleQuestModal
+        isOpen={questModalOpen}
+        onClose={() => setQuestModalOpen(false)}
+        locationName={questLocation?.name || ""}
+        subEvents={questLocation?.subEvents || []}
+        alreadyCheckedIn={questLocation?.alreadyCheckedIn || false}
+        completedSubEvents={questLocation?.completedSubEvents || []}
+      />
     </PirateBackdrop>
   );
 };

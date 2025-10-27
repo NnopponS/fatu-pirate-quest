@@ -311,7 +311,7 @@ export const PirateHero = () => {
               <p className="text-sm md:text-lg text-foreground/80">ทำตามขั้นตอนง่ายๆ เพื่อรับสมบัติโจรสลัด</p>
             </div>
 
-            <div className="grid gap-3 md:gap-6 grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 md:gap-6 grid-cols-2 lg:grid-cols-5">
               {[
                 {
                   step: "1",
@@ -341,15 +341,27 @@ export const PirateHero = () => {
                   description: "สะสมครบ 400 คะแนน แล้วหมุนวงล้อลุ้นรางวัล!",
                   color: "from-red-500 to-red-600",
                 },
+                {
+                  step: "💡",
+                  icon: "🤖",
+                  title: "AI โจรสลัด",
+                  description: "คลิกตัวโจรสลัดเพื่อคุยและถามคำถามเกี่ยวกับงาน!",
+                  color: "from-purple-500 to-purple-600",
+                  highlight: true,
+                },
               ].map((item, index) => (
                 <div 
                   key={index}
-                  className="relative group"
+                  className={`relative group ${item.highlight ? 'col-span-2 lg:col-span-1' : ''}`}
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <div className="rounded-xl md:rounded-2xl border-2 border-rope/40 bg-white/90 p-3 md:p-6 shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-105 h-full">
+                  <div className={`rounded-xl md:rounded-2xl border-2 p-3 md:p-6 shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-105 h-full ${
+                    item.highlight 
+                      ? 'border-purple-400 bg-gradient-to-br from-purple-50 to-pink-50 animate-pulse-slow' 
+                      : 'border-rope/40 bg-white/90'
+                  }`}>
                     {/* Step Number Badge */}
-                    <div className={`absolute -top-2 -left-2 md:-top-4 md:-left-4 w-8 h-8 md:w-12 md:h-12 rounded-full bg-gradient-to-br ${item.color} text-white font-bold text-sm md:text-xl flex items-center justify-center shadow-lg`}>
+                    <div className={`absolute -top-2 -left-2 md:-top-4 md:-left-4 w-8 h-8 md:w-12 md:h-12 rounded-full bg-gradient-to-br ${item.color} text-white font-bold text-sm md:text-xl flex items-center justify-center shadow-lg ${item.highlight ? 'animate-bounce' : ''}`}>
                       {item.step}
                     </div>
                     
