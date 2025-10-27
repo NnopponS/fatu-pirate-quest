@@ -1324,7 +1324,7 @@ const AdminDashboard = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {spins.length === 0 ? (
+                      {dashboard.spins.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={6} className="text-center text-foreground/50 py-8">
                             ยังไม่มีผู้ที่หมุนวงล้อ
