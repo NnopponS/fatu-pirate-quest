@@ -44,7 +44,8 @@ import {
   Users,
   Layers,
   Search,
-  Calendar, // ✅ เพิ่ม Calendar icon สำหรับ sub-events
+  Calendar,
+  FileSpreadsheet,
 } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { AdminLocationManager } from "@/components/AdminLocationManager";
@@ -53,6 +54,7 @@ import { AdminHeroCardManager } from "@/components/AdminHeroCardManager";
 import { AdminSubEventManager } from "@/components/AdminSubEventManager";
 import { HeroCardsTab } from "@/components/HeroCardsTabContent";
 import { supabase } from "@/integrations/supabase/client";
+import * as XLSX from 'xlsx';
 
 interface ParticipantRow {
   id: string;
@@ -484,9 +486,9 @@ const AdminDashboard = () => {
       "ระดับชั้น",
       "สถานศึกษา",
       "โปรแกรม",
-      "เบอร์โทร", // ✅ เพิ่มเบอร์โทร
-      "สถานะรางวัล", // ✅ เพิ่มสถานะรางวัล
-      "รางวัลที่ได้", // ✅ เพิ่มรางวัลที่ได้
+      "เบอร์โทร",
+      "สถานะรางวัล",
+      "รางวัลที่ได้",
       "ลงทะเบียนเมื่อ",
     ];
 
@@ -502,9 +504,9 @@ const AdminDashboard = () => {
         p.grade_level ?? "",
         p.school ?? "",
         p.program ?? "",
-        p.phone_number ?? "", // ✅ เบอร์โทร
-        spin ? "ได้รับแล้ว" : "ยังไม่ได้รับ", // ✅ สถานะ
-        spin ? spin.prize : "-", // ✅ รางวัล
+        p.phone_number ?? "",
+        spin ? "ได้รับแล้ว" : "ยังไม่ได้รับ",
+        spin ? spin.prize : "-",
         new Date(p.created_at).toISOString(),
       ];
     });
@@ -520,7 +522,9 @@ const AdminDashboard = () => {
       )
       .join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    // ✅ Add UTF-8 BOM for Excel Thai language support
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -571,7 +575,9 @@ const AdminDashboard = () => {
       )
       .join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    // ✅ Add UTF-8 BOM for Excel Thai language support
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -627,7 +633,9 @@ const AdminDashboard = () => {
       )
       .join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    // ✅ Add UTF-8 BOM for Excel Thai language support
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -636,6 +644,122 @@ const AdminDashboard = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  // ✅ Export all data to Excel with multiple sheets
+  const exportAllDataToExcel = () => {
+    if (!dashboard) return;
+
+    const workbook = XLSX.utils.book_new();
+
+    // Sheet 1: ข้อมูลผู้ลงทะเบียน (Participants)
+    const participantsData = [
+      ["ID", "Username", "ชื่อ", "นามสกุล", "คะแนน", "อายุ", "ระดับชั้น", "สถานศึกษา", "โปรแกรม", "เบอร์โทร", "สถานะรางวัล", "รางวัลที่ได้", "ลงทะเบียนเมื่อ"],
+      ...dashboard.participants.map((p) => {
+        const spin = dashboard.spins.find((s) => s.participant_id === p.id);
+        return [
+          p.id,
+          p.username,
+          p.first_name,
+          p.last_name,
+          p.points,
+          p.age ?? "",
+          p.grade_level ?? "",
+          p.school ?? "",
+          p.program ?? "",
+          p.phone_number ?? "",
+          spin ? "ได้รับแล้ว" : "ยังไม่ได้รับ",
+          spin ? spin.prize : "-",
+          new Date(p.created_at).toLocaleString('th-TH'),
+        ];
+      }),
+    ];
+    const participantsSheet = XLSX.utils.aoa_to_sheet(participantsData);
+    XLSX.utils.book_append_sheet(workbook, participantsSheet, "ผู้ลงทะเบียน");
+
+    // Sheet 2: เช็กอินสถานที่ทั้งหมด (All Location Check-ins)
+    const allCheckinsData = [
+      ["Checkin ID", "Participant ID", "Username", "ชื่อ-นามสกุล", "Location ID", "ชื่อสถานที่", "Method", "เช็กอินเมื่อ"],
+      ...dashboard.checkins.map((checkin) => {
+        const participant = dashboard.participants.find((p) => p.id === checkin.participant_id);
+        const location = dashboard.locations.find((l) => l.id === checkin.location_id);
+        return [
+          `${checkin.participant_id}-${checkin.location_id}`,
+          checkin.participant_id,
+          participant?.username ?? "",
+          participant ? `${participant.first_name} ${participant.last_name}` : "",
+          checkin.location_id,
+          location?.name ?? "",
+          checkin.method,
+          new Date(checkin.created_at).toLocaleString('th-TH'),
+        ];
+      }),
+    ];
+    const allCheckinsSheet = XLSX.utils.aoa_to_sheet(allCheckinsData);
+    XLSX.utils.book_append_sheet(workbook, allCheckinsSheet, "เช็กอินทั้งหมด");
+
+    // Sheet 3-N: แยกเช็กอินตามสถานที่ (Checkins by Location)
+    dashboard.locations.forEach((location) => {
+      const locationCheckins = dashboard.checkins.filter((c) => c.location_id === location.id);
+      const locationData = [
+        ["Participant ID", "Username", "ชื่อ-นามสกุล", "Method", "เช็กอินเมื่อ"],
+        ...locationCheckins.map((checkin) => {
+          const participant = dashboard.participants.find((p) => p.id === checkin.participant_id);
+          return [
+            checkin.participant_id,
+            participant?.username ?? "",
+            participant ? `${participant.first_name} ${participant.last_name}` : "",
+            checkin.method,
+            new Date(checkin.created_at).toLocaleString('th-TH'),
+          ];
+        }),
+      ];
+      const locationSheet = XLSX.utils.aoa_to_sheet(locationData);
+      // Shorten location name for sheet name (max 31 chars for Excel)
+      const sheetName = location.name.substring(0, 25);
+      XLSX.utils.book_append_sheet(workbook, locationSheet, sheetName);
+    });
+
+    // Sheet: กิจกรรมย่อย (Sub-events)
+    const subEventsData = [
+      ["Checkin ID", "Participant ID", "Username", "ชื่อ-นามสกุล", "Sub Event ID", "ชื่อกิจกรรม", "Location ID", "ชื่อสถานที่", "คะแนนที่ได้", "เข้าร่วมเมื่อ"],
+      ...dashboard.subEventCheckins.map((checkin) => {
+        const participant = dashboard.participants.find((p) => p.id === checkin.participant_id);
+        const location = dashboard.locations.find((l) => l.id === checkin.location_id);
+        const subEvent = location?.sub_events?.find((se) => se.id === checkin.sub_event_id);
+        return [
+          `${checkin.participant_id}-${checkin.sub_event_id}`,
+          checkin.participant_id,
+          participant?.username ?? "",
+          participant ? `${participant.first_name} ${participant.last_name}` : "",
+          checkin.sub_event_id,
+          subEvent?.name ?? "",
+          checkin.location_id,
+          location?.name ?? "",
+          checkin.points_awarded,
+          new Date(checkin.created_at).toLocaleString('th-TH'),
+        ];
+      }),
+    ];
+    const subEventsSheet = XLSX.utils.aoa_to_sheet(subEventsData);
+    XLSX.utils.book_append_sheet(workbook, subEventsSheet, "กิจกรรมย่อย");
+
+    // Generate Excel file and download
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `FATU_Complete_Data_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "ดาวน์โหลดสำเร็จ",
+      description: "ไฟล์ Excel ถูกดาวน์โหลดเรียบร้อยแล้ว",
+    });
   };
 
   if (!token) {
@@ -687,7 +811,7 @@ const AdminDashboard = () => {
           </div>
         ) : (
           <Tabs defaultValue="participants" className="space-y-8">
-            <TabsList className="grid w-full grid-cols-6 bg-white/80">
+            <TabsList className="grid w-full grid-cols-7 bg-white/80">
               <TabsTrigger value="participants" className="gap-2">
                 <Users className="h-4 w-4" />
                 ลูกเรือ
@@ -707,6 +831,10 @@ const AdminDashboard = () => {
               <TabsTrigger value="herocards" className="gap-2">
                 <Layers className="h-4 w-4" />
                 Hero Cards
+              </TabsTrigger>
+              <TabsTrigger value="export" className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" />
+                Export Data
               </TabsTrigger>
               <TabsTrigger value="settings" className="gap-2">
                 <Anchor className="h-4 w-4" />
@@ -986,6 +1114,126 @@ const AdminDashboard = () => {
 
             <TabsContent value="herocards" className="space-y-4">
               <HeroCardsTab token={token} />
+            </TabsContent>
+
+            <TabsContent value="export" className="space-y-4">
+              <div className="pirate-card px-6 py-8 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
+                    <FileSpreadsheet className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-semibold text-primary">Export ข้อมูลทั้งหมด</h2>
+                    <p className="text-sm text-foreground/70">
+                      ดาวน์โหลดข้อมูลทั้งหมดในไฟล์ Excel แยกเป็น Sheets ตามประเภทข้อมูล
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  {/* Excel Export - Main Feature */}
+                  <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 px-6 py-8 shadow-lg">
+                    <div className="mb-4 flex items-center gap-3">
+                      <FileSpreadsheet className="h-8 w-8 text-primary" />
+                      <h3 className="text-xl font-semibold text-primary">Export Excel แบบครบถ้วน</h3>
+                    </div>
+                    <p className="mb-6 text-sm text-foreground/70">
+                      ดาวน์โหลดไฟล์ Excel ที่รวมข้อมูลทั้งหมด แยกเป็น Sheets ดังนี้:
+                    </p>
+                    <ul className="mb-6 space-y-2 text-sm">
+                      <li className="flex items-start gap-2">
+                        <span className="mt-0.5 text-primary">✓</span>
+                        <span>ข้อมูลผู้ลงทะเบียนทั้งหมด (ชื่อ, อายุ, ระดับชั้น, สถานศึกษา, โปรแกรม, เบอร์โทร, รางวัล)</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-0.5 text-primary">✓</span>
+                        <span>เช็กอินสถานที่ทั้งหมดรวมกัน</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-0.5 text-primary">✓</span>
+                        <span>เช็กอินแยกตามแต่ละสถานที่ (1 Sheet ต่อสถานที่)</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-0.5 text-primary">✓</span>
+                        <span>กิจกรรมย่อยทั้งหมด</span>
+                      </li>
+                    </ul>
+                    <Button 
+                      onClick={exportAllDataToExcel}
+                      className="w-full gap-2 shadow-lg"
+                      size="lg"
+                    >
+                      <Download className="h-5 w-5" />
+                      ดาวน์โหลด Excel ทั้งหมด
+                    </Button>
+                    <p className="mt-3 text-center text-xs text-foreground/60">
+                      ภาษาไทยจะแสดงผลถูกต้องใน Excel
+                    </p>
+                  </div>
+
+                  {/* CSV Exports - Individual */}
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-rope/40 bg-white/70 px-6 py-6 shadow-sm">
+                      <h3 className="mb-4 text-lg font-semibold text-primary">Export CSV แยกไฟล์</h3>
+                      <div className="space-y-3">
+                        <Button
+                          variant="outline"
+                          onClick={exportParticipants}
+                          className="w-full justify-start gap-2"
+                        >
+                          <Users className="h-4 w-4" />
+                          ผู้ลงทะเบียน (CSV)
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={exportLocationCheckins}
+                          className="w-full justify-start gap-2"
+                        >
+                          <MapPin className="h-4 w-4" />
+                          เช็กอินสถานที่ (CSV)
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={exportSubEventCheckins}
+                          className="w-full justify-start gap-2"
+                        >
+                          <Calendar className="h-4 w-4" />
+                          กิจกรรมย่อย (CSV)
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-amber-400/40 bg-amber-50/50 px-4 py-4">
+                      <p className="text-sm text-amber-900">
+                        <strong>💡 คำแนะนำ:</strong> ใช้ Excel Export เพื่อความสะดวก 
+                        (ครบทุกข้อมูลในไฟล์เดียว) หรือ CSV Export หากต้องการเฉพาะข้อมูลบางส่วน
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-primary/20 bg-primary/5 px-6 py-4">
+                  <h4 className="mb-2 font-semibold text-primary">สถิติข้อมูล</h4>
+                  <div className="grid gap-4 sm:grid-cols-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-primary">{dashboard.participants.length}</p>
+                      <p className="text-xs text-foreground/70">ผู้ลงทะเบียน</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-secondary">{dashboard.checkins.length}</p>
+                      <p className="text-xs text-foreground/70">เช็กอินสถานที่</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-accent">{dashboard.subEventCheckins.length}</p>
+                      <p className="text-xs text-foreground/70">เข้าร่วมกิจกรรม</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-green-600">{dashboard.spins.length}</p>
+                      <p className="text-xs text-foreground/70">ได้รับรางวัล</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-4">

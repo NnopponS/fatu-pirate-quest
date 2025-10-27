@@ -59,7 +59,7 @@ export const SpinWheel = ({ onSpin, disabled, prizes }: SpinWheelProps) => {
       setTimeout(() => {
         setResult(prize);
         setSpinning(false);
-      }, 4000); // Match animation duration
+      }, 6000); // ✅ Increased to 6 seconds for better effect
     } catch {
       setSpinning(false);
       // Don't reset rotation on error to show what was spun
@@ -95,7 +95,7 @@ export const SpinWheel = ({ onSpin, disabled, prizes }: SpinWheelProps) => {
         {/* Wheel */}
         <div className="relative h-full w-full">
           <div
-            className="absolute inset-0 rounded-full border-8 border-yellow-600 shadow-2xl transition-transform duration-[4000ms] ease-out"
+            className="absolute inset-0 rounded-full border-8 border-yellow-600 shadow-2xl transition-transform duration-[6000ms] ease-out"
             style={{
               transform: `rotate(${rotation}deg)`,
               background: `conic-gradient(${displayPrizes.map((_, idx) => {
