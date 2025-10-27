@@ -202,7 +202,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
             {/* Speech Bubble - Larger and more prominent */}
             <div className="absolute -top-32 -left-48 bg-white rounded-3xl px-8 py-4 shadow-2xl border-4 border-primary animate-in zoom-in duration-500">
               <p className="text-3xl font-bold text-primary whitespace-nowrap animate-text-glow">
-                อาฮอย! ลูกเรือ! ⚓
+                ฮาฮอย! ลูกเรือ! ⚓
               </p>
               {/* Bubble Tail */}
               <div className="absolute bottom-0 right-16 translate-y-1/2 w-0 h-0 border-l-12 border-l-transparent border-r-12 border-r-transparent border-t-16 border-t-white" 
