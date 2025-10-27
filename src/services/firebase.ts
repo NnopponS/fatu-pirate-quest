@@ -1179,7 +1179,9 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
   const checkinsArr: CheckinRecord[] = [];
   Object.values(checkinsRecord ?? {}).forEach((participantCheckins) => {
     Object.values(participantCheckins ?? {}).forEach((checkin) => {
-      checkinsArr.push(checkin);
+      if (checkin && checkin.created_at) { // ✅ Filter out null/undefined
+        checkinsArr.push(checkin);
+      }
     });
   });
   
@@ -1187,7 +1189,9 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
   const subEventCheckinsArr: SubEventCheckinRecord[] = [];
   Object.values(subEventCheckinsRecord ?? {}).forEach((participantSubEventCheckins) => {
     Object.values(participantSubEventCheckins ?? {}).forEach((subEventCheckin) => {
-      subEventCheckinsArr.push(subEventCheckin);
+      if (subEventCheckin && subEventCheckin.created_at) { // ✅ Filter out null/undefined
+        subEventCheckinsArr.push(subEventCheckin);
+      }
     });
   });
 
