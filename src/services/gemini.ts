@@ -144,8 +144,9 @@ ${userContextText}
     
     // Call Puter AI with official format
     const response = await puter.ai.chat(fullPrompt, {
-      model: 'google/gemini-2.0-flash-lite-001', // Fast & Free model
+      model: 'google/gemini-2.5-flash', // Latest Gemini 2.5 Flash - Fast & Smart
       stream: false,
+      mode: 'background', // Run in background to prevent loading popup
     });
 
     // Extract content from response (official format: response.message.content)

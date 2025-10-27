@@ -1004,16 +1004,16 @@ const AdminDashboard = () => {
             <TabsContent value="locations" className="space-y-4">
               <div className="pirate-card px-6 py-8 space-y-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary/15 text-secondary">
-                      <MapPin className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-semibold text-primary">จัดการจุดเช็กอิน</h2>
-                      <p className="text-sm text-foreground/70">
-                        แก้ไขรายละเอียด อัปโหลดรูปภาพ และสร้าง QR Code สำหรับแต่ละจุด
-                      </p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary/15 text-secondary">
+                    <MapPin className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-semibold text-primary">จัดการจุดเช็กอิน</h2>
+                    <p className="text-sm text-foreground/70">
+                      แก้ไขรายละเอียด อัปโหลดรูปภาพ และสร้าง QR Code สำหรับแต่ละจุด
+                    </p>
+                  </div>
                   </div>
                   <Button variant="outline" className="gap-2" onClick={exportLocationCheckins}>
                     <Download className="h-4 w-4" />
@@ -1193,38 +1193,38 @@ const AdminDashboard = () => {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label>ชื่อรางวัล *</Label>
-                      <Input
-                        placeholder="ชื่อรางวัล"
-                        value={newPrize.name}
-                        onChange={(event) =>
-                          setNewPrize((prev) => ({ ...prev, name: event.target.value }))
-                        }
-                      />
+                    <Input
+                      placeholder="ชื่อรางวัล"
+                      value={newPrize.name}
+                      onChange={(event) =>
+                        setNewPrize((prev) => ({ ...prev, name: event.target.value }))
+                      }
+                    />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>น้ำหนัก *</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          placeholder="น้ำหนัก"
-                          value={newPrize.weight}
-                          onChange={(event) =>
-                            setNewPrize((prev) => ({ ...prev, weight: event.target.value }))
-                          }
-                        />
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="น้ำหนัก"
+                      value={newPrize.weight}
+                      onChange={(event) =>
+                        setNewPrize((prev) => ({ ...prev, weight: event.target.value }))
+                      }
+                    />
                       </div>
                       <div className="space-y-2">
                         <Label>จำนวน *</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="จำนวน"
-                          value={newPrize.stock}
-                          onChange={(event) =>
-                            setNewPrize((prev) => ({ ...prev, stock: event.target.value }))
-                          }
-                        />
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="จำนวน"
+                      value={newPrize.stock}
+                      onChange={(event) =>
+                        setNewPrize((prev) => ({ ...prev, stock: event.target.value }))
+                      }
+                    />
                       </div>
                     </div>
                     <div className="space-y-2">
