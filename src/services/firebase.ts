@@ -8,6 +8,33 @@ const encoder = new TextEncoder();
 const ADMIN_SESSION_TTL_HOURS = 12;
 const DEFAULT_POINTS_REQUIRED = 400;
 
+// 🚀 Simple Cache Layer - เก็บข้อมูลไว้ชั่วคราวเพื่อลดการเรียก Firebase
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 30000; // 30 seconds
+
+function getCached<T>(key: string): T | null {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data as T;
+  }
+  cache.delete(key);
+  return null;
+}
+
+function setCache(key: string, data: any) {
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
+function clearCache(pattern?: string) {
+  if (pattern) {
+    Array.from(cache.keys()).forEach(key => {
+      if (key.includes(pattern)) cache.delete(key);
+    });
+  } else {
+    cache.clear();
+  }
+}
+
 type Nullable<T> = T | null | undefined;
 
 export interface ParticipantRecord {
@@ -1110,6 +1137,11 @@ export const spinWheel = async (participantId: string): Promise<{ prize: string;
 };
 
 export const getMapData = async (participantId: string) => {
+  // 🚀 Check cache first
+  const cacheKey = `mapData:${participantId}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
   await ensureDefaults();
 
   const [locationsRecord, checkinsRecord, subEventCheckinsRecord, participant, pointsRequired] = await Promise.all([
@@ -1133,7 +1165,7 @@ export const getMapData = async (participantId: string) => {
   // Get participant name
   const participantName = participant ? `${participant.first_name} ${participant.last_name}` : "ลูกเรือ";
 
-  return { 
+  const result = { 
     locations, 
     checkins, 
     points, 
@@ -1142,6 +1174,10 @@ export const getMapData = async (participantId: string) => {
     subEventCheckins,
     participantName
   };
+
+  // 🚀 Cache the result
+  setCache(cacheKey, result);
+  return result;
 };
 
 export const getRewardsData = async (participantId: string) => {
@@ -1397,23 +1433,41 @@ export const deletePrize = async (token: string, prizeId: string) => {
 
 // Hero Cards Management
 export const getHeroCards = async (): Promise<HeroCardRecord[]> => {
+  // 🚀 Check cache first
+  const cacheKey = 'heroCards';
+  const cached = getCached<HeroCardRecord[]>(cacheKey);
+  if (cached) return cached;
+
   await ensureDefaults();
   
   const heroCardsRecord = await firebaseDb.get<Record<string, HeroCardRecord>>("hero_cards");
   const cards = objectValues(heroCardsRecord);
   
   // Sort by order and filter active cards
-  return cards.sort((a, b) => a.order - b.order);
+  const result = cards.sort((a, b) => a.order - b.order);
+  
+  // 🚀 Cache for 1 minute
+  setCache(cacheKey, result);
+  return result;
 };
 
 export const getPrizes = async (): Promise<PrizeRecord[]> => {
+  // 🚀 Check cache first  
+  const cacheKey = 'prizes';
+  const cached = getCached<PrizeRecord[]>(cacheKey);
+  if (cached) return cached;
+
   await ensureDefaults();
   
   const prizesRecord = await firebaseDb.get<Record<string, PrizeRecord>>("prizes");
   const prizes = objectValues(prizesRecord);
   
   // Filter prizes with stock > 0 and return them
-  return prizes.filter(p => p.stock > 0);
+  const result = prizes.filter(p => p.stock > 0);
+  
+  // 🚀 Cache for 30 seconds
+  setCache(cacheKey, result);
+  return result;
 };
 
 // Admin: Verify and claim prize by code
