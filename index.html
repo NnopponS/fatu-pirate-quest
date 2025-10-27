@@ -44,8 +44,24 @@
 
   <body>
     <div id="root"></div>
-    <!-- Puter.js - Free AI & Cloud Services -->
-    <script src="https://js.puter.com/v2/"></script>
+    <!-- Puter.js - Free AI & Cloud Services (Anonymous Mode) -->
+    <script src="https://js.puter.com/v2/" data-auth="optional"></script>
+    <script>
+      // Configure Puter to work without authentication
+      window.addEventListener('DOMContentLoaded', function() {
+        if (window.puter) {
+          // Set Puter to anonymous/optional auth mode
+          // This prevents the login popup from appearing
+          try {
+            if (typeof window.puter.setAuthRequired === 'function') {
+              window.puter.setAuthRequired(false);
+            }
+          } catch (e) {
+            console.log('Puter auth config:', e);
+          }
+        }
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
