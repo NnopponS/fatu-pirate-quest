@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LocationCard } from "@/components/LocationCard";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Anchor, Compass, Trophy, ScanLine, CheckCircle2, XCircle, LogOut } from "lucide-react";
+import { Anchor, Compass, Trophy, ScanLine, CheckCircle2, XCircle, LogOut, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
@@ -282,24 +282,30 @@ const Map = () => {
                 <Trophy className="h-5 w-5" />
                 🎰 หมุนวงล้อสมบัติ
               </Button>
-              <div className="flex gap-3">
+              <div className="grid grid-cols-3 gap-3">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  onClick={() => navigate("/profile")} 
+                  className="border-2 border-primary/30 hover:bg-primary/10"
+                >
+                  <User className="h-4 w-4" />
+                </Button>
                 <Button 
                   size="lg" 
                   variant="outline" 
                   onClick={() => navigate("/")} 
-                  className="flex-1 border-2 border-primary/30 hover:bg-primary/10"
+                  className="border-2 border-primary/30 hover:bg-primary/10"
                 >
-                  <Anchor className="mr-2 h-4 w-4" />
-                  หน้าแรก
+                  <Anchor className="h-4 w-4" />
                 </Button>
                 <Button 
                   size="lg" 
                   variant="outline" 
                   onClick={handleLogout} 
-                  className="flex-1 border-2 border-red-300 text-red-600 hover:bg-red-50"
+                  className="border-2 border-red-300 text-red-600 hover:bg-red-50"
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  ออกจากระบบ
+                  <LogOut className="h-4 w-4" />
                 </Button>
               </div>
             </div>

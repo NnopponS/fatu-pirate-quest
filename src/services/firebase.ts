@@ -56,6 +56,8 @@ export interface PrizeRecord {
   name: string;
   weight: number;
   stock: number; // จำนวนคงเหลือ
+  image_url?: string; // รูปภาพรางวัล
+  description?: string; // รายละเอียดรางวัล
   created_at: string;
 }
 
@@ -1309,7 +1311,14 @@ export const updateParticipant = async (
   await firebaseDb.update(`participants/${participantId}`, updates);
 };
 
-export const createPrize = async (token: string, name: string, weight: number, stock: number = 10) => {
+export const createPrize = async (
+  token: string, 
+  name: string, 
+  weight: number, 
+  stock: number = 10,
+  image_url?: string,
+  description?: string
+) => {
   const session = await validateAdminSession(token);
   if (!session) {
     throw new Error("Invalid session");
@@ -1325,6 +1334,8 @@ export const createPrize = async (token: string, name: string, weight: number, s
     name,
     weight,
     stock,
+    image_url,
+    description,
     created_at: new Date().toISOString(),
   };
 
@@ -1366,6 +1377,16 @@ export const getHeroCards = async (): Promise<HeroCardRecord[]> => {
   
   // Sort by order and filter active cards
   return cards.sort((a, b) => a.order - b.order);
+};
+
+export const getPrizes = async (): Promise<PrizeRecord[]> => {
+  await ensureDefaults();
+  
+  const prizesRecord = await firebaseDb.get<Record<string, PrizeRecord>>("prizes");
+  const prizes = objectValues(prizesRecord);
+  
+  // Filter prizes with stock > 0 and return them
+  return prizes.filter(p => p.stock > 0);
 };
 
 export const createHeroCard = async (token: string, card: Omit<HeroCardRecord, "id" | "created_at">) => {

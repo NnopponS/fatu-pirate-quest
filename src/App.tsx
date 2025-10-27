@@ -11,6 +11,8 @@ import Login from "./pages/Login";
 import Map from "./pages/Map";
 import Checkin from "./pages/Checkin";
 import Rewards from "./pages/Rewards";
+import Profile from "./pages/Profile";
+import FlappyBird from "./pages/FlappyBird";
 import AdminDashboard from "./pages/AdminDashboard";
 import PrizeVerification from "./pages/PrizeVerification";
 import NotFound from "./pages/NotFound";
@@ -51,6 +53,18 @@ const App = () => (
                   <Rewards />
                 </ProtectedRoute>
               } 
+            />
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute requireParticipant>
+                  <Profile />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/game" 
+              element={<FlappyBird />} 
             />
             <Route 
               path="/admin" 

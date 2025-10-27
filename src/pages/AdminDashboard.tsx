@@ -95,6 +95,8 @@ interface PrizeRow {
   name: string;
   weight: number;
   stock: number;
+  image_url?: string;
+  description?: string;
   created_at?: string;
 }
 
@@ -124,7 +126,7 @@ const AdminDashboard = () => {
   const [pointsRequired, setPointsRequired] = useState<number>(400);
   const [savingLocationId, setSavingLocationId] = useState<number | null>(null);
   const [savingPrizeId, setSavingPrizeId] = useState<string | null>(null);
-  const [newPrize, setNewPrize] = useState({ name: "", weight: "10", stock: "10" });
+  const [newPrize, setNewPrize] = useState({ name: "", weight: "10", stock: "10", image_url: "", description: "" });
   const [updatingThreshold, setUpdatingThreshold] = useState(false);
   const [heroCards, setHeroCards] = useState<HeroCardRecord[]>([]);
   const [heroCardDrafts, setHeroCardDrafts] = useState<HeroCardRecord[]>([]);
@@ -365,6 +367,8 @@ const AdminDashboard = () => {
         name: prize.name.trim(),
         weight: Number(prize.weight),
         stock: Number(prize.stock),
+        image_url: prize.image_url || undefined,
+        description: prize.description || undefined,
         created_at: prize.created_at || new Date().toISOString(),
       });
       toast({ title: "บันทึกรางวัลสำเร็จ" });
@@ -411,9 +415,16 @@ const AdminDashboard = () => {
     }
 
     try {
-      await createPrizeApi(token, trimmedName, weightValue, stockValue);
+      await createPrizeApi(
+        token, 
+        trimmedName, 
+        weightValue, 
+        stockValue,
+        newPrize.image_url || undefined,
+        newPrize.description || undefined
+      );
       toast({ title: "เพิ่มรางวัลสำเร็จ" });
-      setNewPrize({ name: "", weight: "10", stock: "10" });
+      setNewPrize({ name: "", weight: "10", stock: "10", image_url: "", description: "" });
       fetchDashboard(token);
     } catch (error) {
       toast({
@@ -1056,6 +1067,43 @@ const AdminDashboard = () => {
                             }
                           />
                         </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`prize-image-${prize.id}`}>URL รูปภาพ (ไม่บังคับ)</Label>
+                          <Input
+                            id={`prize-image-${prize.id}`}
+                            type="url"
+                            placeholder="https://..."
+                            value={prize.image_url || ""}
+                            onChange={(event) =>
+                              setPrizeDrafts((prev) => {
+                                const updated = [...prev];
+                                updated[index] = {
+                                  ...updated[index],
+                                  image_url: event.target.value || undefined,
+                                };
+                                return updated;
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`prize-description-${prize.id}`}>รายละเอียด (ไม่บังคับ)</Label>
+                          <Input
+                            id={`prize-description-${prize.id}`}
+                            placeholder="คำอธิบายรางวัล"
+                            value={prize.description || ""}
+                            onChange={(event) =>
+                              setPrizeDrafts((prev) => {
+                                const updated = [...prev];
+                                updated[index] = {
+                                  ...updated[index],
+                                  description: event.target.value || undefined,
+                                };
+                                return updated;
+                              })
+                            }
+                          />
+                        </div>
                       </div>
                       <div className="mt-4 flex gap-3">
                         <Button
@@ -1077,32 +1125,66 @@ const AdminDashboard = () => {
 
                 <div className="rounded-2xl border border-dashed border-rope/40 bg-white/60 px-6 py-6 shadow-inner">
                   <h3 className="text-lg font-semibold text-primary mb-4">เพิ่มรางวัลใหม่</h3>
-                  <div className="grid gap-4 md:grid-cols-[2fr_1fr_1fr_auto]">
-                    <Input
-                      placeholder="ชื่อรางวัล"
-                      value={newPrize.name}
-                      onChange={(event) =>
-                        setNewPrize((prev) => ({ ...prev, name: event.target.value }))
-                      }
-                    />
-                    <Input
-                      type="number"
-                      min="1"
-                      placeholder="น้ำหนัก"
-                      value={newPrize.weight}
-                      onChange={(event) =>
-                        setNewPrize((prev) => ({ ...prev, weight: event.target.value }))
-                      }
-                    />
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="จำนวน"
-                      value={newPrize.stock}
-                      onChange={(event) =>
-                        setNewPrize((prev) => ({ ...prev, stock: event.target.value }))
-                      }
-                    />
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>ชื่อรางวัล *</Label>
+                      <Input
+                        placeholder="ชื่อรางวัล"
+                        value={newPrize.name}
+                        onChange={(event) =>
+                          setNewPrize((prev) => ({ ...prev, name: event.target.value }))
+                        }
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>น้ำหนัก *</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="น้ำหนัก"
+                          value={newPrize.weight}
+                          onChange={(event) =>
+                            setNewPrize((prev) => ({ ...prev, weight: event.target.value }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>จำนวน *</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="จำนวน"
+                          value={newPrize.stock}
+                          onChange={(event) =>
+                            setNewPrize((prev) => ({ ...prev, stock: event.target.value }))
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>URL รูปภาพ</Label>
+                      <Input
+                        type="url"
+                        placeholder="https://example.com/image.jpg"
+                        value={newPrize.image_url}
+                        onChange={(event) =>
+                          setNewPrize((prev) => ({ ...prev, image_url: event.target.value }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>รายละเอียด</Label>
+                      <Input
+                        placeholder="คำอธิบายรางวัล"
+                        value={newPrize.description}
+                        onChange={(event) =>
+                          setNewPrize((prev) => ({ ...prev, description: event.target.value }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-4">
                     <Button className="gap-2" onClick={addPrize}>
                       <Plus className="h-4 w-4" />
                       เพิ่มรางวัล

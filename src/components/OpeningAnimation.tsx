@@ -54,15 +54,37 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
         ข้ามแอนิเมชัน
       </Button>
 
-      {/* Sun */}
+      {/* Sun with rays */}
       <div className="absolute top-10 right-10 w-20 h-20 bg-yellow-300 rounded-full shadow-2xl animate-pulse-slow">
         <div className="absolute inset-0 rounded-full bg-yellow-200 animate-ping opacity-20" />
+        {/* Sun rays rotating */}
+        <div className="absolute inset-0 animate-spin-slow">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-8 bg-yellow-400 rounded-full"
+              style={{
+                left: '50%',
+                top: '50%',
+                transformOrigin: 'center',
+                transform: `rotate(${i * 45}deg) translate(-50%, -140%)`,
+              }}
+            />
+          ))}
+        </div>
       </div>
+      
+      {/* Stars twinkling */}
+      <div className="absolute top-5 left-5 text-2xl animate-twinkle-1">⭐</div>
+      <div className="absolute top-20 left-[30%] text-xl animate-twinkle-2">✨</div>
+      <div className="absolute top-10 right-[20%] text-2xl animate-twinkle-3">💫</div>
 
-      {/* Clouds */}
-      <div className="absolute top-20 left-10 w-32 h-12 bg-white/80 rounded-full blur-sm animate-float-cloud-1" />
-      <div className="absolute top-32 right-1/4 w-40 h-16 bg-white/70 rounded-full blur-sm animate-float-cloud-2" />
-      <div className="absolute top-16 left-1/3 w-24 h-10 bg-white/60 rounded-full blur-sm animate-float-cloud-3" />
+      {/* Clouds - More dynamic */}
+      <div className="absolute top-20 left-10 w-32 h-12 bg-white/80 rounded-full blur-sm animate-float-cloud-1 shadow-lg" />
+      <div className="absolute top-32 right-1/4 w-40 h-16 bg-white/70 rounded-full blur-sm animate-float-cloud-2 shadow-lg" />
+      <div className="absolute top-16 left-1/3 w-24 h-10 bg-white/60 rounded-full blur-sm animate-float-cloud-3 shadow-lg" />
+      <div className="absolute top-28 right-1/3 w-36 h-14 bg-white/75 rounded-full blur-sm animate-float-cloud-4 shadow-lg" />
+      <div className="absolute top-40 left-1/4 w-28 h-10 bg-white/65 rounded-full blur-sm animate-float-cloud-5 shadow-lg" />
 
       {/* Ocean Waves - Always Visible */}
       <div className="absolute bottom-0 left-0 right-0">
@@ -94,9 +116,28 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
         />
       </div>
 
-      {/* Seagulls */}
+      {/* Seagulls - More birds flying */}
       <div className="absolute top-40 left-1/4 text-2xl animate-fly-bird-1">🦅</div>
       <div className="absolute top-60 right-1/3 text-xl animate-fly-bird-2">🦅</div>
+      <div className="absolute top-32 right-1/2 text-2xl animate-fly-bird-3">🦅</div>
+      
+      {/* Dolphins jumping */}
+      <div className="absolute bottom-32 left-[10%] text-4xl animate-dolphin-jump-1">🐬</div>
+      <div className="absolute bottom-28 right-[15%] text-4xl animate-dolphin-jump-2">🐬</div>
+      
+      {/* Floating fish */}
+      <div className="absolute bottom-40 left-[30%] text-2xl animate-fish-swim-1">🐟</div>
+      <div className="absolute bottom-48 right-[40%] text-2xl animate-fish-swim-2">🐠</div>
+      
+      {/* Treasure coins falling during ship phase */}
+      {(phase === "ship" || phase === "ship-out") && (
+        <>
+          <div className="absolute top-0 left-[20%] text-3xl animate-coin-fall-1">🪙</div>
+          <div className="absolute top-0 left-[40%] text-3xl animate-coin-fall-2">💰</div>
+          <div className="absolute top-0 right-[30%] text-3xl animate-coin-fall-3">🪙</div>
+          <div className="absolute top-0 right-[10%] text-3xl animate-coin-fall-4">💎</div>
+        </>
+      )}
 
       {/* Ship Animation - Only show in ship phase */}
       {(phase === "ship" || phase === "ship-out") && (
@@ -112,7 +153,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
         >
           <div className="relative scale-150">
             {/* Ship Body */}
-            <div className="w-40 h-24 bg-gradient-to-b from-amber-800 to-amber-900 rounded-b-[50px] border-4 border-amber-950 shadow-2xl relative overflow-hidden">
+            <div className="w-40 h-24 bg-gradient-to-b from-amber-800 to-amber-900 rounded-b-[50px] border-4 border-amber-950 shadow-2xl relative overflow-hidden animate-ship-rock">
               {/* Wood Texture */}
               <div className="absolute inset-0 opacity-20">
                 <div className="absolute top-2 left-0 right-0 h-0.5 bg-amber-950" />
@@ -142,7 +183,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
             <div className="absolute left-1/2 -translate-x-1/2 -top-32 w-3 h-36 bg-gradient-to-b from-amber-950 to-amber-900 shadow-lg" />
 
             {/* Main Sail */}
-            <div className="absolute left-1/2 -translate-x-1/2 -top-28 w-24 h-20 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 border-2 border-gray-400 shadow-2xl"
+            <div className="absolute left-1/2 -translate-x-1/2 -top-28 w-24 h-20 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 border-2 border-gray-400 shadow-2xl animate-sail-billow"
               style={{
                 clipPath: "polygon(0 0, 100% 5%, 95% 100%, 5% 100%)",
               }}
@@ -381,6 +422,94 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
           100% { transform: translateX(100vw) translateY(-30px); }
         }
         
+        @keyframes fly-bird-3 {
+          0% { transform: translateX(-200px) translateY(0) scale(1); }
+          50% { transform: translateX(50vw) translateY(-40px) scale(1.2); }
+          100% { transform: translateX(100vw) translateY(-20px) scale(1); }
+        }
+        
+        @keyframes dolphin-jump-1 {
+          0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0; }
+          10%, 90% { opacity: 1; }
+          50% { transform: translateY(-120px) rotate(360deg); }
+        }
+        
+        @keyframes dolphin-jump-2 {
+          0%, 100% { transform: translateY(0) rotate(0deg) scaleX(1); opacity: 0; }
+          10%, 90% { opacity: 1; }
+          50% { transform: translateY(-100px) rotate(-360deg) scaleX(-1); }
+        }
+        
+        @keyframes fish-swim-1 {
+          0%, 100% { transform: translateX(0) translateY(0) scaleX(1); }
+          50% { transform: translateX(100px) translateY(-20px) scaleX(-1); }
+        }
+        
+        @keyframes fish-swim-2 {
+          0%, 100% { transform: translateX(0) translateY(0) scaleX(-1); }
+          50% { transform: translateX(-80px) translateY(20px) scaleX(1); }
+        }
+        
+        @keyframes coin-fall-1 {
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        
+        @keyframes coin-fall-2 {
+          0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+          100% { transform: translateY(100vh) rotate(-720deg) scale(1.5); opacity: 0; }
+        }
+        
+        @keyframes coin-fall-3 {
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        
+        @keyframes coin-fall-4 {
+          0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+          100% { transform: translateY(100vh) rotate(-540deg) scale(0.8); opacity: 0; }
+        }
+        
+        @keyframes twinkle-1 {
+          0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
+          50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
+        }
+        
+        @keyframes twinkle-2 {
+          0%, 100% { transform: scale(0.8) rotate(0deg); opacity: 0.3; }
+          50% { transform: scale(1.3) rotate(-180deg); opacity: 1; }
+        }
+        
+        @keyframes twinkle-3 {
+          0%, 100% { transform: scale(1.2) rotate(0deg); opacity: 0.6; }
+          50% { transform: scale(1.8) rotate(360deg); opacity: 1; }
+        }
+        
+        @keyframes float-cloud-4 {
+          0%, 100% { transform: translateX(0) translateY(0); }
+          50% { transform: translateX(-50px) translateY(10px); }
+        }
+        
+        @keyframes float-cloud-5 {
+          0%, 100% { transform: translateX(0) translateY(0); }
+          50% { transform: translateX(40px) translateY(-10px); }
+        }
+        
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        @keyframes ship-rock {
+          0%, 100% { transform: rotate(-2deg) translateY(0); }
+          50% { transform: rotate(2deg) translateY(-5px); }
+        }
+        
+        @keyframes sail-billow {
+          0%, 100% { transform: translateX(-50%) scaleX(1); }
+          50% { transform: translateX(-50%) scaleX(1.05); }
+        }
+        
         @keyframes float-diagonal-1 {
           0%, 100% { transform: translate(0, 0) rotate(0deg); }
           50% { transform: translate(20px, -20px) rotate(180deg); }
@@ -526,6 +655,74 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
         
         .animate-spin-slow-reverse {
           animation: spin-slow-reverse 8s linear infinite;
+        }
+        
+        .animate-spin-slow {
+          animation: spin-slow 10s linear infinite;
+        }
+        
+        .animate-fly-bird-3 {
+          animation: fly-bird-3 18s linear infinite 2s;
+        }
+        
+        .animate-dolphin-jump-1 {
+          animation: dolphin-jump-1 4s ease-in-out infinite;
+        }
+        
+        .animate-dolphin-jump-2 {
+          animation: dolphin-jump-2 5s ease-in-out infinite 1s;
+        }
+        
+        .animate-fish-swim-1 {
+          animation: fish-swim-1 6s ease-in-out infinite;
+        }
+        
+        .animate-fish-swim-2 {
+          animation: fish-swim-2 7s ease-in-out infinite 1s;
+        }
+        
+        .animate-coin-fall-1 {
+          animation: coin-fall-1 3s ease-in infinite;
+        }
+        
+        .animate-coin-fall-2 {
+          animation: coin-fall-2 3.5s ease-in infinite 0.5s;
+        }
+        
+        .animate-coin-fall-3 {
+          animation: coin-fall-3 4s ease-in infinite 1s;
+        }
+        
+        .animate-coin-fall-4 {
+          animation: coin-fall-4 3.2s ease-in infinite 1.5s;
+        }
+        
+        .animate-twinkle-1 {
+          animation: twinkle-1 2s ease-in-out infinite;
+        }
+        
+        .animate-twinkle-2 {
+          animation: twinkle-2 2.5s ease-in-out infinite 0.5s;
+        }
+        
+        .animate-twinkle-3 {
+          animation: twinkle-3 3s ease-in-out infinite 1s;
+        }
+        
+        .animate-float-cloud-4 {
+          animation: float-cloud-4 12s ease-in-out infinite;
+        }
+        
+        .animate-float-cloud-5 {
+          animation: float-cloud-5 9s ease-in-out infinite;
+        }
+        
+        .animate-ship-rock {
+          animation: ship-rock 3s ease-in-out infinite;
+        }
+        
+        .animate-sail-billow {
+          animation: sail-billow 2s ease-in-out infinite;
         }
       `}</style>
     </div>

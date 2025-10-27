@@ -33,6 +33,7 @@ export interface ParticipantRow {
   grade_level: string | null;
   school: string | null;
   program: string | null;
+  phone_number?: string; // ✅ เพิ่มเบอร์โทร
   created_at: string;
 }
 
@@ -67,6 +68,7 @@ export const AdminParticipantManager = ({ participant, spin, onUpdate, onDelete,
         grade_level: draft.grade_level,
         school: draft.school,
         program: draft.program,
+        phone_number: draft.phone_number, // ✅ เพิ่มเบอร์โทร
       });
       setEditOpen(false);
       toast({ title: "อัปเดตข้อมูลสำเร็จ" });
@@ -244,6 +246,16 @@ export const AdminParticipantManager = ({ participant, spin, onUpdate, onDelete,
               <Input
                 value={draft.program ?? ""}
                 onChange={(e) => setDraft({ ...draft, program: e.target.value || null })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>เบอร์โทรศัพท์</Label>
+              <Input
+                type="tel"
+                value={draft.phone_number ?? ""}
+                onChange={(e) => setDraft({ ...draft, phone_number: e.target.value || undefined })}
+                placeholder="08x-xxx-xxxx"
               />
             </div>
           </div>
