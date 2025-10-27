@@ -98,10 +98,10 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
             <div className="text-green-600 text-xl">✨</div>
             <div className="flex-1 space-y-2">
               <p className="text-sm text-green-900 font-semibold">
-                ตอนนี้ใช้ Puter.js - AI ฟรี! (Gemini 2.5 Flash)
+                ตอนนี้ใช้ Puter.js - AI ฟรี! (Gemini 1.5 Flash)
               </p>
               <ul className="text-sm text-green-800 space-y-1 list-disc list-inside">
-                <li>Model: <strong>Gemini 2.5 Flash</strong> - เร็ว ฉลาด ตอบได้ดี!</li>
+                <li>Model: <strong>Gemini 1.5 Flash</strong> - เร็ว เสถียร ตอบได้ดี!</li>
                 <li>ไม่ต้องมี API Key</li>
                 <li>ไม่มีค่าใช้จ่าย (Free Forever)</li>
                 <li>รองรับ Gemini, Claude, GPT และอีกมากมาย</li>

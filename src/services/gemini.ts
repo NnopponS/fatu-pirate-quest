@@ -144,7 +144,7 @@ ${userContextText}
     
     // Call Puter AI with official format (Anonymous mode - no auth popup)
     const response = await puter.ai.chat(fullPrompt, undefined, {
-      model: 'google/gemini-2.5-flash', // Latest Gemini 2.5 Flash - Fast & Smart
+      model: 'google/gemini-1.5-flash-002', // Stable & Fast model
       stream: false,
     });
 
