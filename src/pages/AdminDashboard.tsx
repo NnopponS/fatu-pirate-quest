@@ -127,6 +127,7 @@ const AdminDashboard = () => {
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [locationDrafts, setLocationDrafts] = useState<LocationRow[]>([]);
@@ -162,6 +163,7 @@ const AdminDashboard = () => {
   const fetchDashboard = useCallback(
     async (sessionToken: string) => {
       setLoading(true);
+      setError(null);
       try {
         const data = await getDashboardData(sessionToken);
 
@@ -172,6 +174,7 @@ const AdminDashboard = () => {
       } catch (error) {
         console.error("Dashboard fetch error:", error);
         const errorMsg = errorMessage(error);
+        setError(errorMsg);
         
         toast({
           title: "ไม่สามารถโหลดข้อมูลได้",
@@ -181,7 +184,7 @@ const AdminDashboard = () => {
         
         // Only logout if session is actually invalid
         if (errorMsg.includes("Invalid session") || errorMsg.includes("session")) {
-          logout();
+          setTimeout(() => logout(), 1500);
         }
       } finally {
         setLoading(false);
@@ -832,10 +835,47 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {loading || !dashboard ? (
+        {loading ? (
           <div className="pirate-card py-16 text-center text-foreground/70">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             กำลังโหลดข้อมูลแดชบอร์ด...
+          </div>
+        ) : error ? (
+          <div className="pirate-card py-16 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+              <XCircle className="h-10 w-10 text-red-600" />
+            </div>
+            <h3 className="text-xl font-bold text-red-600 mb-2">เกิดข้อผิดพลาด</h3>
+            <p className="text-foreground/70 mb-4">{error}</p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => token && fetchDashboard(token)} className="gap-2">
+                <RefreshCw className="h-4 w-4" />
+                ลองอีกครั้ง
+              </Button>
+              <Button variant="outline" onClick={logout}>
+                กลับไปหน้า Login
+              </Button>
+            </div>
+            <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg max-w-2xl mx-auto text-left">
+              <p className="text-sm font-semibold text-amber-900 mb-2">💡 เช็คสิ่งเหล่านี้:</p>
+              <ul className="text-xs text-amber-800 space-y-1">
+                <li>• Firebase Database URL ตั้งค่าถูกต้องใน Vercel หรือยัง?</li>
+                <li>• Environment Variable: <code className="bg-amber-100 px-1 py-0.5 rounded">VITE_FIREBASE_DB_URL</code></li>
+                <li>• ตรวจสอบ Firebase Rules ว่าอนุญาตให้ Admin เข้าถึงหรือยัง</li>
+                <li>• เปิด Console (F12) ดู error details</li>
+              </ul>
+            </div>
+          </div>
+        ) : !dashboard ? (
+          <div className="pirate-card py-16 text-center text-foreground/70">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+              <XCircle className="h-10 w-10 text-gray-400" />
+            </div>
+            <p>ไม่พบข้อมูล</p>
+            <Button onClick={() => token && fetchDashboard(token)} className="mt-4 gap-2">
+              <RefreshCw className="h-4 w-4" />
+              โหลดใหม่
+            </Button>
           </div>
         ) : (
           <Tabs defaultValue="participants" className="space-y-8">
@@ -1246,7 +1286,7 @@ const AdminDashboard = () => {
                       <Trophy className="h-5 w-5 text-primary" />
                       <span className="text-sm font-semibold text-foreground/70">รางวัลทั้งหมด</span>
                     </div>
-                    <p className="text-3xl font-bold text-primary">{spins.length}</p>
+                    <p className="text-3xl font-bold text-primary">{dashboard.spins.length}</p>
                   </div>
                   
                   <div className="p-4 rounded-xl border-2 border-green-200 bg-green-50">
@@ -1255,7 +1295,7 @@ const AdminDashboard = () => {
                       <span className="text-sm font-semibold text-green-800">มอบแล้ว</span>
                     </div>
                     <p className="text-3xl font-bold text-green-600">
-                      {spins.filter(s => s.claimed).length}
+                      {dashboard.spins.filter(s => s.claimed).length}
                     </p>
                   </div>
                   
@@ -1265,7 +1305,7 @@ const AdminDashboard = () => {
                       <span className="text-sm font-semibold text-amber-800">รอมอบ</span>
                     </div>
                     <p className="text-3xl font-bold text-amber-600">
-                      {spins.filter(s => !s.claimed).length}
+                      {dashboard.spins.filter(s => !s.claimed).length}
                     </p>
                   </div>
                 </div>
@@ -1291,10 +1331,10 @@ const AdminDashboard = () => {
                           </TableCell>
                         </TableRow>
                       ) : (
-                        spins
+                        dashboard.spins
                           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                           .map((spin) => {
-                            const participant = participants.find(p => p.id === spin.participant_id);
+                            const participant = dashboard.participants.find(p => p.id === spin.participant_id);
                             return (
                               <TableRow key={spin.participant_id}>
                                 <TableCell className="font-mono text-sm">{spin.claim_code}</TableCell>
