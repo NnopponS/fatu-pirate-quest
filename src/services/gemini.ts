@@ -1,32 +1,40 @@
 import { firebaseDb } from "@/integrations/firebase/database";
 
-interface GeminiSettings {
-  apiKey: string;
+// Declare puter global from Puter.js
+declare global {
+  interface Window {
+    puter: {
+      ai: {
+        chat: (message: string, options?: any) => Promise<string>;
+      };
+    };
+  }
+}
+
+interface PuterSettings {
   knowledgeBase?: string; // Context/knowledge for the chatbot
 }
 
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
-
-// Get Gemini settings from Firebase
-export const getGeminiSettings = async (): Promise<GeminiSettings | null> => {
+// Get Puter settings from Firebase (only knowledge base, no API key needed!)
+export const getGeminiSettings = async (): Promise<PuterSettings | null> => {
   try {
-    const settings = await firebaseDb.get<GeminiSettings>("settings/gemini");
+    const settings = await firebaseDb.get<PuterSettings>("settings/puter");
     return settings;
   } catch (error) {
-    console.error("Error getting Gemini settings:", error);
+    console.error("Error getting Puter settings:", error);
     return null;
   }
 };
 
-// Save Gemini settings (Admin only)
-export const saveGeminiSettings = async (token: string, settings: GeminiSettings): Promise<void> => {
+// Save Puter settings (Admin only)
+export const saveGeminiSettings = async (token: string, settings: PuterSettings): Promise<void> => {
   // Validate admin token
   const adminToken = await firebaseDb.get<string>(`admin_sessions/${token}`);
   if (!adminToken) {
     throw new Error("Unauthorized");
   }
 
-  await firebaseDb.set("settings/gemini", settings);
+  await firebaseDb.set("settings/puter", settings);
 };
 
 export interface UserContext {
@@ -40,16 +48,17 @@ export interface UserContext {
   prize?: string;
 }
 
-// Chat with pirate using Gemini API
+// Chat with pirate using Puter.js AI (FREE! No API key needed!)
 export const chatWithPirate = async (
   userMessage: string,
   userContext?: UserContext
 ): Promise<string> => {
-  const settings = await getGeminiSettings();
-  
-  if (!settings || !settings.apiKey) {
-    throw new Error("Gemini API key not configured. Please ask admin to set it up.");
+  // Check if Puter.js is loaded
+  if (typeof window === 'undefined' || !window.puter) {
+    throw new Error("Puter.js is not loaded. Please refresh the page.");
   }
+
+  const settings = await getGeminiSettings();
 
   // Build user-specific context
   let userContextText = "";
@@ -106,7 +115,7 @@ export const chatWithPirate = async (
 - ได้คะแนนครบ 400 คะแนนสามารถหมุนวงล้อรับรางวัล
 - มีกิจกรรมย่อยต่างๆ ในแต่ละสถานที่
 
-${settings.knowledgeBase ? `\n\nข้อมูลเพิ่มเติมเกี่ยวกับงาน:\n${settings.knowledgeBase}` : ""}
+${settings?.knowledgeBase ? `\n\nข้อมูลเพิ่มเติมเกี่ยวกับงาน:\n${settings.knowledgeBase}` : ""}
 
 ${userContextText}
 
@@ -121,64 +130,19 @@ ${userContextText}
 8. เรียกชื่อ User ถ้ามีข้อมูลชื่อ เพื่อให้เป็นกันเอง`;
 
   try {
-    const response = await fetch(`${GEMINI_API_URL}?key=${settings.apiKey}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: systemPrompt
-              }
-            ]
-          },
-          {
-            parts: [
-              {
-                text: userMessage
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.9,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 200,
-        },
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_HATE_SPEECH",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          }
-        ]
-      }),
+    // Use Puter.js AI chat with Gemini model
+    const fullPrompt = `${systemPrompt}\n\n---\n\nคำถามจาก User: ${userMessage}`;
+    
+    const response = await window.puter.ai.chat(fullPrompt, {
+      model: "gemini-2.0-flash-exp", // Use Gemini through Puter
+      temperature: 0.9,
+      max_tokens: 200,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Gemini API error:", errorData);
-      throw new Error(`API Error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (!data.candidates || data.candidates.length === 0) {
-      throw new Error("No response from AI");
-    }
-
-    const text = data.candidates[0].content.parts[0].text;
-    return text;
+    return response;
   } catch (error) {
-    console.error("Chat error:", error);
-    throw error;
+    console.error("Puter AI chat error:", error);
+    throw new Error("ข้าไม่สามารถตอบได้ในตอนนี้ ลองใหม่อีกครั้งนะ!");
   }
 };
 

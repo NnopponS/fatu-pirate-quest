@@ -45,7 +45,7 @@ export const BottleQuestModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
       {/* Backdrop with water effect */}
       <div 
         className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-700 to-blue-500 animate-in fade-in"
@@ -86,9 +86,9 @@ export const BottleQuestModal = ({
         variant="ghost"
         size="icon"
         onClick={onClose}
-        className="absolute top-4 right-4 z-50 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white"
+        className="absolute top-2 right-2 sm:top-4 sm:right-4 z-50 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white"
       >
-        <X className="h-6 w-6" />
+        <X className="h-5 w-5 sm:h-6 sm:w-6" />
       </Button>
 
       {/* Bottle floating */}
@@ -102,9 +102,9 @@ export const BottleQuestModal = ({
 
       {/* Bottle opening and scroll appearing */}
       {(phase === "opening" || phase === "scroll") && (
-        <div className="relative z-10 max-w-4xl w-full max-h-[90vh] overflow-auto">
+        <div className="relative z-10 max-w-md sm:max-w-2xl md:max-w-3xl w-full max-h-[85vh] sm:max-h-[90vh] overflow-auto">
           <div
-            className={`relative bg-[#f4e4c1] rounded-2xl shadow-2xl border-8 border-[#8b7355] p-8 md:p-12 ${
+            className={`relative bg-[#f4e4c1] rounded-xl sm:rounded-2xl shadow-2xl border-4 sm:border-6 md:border-8 border-[#8b7355] p-4 sm:p-6 md:p-10 ${
               phase === "scroll" ? "animate-in zoom-in-90 fade-in duration-700" : "scale-50 opacity-0"
             }`}
             style={{
@@ -124,28 +124,28 @@ export const BottleQuestModal = ({
             }} />
 
             {/* Wax seal */}
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-red-700 border-4 border-red-900 flex items-center justify-center shadow-xl animate-in zoom-in duration-500 delay-300">
-              <div className="text-yellow-200 text-2xl font-bold">🏴‍☠️</div>
+            <div className="absolute -top-4 sm:-top-6 left-1/2 -translate-x-1/2 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-red-700 border-2 sm:border-4 border-red-900 flex items-center justify-center shadow-xl animate-in zoom-in duration-500 delay-300">
+              <div className="text-yellow-200 text-lg sm:text-2xl font-bold">🏴‍☠️</div>
             </div>
 
             {/* Content */}
-            <div className="space-y-6 text-[#3d2817]" style={{ fontFamily: 'Georgia, serif' }}>
+            <div className="space-y-3 sm:space-y-4 md:space-y-6 text-[#3d2817]" style={{ fontFamily: 'Georgia, serif' }}>
               {/* Header */}
-              <div className="text-center space-y-4 border-b-2 border-[#8b7355]/30 pb-6">
-                <h1 className="text-4xl md:text-5xl font-bold" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.1)' }}>
+              <div className="text-center space-y-2 sm:space-y-3 border-b-2 border-[#8b7355]/30 pb-3 sm:pb-4 md:pb-6">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.1)' }}>
                   ⚓ บันทึกภารกิจ ⚓
                 </h1>
-                <div className="text-2xl md:text-3xl font-semibold text-[#8b4513]">
+                <div className="text-lg sm:text-xl md:text-2xl font-semibold text-[#8b4513]">
                   {locationName}
                 </div>
               </div>
 
               {/* Greeting in old pirate style */}
-              <div className="p-6 bg-[#e8d4a8] rounded-lg border-2 border-[#8b7355]/40 shadow-inner">
-                <p className="text-lg md:text-xl leading-relaxed italic">
+              <div className="p-3 sm:p-4 md:p-6 bg-[#e8d4a8] rounded-lg border-2 border-[#8b7355]/40 shadow-inner">
+                <p className="text-sm sm:text-base md:text-lg leading-relaxed italic">
                   ถึงท่านผู้กล้าหาญผู้มาเยือน,
                 </p>
-                <p className="mt-4 text-base md:text-lg leading-relaxed">
+                <p className="mt-2 sm:mt-3 text-sm sm:text-base leading-relaxed">
                   ข้าขอต้อนรับเจ้าสู่ <span className="font-bold text-[#8b4513]">{locationName}</span> เกาะแห่งหนึ่งในแผนที่สมบัติของข้า
                   {alreadyCheckedIn ? (
                     <span className="inline-block ml-2 px-3 py-1 bg-green-100 border-2 border-green-600 rounded-full text-green-800 text-sm font-bold">
@@ -160,15 +160,15 @@ export const BottleQuestModal = ({
               </div>
 
               {/* Quest description */}
-              <div className="space-y-3">
-                <h2 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+              <div className="space-y-2 sm:space-y-3">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold flex items-center gap-2">
                   📜 ภารกิจพิเศษ
                 </h2>
-                <div className="p-5 bg-amber-50/80 rounded-lg border-2 border-amber-800/30">
-                  <p className="text-base md:text-lg leading-relaxed">
+                <div className="p-3 sm:p-4 md:p-5 bg-amber-50/80 rounded-lg border-2 border-amber-800/30">
+                  <p className="text-sm sm:text-base leading-relaxed">
                     ณ ที่แห่งนี้ มี<span className="font-bold text-[#8b4513]"> {subEvents.length} ภารกิจ</span>รอเจ้าอยู่
                     หากเจ้าร่วมกิจกรรมแม้เพียง<span className="font-bold text-green-700"> ๑ ภารกิจ</span> 
-                    ท่านจักได้รับ<span className="text-2xl font-bold text-yellow-600"> +๑๐๐ </span>
+                    ท่านจักได้รับ<span className="text-lg sm:text-xl font-bold text-yellow-600"> +๑๐๐ </span>
                     <span className="font-bold text-yellow-600">คะแนน</span>เป็นรางวัล!
                   </p>
                 </div>
@@ -176,43 +176,43 @@ export const BottleQuestModal = ({
 
               {/* Quest list */}
               {subEvents.length > 0 ? (
-                <div className="space-y-4">
-                  <h3 className="text-xl md:text-2xl font-bold">🗺️ รายการภารกิจ:</h3>
-                  <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3 md:space-y-4">
+                  <h3 className="text-base sm:text-lg md:text-xl font-bold">🗺️ รายการภารกิจ:</h3>
+                  <div className="space-y-2 sm:space-y-3">
                     {subEvents.map((subEvent, idx) => {
                       const isCompleted = completedSubEvents.includes(subEvent.id);
                       
                       return (
                         <div
                           key={subEvent.id}
-                          className={`p-4 md:p-5 rounded-lg border-2 transition-all ${
+                          className={`p-3 sm:p-4 rounded-lg border-2 transition-all ${
                             isCompleted
                               ? 'bg-green-50/80 border-green-600'
                               : 'bg-white/60 border-[#8b7355]/40 hover:border-[#8b7355] hover:shadow-lg'
                           }`}
                         >
-                          <div className="flex items-start gap-3">
-                            <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-base sm:text-lg font-bold ${
                               isCompleted
                                 ? 'bg-green-600 text-white'
                                 : 'bg-[#8b7355] text-[#f4e4c1]'
                             }`}>
                               {isCompleted ? '✓' : idx + 1}
                             </div>
-                            <div className="flex-1 space-y-2">
-                              <h4 className="text-lg md:text-xl font-bold text-[#3d2817]">
+                            <div className="flex-1 space-y-1 sm:space-y-2">
+                              <h4 className="text-base sm:text-lg font-bold text-[#3d2817]">
                                 {subEvent.name}
                                 {isCompleted && (
-                                  <span className="ml-2 text-sm text-green-600">(สำเร็จแล้ว)</span>
+                                  <span className="ml-2 text-xs sm:text-sm text-green-600">(สำเร็จแล้ว)</span>
                                 )}
                               </h4>
                               {subEvent.description && (
-                                <p className="text-sm md:text-base text-[#5d4e37]">
+                                <p className="text-xs sm:text-sm text-[#5d4e37]">
                                   {subEvent.description}
                                 </p>
                               )}
                               {subEvent.time && (
-                                <p className="text-sm text-[#8b7355] flex items-center gap-1">
+                                <p className="text-xs sm:text-sm text-[#8b7355] flex items-center gap-1">
                                   🕐 <span className="font-semibold">{subEvent.time}</span>
                                 </p>
                               )}
@@ -224,22 +224,22 @@ export const BottleQuestModal = ({
                   </div>
                 </div>
               ) : (
-                <div className="p-6 bg-gray-50 rounded-lg border-2 border-gray-300 text-center">
-                  <p className="text-lg text-gray-600">
+                <div className="p-4 sm:p-6 bg-gray-50 rounded-lg border-2 border-gray-300 text-center">
+                  <p className="text-base sm:text-lg text-gray-600">
                     ณ บัดนี้ ยังไม่มีภารกิจเฉพาะเจาะจง...
                   </p>
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-xs sm:text-sm text-gray-500 mt-2">
                     แต่เจ้าสามารถสำรวจพื้นที่นี้ได้เสมอ!
                   </p>
                 </div>
               )}
 
               {/* Footer message */}
-              <div className="pt-6 border-t-2 border-[#8b7355]/30">
-                <p className="text-center text-base md:text-lg leading-relaxed italic">
+              <div className="pt-3 sm:pt-4 md:pt-6 border-t-2 border-[#8b7355]/30">
+                <p className="text-center text-sm sm:text-base leading-relaxed italic">
                   จงออกเดินทางด้วยความกล้าหาญ และขอให้โชคดีมีแก่เจ้า!
                 </p>
-                <p className="text-center text-xl md:text-2xl mt-3 font-bold">
+                <p className="text-center text-lg sm:text-xl mt-2 sm:mt-3 font-bold">
                   🏴‍☠️ ⚓ 🗺️
                 </p>
                 <p className="text-center text-sm text-[#8b7355] mt-4">
@@ -248,11 +248,11 @@ export const BottleQuestModal = ({
               </div>
 
               {/* Close button */}
-              <div className="flex justify-center pt-4">
+              <div className="flex justify-center pt-3 sm:pt-4">
                 <Button
                   onClick={onClose}
                   size="lg"
-                  className="pirate-button text-lg px-8"
+                  className="pirate-button text-sm sm:text-base md:text-lg px-6 sm:px-8"
                 >
                   รับทราบแล้ว ⚓
                 </Button>

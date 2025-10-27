@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { getGeminiSettings, saveGeminiSettings } from "@/services/gemini";
-import { Save, Eye, EyeOff, Loader2, Bot, ExternalLink } from "lucide-react";
+import { Save, Loader2, Bot, ExternalLink } from "lucide-react";
 
 interface GeminiSettingsTabProps {
   token: string | null;
@@ -15,8 +15,6 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [apiKey, setApiKey] = useState("");
   const [knowledgeBase, setKnowledgeBase] = useState("");
 
   useEffect(() => {
@@ -28,7 +26,6 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
     try {
       const settings = await getGeminiSettings();
       if (settings) {
-        setApiKey(settings.apiKey || "");
         setKnowledgeBase(settings.knowledgeBase || "");
       }
     } catch (error) {
@@ -48,25 +45,15 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
       return;
     }
 
-    if (!apiKey.trim()) {
-      toast({
-        title: "กรุณากรอก API Key",
-        description: "ต้องมี Gemini API Key เพื่อใช้งาน Chatbot",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setSaving(true);
     try {
       await saveGeminiSettings(token, {
-        apiKey: apiKey.trim(),
         knowledgeBase: knowledgeBase.trim() || undefined,
       });
 
       toast({
         title: "บันทึกสำเร็จ",
-        description: "ตั้งค่า Gemini AI Chatbot สำเร็จแล้ว",
+        description: "ตั้งค่า AI Chatbot สำเร็จแล้ว (ใช้ Puter.js ฟรี!)",
       });
     } catch (error) {
       console.error("Save error:", error);
@@ -97,62 +84,38 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
         <div>
           <h2 className="text-2xl font-semibold text-primary">ตั้งค่า AI Chatbot โจรสลัด</h2>
           <p className="text-sm text-foreground/70">
-            กำหนดค่า Gemini API และข้อมูลสำหรับ Chatbot
+            ใช้ <a href="https://developer.puter.com/" target="_blank" rel="noopener noreferrer" className="underline font-semibold">Puter.js</a> - ฟรี ไม่ต้อง API Key!
           </p>
         </div>
       </div>
 
       <div className="pirate-divider" />
 
-      {/* API Key Section */}
+      {/* Puter.js Info */}
       <div className="space-y-4">
-        <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
+        <div className="p-4 rounded-xl bg-green-50 border border-green-200">
           <div className="flex items-start gap-2">
-            <div className="text-blue-600 text-xl">ℹ️</div>
+            <div className="text-green-600 text-xl">✨</div>
             <div className="flex-1 space-y-2">
-              <p className="text-sm text-blue-900 font-semibold">
-                วิธีการรับ Gemini API Key:
+              <p className="text-sm text-green-900 font-semibold">
+                ตอนนี้ใช้ Puter.js - AI ฟรี!
               </p>
-              <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-                <li>ไปที่ <a 
-                  href="https://aistudio.google.com/app/apikey" 
+              <ul className="text-sm text-green-800 space-y-1 list-disc list-inside">
+                <li>ไม่ต้องมี API Key</li>
+                <li>ไม่มีค่าใช้จ่าย (Free Forever)</li>
+                <li>รองรับ Gemini, Claude, GPT และอีกมากมาย</li>
+                <li>พัฒนาโดย <a 
+                  href="https://puter.com" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="underline font-semibold inline-flex items-center gap-1"
                 >
-                  Google AI Studio
+                  Puter.com
                   <ExternalLink className="h-3 w-3" />
                 </a></li>
-                <li>เข้าสู่ระบบด้วย Google Account</li>
-                <li>คลิก "Create API Key"</li>
-                <li>คัดลอก API Key มาวางด้านล่าง</li>
-              </ol>
+              </ul>
             </div>
           </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="apiKey">Gemini API Key *</Label>
-          <div className="flex gap-2">
-            <Input
-              id="apiKey"
-              type={showApiKey ? "text" : "password"}
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="AIza..."
-              className="flex-1 font-mono"
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setShowApiKey(!showApiKey)}
-            >
-              {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </Button>
-          </div>
-          <p className="text-xs text-foreground/60">
-            API Key จะถูกเก็บไว้อย่างปลอดภัยใน Firebase
-          </p>
         </div>
       </div>
 
@@ -209,7 +172,7 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
         </Button>
         <Button
           onClick={handleSave}
-          disabled={saving || !apiKey.trim()}
+          disabled={saving}
           className="gap-2 pirate-button"
         >
           {saving ? (
