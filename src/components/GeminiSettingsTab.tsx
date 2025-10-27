@@ -98,10 +98,10 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
             <div className="text-green-600 text-xl">✨</div>
             <div className="flex-1 space-y-2">
               <p className="text-sm text-green-900 font-semibold">
-                ตอนนี้ใช้ Puter.js - AI ฟรี! (Gemini 1.5 Flash)
+                ตอนนี้ใช้ Puter.js - AI ฟรี! (Gemini 2.5 Flash)
               </p>
               <ul className="text-sm text-green-800 space-y-1 list-disc list-inside">
-                <li>Model: <strong>Gemini 1.5 Flash</strong> - เร็ว เสถียร ตอบได้ดี!</li>
+                <li>Model: <strong>Gemini 2.5 Flash</strong> - เร็ว ฉลาด ตอบได้ดี!</li>
                 <li>ไม่ต้องมี API Key</li>
                 <li>ไม่มีค่าใช้จ่าย (Free Forever)</li>
                 <li>รองรับ Gemini, Claude, GPT และอีกมากมาย</li>
@@ -137,32 +137,17 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
           onChange={(e) => setKnowledgeBase(e.target.value)}
           placeholder={`ตัวอย่าง:
 
-สถานที่เช็กอินใน FATU Treasure Quest (4 สถานที่):
-1. สถานที่ที่ 1 - ชื่อสถานที่ (เช่น อาคารคณะศิลปกรรมศาสตร์)
-   - รายละเอียด: ...
-   - คะแนนที่ได้: 100 คะแนน
-   - กิจกรรมย่อย: ...
-
-2. สถานที่ที่ 2 - ชื่อสถานที่
-   - รายละเอียด: ...
-   - คะแนนที่ได้: 100 คะแนน
-   - กิจกรรมย่อย: ...
-
-3. สถานที่ที่ 3 - ชื่อสถานที่
-   - รายละเอียด: ...
-   - คะแนนที่ได้: 100 คะแนน
-   - กิจกรรมย่อย: ...
-
-4. สถานที่ที่ 4 - ชื่อสถานที่
-   - รายละเอียด: ...
-   - คะแนนที่ได้: 100 คะแนน
-   - กิจกรรมย่อย: ...
-
-หลักสูตรคณะศิลปกรรมศาสตร์:
+คณะศิลปกรรมศาสตร์ มธ. มีหลักสูตร:
 - ทัศนศิลป์
 - ดนตรี
 - การออกแบบ
 - ศิลปะการแสดง
+
+สถานที่ในงาน:
+1. อาคารเรียนรวม - Workshop ศิลปะ
+2. หอแสดงผลงาน - นิทรรศการ
+3. ห้องดนตรี - คอนเสิร์ตมินิ
+4. สตูดิโอ - การแสดง
 
 กิจกรรมพิเศษ:
 - Talk กับศิษย์เก่า เวลา 10:00-12:00

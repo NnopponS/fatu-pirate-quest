@@ -119,7 +119,7 @@ export const chatWithPirate = async (
 งาน FATU Treasure Quest คือ:
 - Open House 2025 ของคณะศิลปกรรมศาสตร์ มหาวิทยาลัยธรรมศาสตร์
 - จัดวันที่ 7-8 พฤศจิกายน 2568
-- เป็นกิจกรรมล่าสมบัติที่ผู้เข้าร่วมต้องเช็กอิน 4 สถานที่
+- เป็นกิจกรรมล่าสมบัติที่มี 4 สถานที่ ผู้เข้าร่วมต้องเช็กอินอย่างน้อย 3 จาก 4 สถานที่
 - ได้คะแนนครบ 300 คะแนนสามารถหมุนวงล้อรับรางวัล
 - มีกิจกรรมย่อยต่างๆ ในแต่ละสถานที่ที่สามารถทำเพื่อรับคะแนนเพิ่ม
 
@@ -145,7 +145,7 @@ ${userContextText}
     
     // Call Puter AI with official format (Anonymous mode - no auth popup)
     const response = await puter.ai.chat(fullPrompt, undefined, {
-      model: 'google/gemini-1.5-flash-002', // Stable & Fast model
+      model: 'google/gemini-2.5-flash', // Latest Gemini 2.5 Flash - Fast & Smart
       stream: false,
     });
 
