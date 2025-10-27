@@ -24,9 +24,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Database migrations are managed through Supabase Dashboard
-      # - name: Deploy database migrations
-      #   run: npm run supabase:migrate
+      - name: Deploy database migrations
+        run: npm run supabase:migrate
 
       - name: Build application
         run: npm run build
