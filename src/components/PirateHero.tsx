@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { PirateCharacter } from "@/components/PirateCharacter";
+import { PirateChatbot } from "@/components/PirateChatbot";
 import { getHeroCards, getPrizes, type HeroCardRecord, type PrizeRecord } from "@/services/firebase";
 import {
   Carousel,
@@ -21,6 +22,7 @@ export const PirateHero = () => {
   const [prizes, setPrizes] = useState<PrizeRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [api, setApi] = useState<CarouselApi>();
+  const [chatbotOpen, setChatbotOpen] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -45,11 +47,19 @@ export const PirateHero = () => {
       <PirateCharacter 
         messages={[
           "ฮาฮอย! ยินดีต้อนรับสู่ FATU Pirate Quest! 🏴‍☠️",
+          "💬 คลิกที่ข้าได้เลยถ้าอยากคุยหรือถามอะไร!",
           "พร้อมออกล่าสมบัติหรือยัง? 💎",
           "ลงทะเบียนเข้าร่วมกันเถอะ! ⚓",
           "เช็กอิน 4 จุด แล้วหมุนวงล้อลุ้นรางวัล! 🎰",
           "ผจญภัยอย่างปลอดภัยนะ! 🗺️",
         ]}
+        onChatbotOpen={() => setChatbotOpen(true)}
+      />
+      
+      {/* AI Chatbot */}
+      <PirateChatbot 
+        isOpen={chatbotOpen}
+        onClose={() => setChatbotOpen(false)}
       />
       <div className="container mx-auto px-3 py-4 md:py-8 lg:py-16 relative">
         {/* Decorative Elements */}
@@ -112,7 +122,12 @@ export const PirateHero = () => {
                   </h2>
                   <span className="text-4xl md:text-5xl animate-bounce-slow" style={{animationDelay: '0.5s'}}>✨</span>
                 </div>
-                <p className="text-sm md:text-base text-foreground/70">กิจกรรมสุดพิเศษที่คุณไม่ควรพลาด!</p>
+                <p className="text-sm md:text-base text-foreground/70">กิจกรรมสุดพิเศษที่ท่านไม่ควรพลาด!</p>
+                <div className="flex items-center justify-center gap-2 text-sm text-primary/80 animate-pulse">
+                  <span className="hidden md:inline">👉</span>
+                  <span className="font-semibold">เลื่อนขวาเพื่อดูกิจกรรมอื่นๆ</span>
+                  <span className="animate-bounce">👉</span>
+                </div>
               </div>
               
               <Carousel 

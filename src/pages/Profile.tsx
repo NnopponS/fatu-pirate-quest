@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { PirateCharacter } from "@/components/PirateCharacter";
+import { PirateChatbot } from "@/components/PirateChatbot";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,6 +53,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Partial<UserProfile>>({});
+  const [chatbotOpen, setChatbotOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -68,26 +70,41 @@ const Profile = () => {
 
     try {
       setLoading(true);
-      // TODO: Implement actual Firebase data loading
-      // For now, using mock data
-      const mockProfile: UserProfile = {
+      
+      // Load from Firebase
+      const { firebaseDb } = await import("@/integrations/firebase/database");
+      
+      // Load participant data
+      const participant = await firebaseDb.get<any>(`participants/${user.id}`);
+      
+      if (!participant) {
+        throw new Error("ไม่พบข้อมูลผู้ใช้");
+      }
+
+      const profileData: UserProfile = {
         id: user.id,
         username: user.username,
-        first_name: "ชื่อ",
-        last_name: "นามสกุล",
-        age: 18,
-        grade_level: "ม.6",
-        school: "โรงเรียนตัวอย่าง",
-        program: "วิทย์-คณิต",
-        phone_number: "081-234-5678",
-        points: 350,
+        first_name: participant.first_name || "",
+        last_name: participant.last_name || "",
+        age: participant.age || null,
+        grade_level: participant.grade_level || null,
+        school: participant.school || null,
+        program: participant.program || null,
+        phone_number: participant.phone_number || "",
+        points: participant.points || 0,
       };
-      setProfile(mockProfile);
-      setDraft(mockProfile);
+      
+      setProfile(profileData);
+      setDraft(profileData);
 
       // Check for prize
-      // TODO: Load from Firebase
-      // setPrize({ prize: "เสื้อยืด FATU", claimed_at: new Date().toISOString() });
+      const spinData = await firebaseDb.get<any>(`spins/${user.id}`);
+      if (spinData) {
+        setPrize({
+          prize: spinData.prize,
+          claimed_at: spinData.created_at,
+        });
+      }
     } catch (error) {
       toast({
         title: "โหลดข้อมูลไม่สำเร็จ",
@@ -100,12 +117,27 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
+    if (!user || !profile) return;
+
     try {
-      // TODO: Implement actual Firebase update
-      if (profile) {
-        setProfile({ ...profile, ...draft });
-      }
+      // Update Firebase
+      const { firebaseDb } = await import("@/integrations/firebase/database");
+      
+      // Update participant data
+      await firebaseDb.update(`participants/${user.id}`, {
+        first_name: draft.first_name,
+        last_name: draft.last_name,
+        age: draft.age,
+        grade_level: draft.grade_level,
+        school: draft.school,
+        program: draft.program,
+        phone_number: draft.phone_number,
+      });
+
+      // Update local state
+      setProfile({ ...profile, ...draft });
       setEditing(false);
+      
       toast({
         title: "บันทึกข้อมูลสำเร็จ",
         description: "ข้อมูลส่วนตัวของคุณได้รับการอัปเดตแล้ว",
@@ -150,10 +182,18 @@ const Profile = () => {
       <PirateCharacter
         messages={[
           "สวัสดีครับลูกเรือ! 👋",
+          "คลิกที่ข้าได้ถ้าอยากคุยนะ! 💬",
           "นี่คือโปรไฟล์ของคุณ 🏴‍☠️",
           "แก้ไขข้อมูลได้ตามสบาย! ⚓",
           "อย่าลืมเช็กสถานะรางวัลด้วยนะ! 🎁",
         ]}
+        onChatbotOpen={() => setChatbotOpen(true)}
+      />
+      
+      {/* AI Chatbot */}
+      <PirateChatbot 
+        isOpen={chatbotOpen}
+        onClose={() => setChatbotOpen(false)}
       />
       
       <div className="container mx-auto px-4 py-8 md:py-16 max-w-4xl">

@@ -5,6 +5,7 @@ interface PirateCharacterProps {
   messages?: string[];
   autoPlay?: boolean;
   interval?: number;
+  onChatbotOpen?: () => void;
 }
 
 const defaultMessages = [
@@ -18,7 +19,8 @@ const defaultMessages = [
 export const PirateCharacter = ({ 
   messages = defaultMessages, 
   autoPlay = true,
-  interval = 5000 
+  interval = 5000,
+  onChatbotOpen
 }: PirateCharacterProps) => {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
@@ -98,7 +100,8 @@ export const PirateCharacter = ({
 
         {/* Pirate Character */}
         <motion.div
-          className="relative"
+          className="relative cursor-pointer"
+          onClick={onChatbotOpen}
           animate={{
             y: [0, -8, 0], // ✅ Smaller bounce
           }}
@@ -107,6 +110,8 @@ export const PirateCharacter = ({
             repeat: Infinity,
             ease: "easeInOut",
           }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
         >
           <div className="relative">
             {/* Glow effect */}

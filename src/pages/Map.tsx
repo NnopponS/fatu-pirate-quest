@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { PirateCharacter } from "@/components/PirateCharacter";
+import { BottleQuestModal } from "@/components/BottleQuestModal";
+import { PirateChatbot } from "@/components/PirateChatbot";
 import jsQR from "jsqr";
 
 interface SubEventEntry {
@@ -62,6 +64,14 @@ const Map = () => {
     isValid: boolean;
     errorMessage?: string;
   } | null>(null);
+  
+  // Bottle Quest Modal state
+  const [questModalOpen, setQuestModalOpen] = useState(false);
+  const [questLocation, setQuestLocation] = useState<LocationEntry | null>(null);
+  const [completedSubEvents, setCompletedSubEvents] = useState<string[]>([]);
+  
+  // Chatbot state
+  const [chatbotOpen, setChatbotOpen] = useState(false);
 
   const participantId = useMemo(() => localStorage.getItem("participantId"), []);
 
@@ -95,6 +105,12 @@ const Map = () => {
         setCheckins(data.checkins);
         setPoints(data.points ?? 0);
         setPointsRequired(data.pointsRequired);
+        
+        // Load completed sub-events
+        if (data.subEventCheckins && Array.isArray(data.subEventCheckins)) {
+          const completedIds = data.subEventCheckins.map((se: any) => se.sub_event_id);
+          setCompletedSubEvents(completedIds);
+        }
       } else {
         // Load locations from getMapData for anonymous users
         const data = await getMapData('');
@@ -156,11 +172,19 @@ const Map = () => {
       <PirateCharacter 
         messages={[
           "ฮาฮอย! นี่คือแผนที่สมบัติ! 🗺️",
+          "คลิกที่ข้าได้ถ้าอยากคุยนะ! 💬",
           "เช็กอินทั้ง 4 จุดเพื่อสะสมคะแนน! ⚓",
           "สแกน QR Code ที่แต่ละจุดด้วยนะ! 📱",
           "สะสมครบ 400 คะแนนแล้วหมุนวงล้อ! 🎰",
           "โชคดีในการล่าสมบัติ! 💎",
         ]}
+        onChatbotOpen={() => setChatbotOpen(true)}
+      />
+      
+      {/* AI Chatbot */}
+      <PirateChatbot 
+        isOpen={chatbotOpen}
+        onClose={() => setChatbotOpen(false)}
       />
       <div className="container mx-auto max-w-5xl px-4 py-16 space-y-12 animate-fade-in">
         <div className="flex flex-col items-center gap-4 text-center animate-scale-in">
@@ -465,7 +489,18 @@ const Map = () => {
                             onClick={() => {
                               setQrPreviewOpen(false);
                               if (scannedQrData.loc && scannedQrData.sig) {
-                                navigate(`/checkin?loc=${scannedQrData.loc}&sig=${scannedQrData.sig}&v=${scannedQrData.version || '1'}`);
+                                // Find the location
+                                const locationId = parseInt(scannedQrData.loc);
+                                const location = locations.find(loc => loc.id === locationId);
+                                
+                                if (location && location.sub_events && location.sub_events.length > 0) {
+                                  // Show quest modal if location has sub-events
+                                  setQuestLocation(location);
+                                  setQuestModalOpen(true);
+                                } else {
+                                  // Navigate directly if no sub-events
+                                  navigate(`/checkin?loc=${scannedQrData.loc}&sig=${scannedQrData.sig}&v=${scannedQrData.version || '1'}`);
+                                }
                               }
                             }}
                             className="flex-1 gap-2"
@@ -596,6 +631,28 @@ const Map = () => {
           </Dialog>
         </>
       )}
+      
+      {/* Bottle Quest Modal */}
+      <BottleQuestModal
+        isOpen={questModalOpen}
+        onClose={() => {
+          setQuestModalOpen(false);
+          // Navigate to checkin after closing modal
+          if (scannedQrData && scannedQrData.loc && scannedQrData.sig) {
+            navigate(`/checkin?loc=${scannedQrData.loc}&sig=${scannedQrData.sig}&v=${scannedQrData.version || '1'}`);
+          }
+        }}
+        locationName={questLocation?.name || ""}
+        subEvents={questLocation?.sub_events?.map(se => ({
+          id: se.id,
+          name: se.name,
+          description: se.description,
+          time: se.time,
+          points_awarded: 100
+        })) || []}
+        alreadyCheckedIn={questLocation ? checkins.includes(questLocation.id) : false}
+        completedSubEvents={completedSubEvents}
+      />
     </PirateBackdrop>
   );
 };

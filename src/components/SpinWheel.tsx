@@ -35,7 +35,7 @@ interface PrizeItem {
 }
 
 interface SpinWheelProps {
-  onSpin: () => Promise<string>;
+  onSpin: () => Promise<{ prize: string; claimCode: string }>;
   disabled: boolean;
   prizes: PrizeItem[];
 }
@@ -43,6 +43,7 @@ interface SpinWheelProps {
 export const SpinWheel = ({ onSpin, disabled, prizes }: SpinWheelProps) => {
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [claimCode, setClaimCode] = useState<string | null>(null);
   const [rotation, setRotation] = useState(0);
   const [showClaim, setShowClaim] = useState(false); // ✅ Show claim button instead of immediate result
   const [claimed, setClaimed] = useState(false); // ✅ Track if prize has been claimed
@@ -54,8 +55,9 @@ export const SpinWheel = ({ onSpin, disabled, prizes }: SpinWheelProps) => {
     setResult(null);
 
     try {
-      // ✅ Get the prize first
-      const prize = await onSpin();
+      // ✅ Get the prize and claim code
+      const { prize, claimCode: code } = await onSpin();
+      setClaimCode(code);
       
       // ✅ Find which segment this prize is in
       const prizeIndex = prizes.findIndex(p => p.name === prize);
@@ -83,12 +85,12 @@ export const SpinWheel = ({ onSpin, disabled, prizes }: SpinWheelProps) => {
         setRotation(totalRotation);
       }
 
-      // Show claim button after animation completes  
+      // Show claim button after animation completes (matching CSS transition)
       setTimeout(() => {
         setResult(prize);
         setSpinning(false);
         setShowClaim(true); // ✅ Show claim button, don't mark as received yet
-      }, 8000); // ✅ Increased to 8 seconds for spectacular effect
+      }, 8200); // ✅ 8.2 seconds (slightly longer than transition for smooth finish)
     } catch {
       setSpinning(false);
       // Don't reset rotation on error to show what was spun
@@ -164,8 +166,9 @@ export const SpinWheel = ({ onSpin, disabled, prizes }: SpinWheelProps) => {
           }} />
           
           <div
-            className="absolute inset-0 rounded-full border-8 border-yellow-600 shadow-2xl transition-transform duration-[8000ms] ease-out"
+            className="absolute inset-0 rounded-full border-8 border-yellow-600 shadow-2xl transition-transform duration-[8000ms]"
             style={{
+              transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
               transform: `rotate(${rotation}deg)`,
               background: `conic-gradient(${displayPrizes.map((_, idx) => {
                 const startAngle = (idx * segmentAngle);
@@ -271,8 +274,8 @@ export const SpinWheel = ({ onSpin, disabled, prizes }: SpinWheelProps) => {
             <p className="text-lg font-semibold text-green-900">📍 นำหน้าจอนี้ไปแสดงที่จุดรับรางวัล</p>
             <div className="bg-white rounded-lg p-4 border-2 border-green-300">
               <p className="text-sm text-gray-600 mb-2">รหัสรับรางวัล:</p>
-              <p className="text-3xl font-mono font-bold text-green-600 tracking-wider">
-                {Math.random().toString(36).substring(2, 8).toUpperCase()}
+              <p className="text-5xl font-mono font-bold text-green-600 tracking-widest">
+                {claimCode || "----"}
               </p>
             </div>
             <p className="text-sm text-green-700">

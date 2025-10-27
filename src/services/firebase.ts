@@ -92,6 +92,9 @@ export interface SubEventCheckinRecord {
 export interface SpinRecord {
   participant_id: string;
   prize: string;
+  claim_code: string; // 4-digit claim code
+  claimed: boolean; // Has the prize been claimed?
+  claimed_at?: string; // When was it claimed?
   created_at: string;
 }
 
@@ -1045,7 +1048,7 @@ const drawPrize = (prizes: Array<{ name: string; weight: number }>) => {
   return prizes[0]?.name ?? "Prize";
 };
 
-export const spinWheel = async (participantId: string): Promise<{ prize: string }> => {
+export const spinWheel = async (participantId: string): Promise<{ prize: string; claimCode: string }> => {
   if (!participantId) {
     throw new Error("participantId required");
   }
@@ -1081,9 +1084,15 @@ export const spinWheel = async (participantId: string): Promise<{ prize: string 
   }
 
   const prizeName = drawPrize(prizePool);
+  
+  // Generate 4-digit claim code
+  const claimCode = Math.floor(1000 + Math.random() * 9000).toString();
+  
   const record: SpinRecord = {
     participant_id: participantId,
     prize: prizeName,
+    claim_code: claimCode,
+    claimed: false, // Not claimed yet
     created_at: new Date().toISOString(),
   };
 
@@ -1097,15 +1106,16 @@ export const spinWheel = async (participantId: string): Promise<{ prize: string 
 
   await firebaseDb.set(`spins/${participantId}`, record);
 
-  return { prize: prizeName };
+  return { prize: prizeName, claimCode };
 };
 
 export const getMapData = async (participantId: string) => {
   await ensureDefaults();
 
-  const [locationsRecord, checkinsRecord, participant, pointsRequired] = await Promise.all([
+  const [locationsRecord, checkinsRecord, subEventCheckinsRecord, participant, pointsRequired] = await Promise.all([
     firebaseDb.get<Record<string, LocationRecord>>("locations"),
     firebaseDb.get<Record<string, CheckinRecord>>(`checkins/${participantId}`),
+    firebaseDb.get<Record<string, SubEventCheckinRecord>>(`sub_event_checkins/${participantId}`),
     getParticipantById(participantId),
     getPointsRequired(),
   ]);
@@ -1113,8 +1123,25 @@ export const getMapData = async (participantId: string) => {
   const locations = objectValues(locationsRecord).sort((a, b) => (a.display_order ?? a.id) - (b.display_order ?? b.id));
   const checkins = Object.keys(checkinsRecord ?? {}).map((id) => Number(id));
   const points = participant?.points ?? 0;
+  
+  // Convert checkins to array with timestamps
+  const checkinsData = objectValues(checkinsRecord ?? {}).filter(c => c && c.created_at);
+  
+  // Convert sub-event checkins to array with timestamps
+  const subEventCheckins = objectValues(subEventCheckinsRecord ?? {}).filter(c => c && c.created_at);
+  
+  // Get participant name
+  const participantName = participant ? `${participant.first_name} ${participant.last_name}` : "ลูกเรือ";
 
-  return { locations, checkins, points, pointsRequired };
+  return { 
+    locations, 
+    checkins, 
+    points, 
+    pointsRequired,
+    checkinsData,
+    subEventCheckins,
+    participantName
+  };
 };
 
 export const getRewardsData = async (participantId: string) => {
@@ -1387,6 +1414,67 @@ export const getPrizes = async (): Promise<PrizeRecord[]> => {
   
   // Filter prizes with stock > 0 and return them
   return prizes.filter(p => p.stock > 0);
+};
+
+// Admin: Verify and claim prize by code
+export const verifyClaimCode = async (
+  token: string,
+  claimCode: string
+): Promise<{ 
+  found: boolean; 
+  participantId?: string;
+  participantName?: string;
+  prize?: string;
+  claimed?: boolean;
+  claimedAt?: string;
+}> => {
+  const session = await validateAdminSession(token);
+  if (!session) {
+    throw new Error("Invalid session");
+  }
+
+  // Search all spins for matching claim code
+  const spinsRecord = await firebaseDb.get<Record<string, SpinRecord>>("spins");
+  
+  for (const [participantId, spin] of Object.entries(spinsRecord || {})) {
+    if (spin && spin.claim_code === claimCode) {
+      // Found the spin! Get participant info
+      const participant = await getParticipantById(participantId);
+      
+      return {
+        found: true,
+        participantId,
+        participantName: participant ? `${participant.first_name} ${participant.last_name}` : "ไม่ทราบชื่อ",
+        prize: spin.prize,
+        claimed: spin.claimed || false,
+        claimedAt: spin.claimed_at
+      };
+    }
+  }
+
+  return { found: false };
+};
+
+// Admin: Mark prize as claimed
+export const markPrizeClaimed = async (token: string, participantId: string): Promise<void> => {
+  const session = await validateAdminSession(token);
+  if (!session) {
+    throw new Error("Invalid session");
+  }
+
+  const spin = await firebaseDb.get<SpinRecord>(`spins/${participantId}`);
+  if (!spin) {
+    throw new Error("Spin record not found");
+  }
+
+  if (spin.claimed) {
+    throw new Error("รางวัลนี้ถูกรับไปแล้ว");
+  }
+
+  await firebaseDb.update(`spins/${participantId}`, {
+    claimed: true,
+    claimed_at: new Date().toISOString()
+  });
 };
 
 export const createHeroCard = async (token: string, card: Omit<HeroCardRecord, "id" | "created_at">) => {

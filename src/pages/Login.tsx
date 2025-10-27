@@ -26,7 +26,7 @@ const Login = () => {
   useEffect(() => {
     if (isAuthenticated) {
       if (isParticipant) {
-        navigate("/map", { replace: true });
+        navigate("/dashboard", { replace: true });
       } else if (isAdmin) {
         navigate("/admin", { replace: true });
       }
@@ -59,7 +59,7 @@ const Login = () => {
           sessionStorage.removeItem("returnUrl");
           navigate(returnUrl);
         } else {
-          navigate("/map");
+          navigate("/dashboard");
         }
       } else {
         setAuthLogin({

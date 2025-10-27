@@ -71,23 +71,23 @@ const Rewards = () => {
     loadData();
   }, [participantId, toast, navigate, loadData]);
 
-  const handleSpin = async (): Promise<string> => {
+  const handleSpin = async (): Promise<{ prize: string; claimCode: string }> => {
     try {
       if (!participantId) {
         throw new Error("Missing participant identifier");
       }
 
-      const { prize } = await spinWheel(participantId);
+      const { prize, claimCode } = await spinWheel(participantId);
       setHasSpun(true);
       toast({
-        title: "Congrats on your prize!",
-        description: `You just won ${prize}.`,
+        title: "ยินดีด้วย ท่านได้รางวัล!",
+        description: `ท่านได้รับ ${prize}`,
       });
-      return prize;
+      return { prize, claimCode };
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Unknown error";
       toast({
-        title: "Spin failed",
+        title: "หมุนวงล้อไม่สำเร็จ",
         description: message,
         variant: "destructive",
       });

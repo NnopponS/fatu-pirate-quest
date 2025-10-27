@@ -31,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GeminiSettingsTab } from "@/components/GeminiSettingsTab";
 import {
   RefreshCw,
   LogOut,
@@ -46,6 +47,10 @@ import {
   Search,
   Calendar,
   FileSpreadsheet,
+  Bot,
+  CheckCircle2,
+  XCircle,
+  Trophy,
 } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { AdminLocationManager } from "@/components/AdminLocationManager";
@@ -74,6 +79,9 @@ interface SpinRow {
   participant_id: string;
   prize: string;
   created_at: string;
+  claim_code: string;
+  claimed: boolean;
+  claimed_at?: string;
 }
 
 interface LocationRow {
@@ -500,6 +508,9 @@ const AdminDashboard = () => {
       "เบอร์โทร",
       "สถานะรางวัล",
       "รางวัลที่ได้",
+      "รหัสรับรางวัล",
+      "มอบรางวัลแล้ว",
+      "วันที่มอบรางวัล",
       "ลงทะเบียนเมื่อ",
     ];
 
@@ -516,8 +527,11 @@ const AdminDashboard = () => {
         p.school ?? "",
         p.program ?? "",
         p.phone_number ?? "",
-        spin ? "ได้รับแล้ว" : "ยังไม่ได้รับ",
+        spin ? "หมุนวงล้อแล้ว" : "ยังไม่ได้หมุน",
         spin ? spin.prize : "-",
+        spin ? spin.claim_code : "-",
+        spin ? (spin.claimed ? "มอบแล้ว" : "รอมอบ") : "-",
+        spin && spin.claimed_at ? new Date(spin.claimed_at).toLocaleString('th-TH') : "-",
         new Date(p.created_at).toISOString(),
       ];
     });
@@ -665,7 +679,7 @@ const AdminDashboard = () => {
 
     // Sheet 1: ข้อมูลผู้ลงทะเบียน (Participants)
     const participantsData = [
-      ["ID", "Username", "ชื่อ", "นามสกุล", "คะแนน", "อายุ", "ระดับชั้น", "สถานศึกษา", "โปรแกรม", "เบอร์โทร", "สถานะรางวัล", "รางวัลที่ได้", "ลงทะเบียนเมื่อ"],
+      ["ID", "Username", "ชื่อ", "นามสกุล", "คะแนน", "อายุ", "ระดับชั้น", "สถานศึกษา", "โปรแกรม", "เบอร์โทร", "สถานะรางวัล", "รางวัลที่ได้", "รหัสรับรางวัล", "มอบรางวัลแล้ว", "วันที่มอบรางวัล", "ลงทะเบียนเมื่อ"],
       ...dashboard.participants.map((p) => {
         const spin = dashboard.spins.find((s) => s.participant_id === p.id);
         return [
@@ -679,8 +693,11 @@ const AdminDashboard = () => {
           p.school ?? "",
           p.program ?? "",
           p.phone_number ?? "",
-          spin ? "ได้รับแล้ว" : "ยังไม่ได้รับ",
+          spin ? "หมุนวงล้อแล้ว" : "ยังไม่ได้หมุน",
           spin ? spin.prize : "-",
+          spin ? spin.claim_code : "-",
+          spin ? (spin.claimed ? "มอบแล้ว" : "รอมอบ") : "-",
+          spin && spin.claimed_at ? new Date(spin.claimed_at).toLocaleString('th-TH') : "-",
           new Date(p.created_at).toLocaleString('th-TH'),
         ];
       }),
@@ -846,6 +863,14 @@ const AdminDashboard = () => {
               <TabsTrigger value="export" className="gap-2">
                 <FileSpreadsheet className="h-4 w-4" />
                 Export Data
+              </TabsTrigger>
+              <TabsTrigger value="prize-claims" className="gap-2">
+                <Trophy className="h-4 w-4" />
+                รางวัล
+              </TabsTrigger>
+              <TabsTrigger value="gemini" className="gap-2">
+                <Bot className="h-4 w-4" />
+                AI Chatbot
               </TabsTrigger>
               <TabsTrigger value="settings" className="gap-2">
                 <Anchor className="h-4 w-4" />
@@ -1195,7 +1220,152 @@ const AdminDashboard = () => {
             </TabsContent>
 
             <TabsContent value="herocards" className="space-y-4">
-              <HeroCardsTab token={token} />
+              <AdminHeroCardManager token={token} onRefresh={() => fetchDashboard(token!)} />
+            </TabsContent>
+
+            <TabsContent value="prize-claims" className="space-y-4">
+              <div className="pirate-card px-6 py-8 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
+                    <Trophy className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-semibold text-primary">จัดการรางวัล</h2>
+                    <p className="text-sm text-foreground/70">
+                      ตรวจสอบและยืนยันการมอบรางวัล
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pirate-divider" />
+
+                {/* Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-xl border-2 border-primary/20 bg-primary/5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Trophy className="h-5 w-5 text-primary" />
+                      <span className="text-sm font-semibold text-foreground/70">รางวัลทั้งหมด</span>
+                    </div>
+                    <p className="text-3xl font-bold text-primary">{spins.length}</p>
+                  </div>
+                  
+                  <div className="p-4 rounded-xl border-2 border-green-200 bg-green-50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      <span className="text-sm font-semibold text-green-800">มอบแล้ว</span>
+                    </div>
+                    <p className="text-3xl font-bold text-green-600">
+                      {spins.filter(s => s.claimed).length}
+                    </p>
+                  </div>
+                  
+                  <div className="p-4 rounded-xl border-2 border-amber-200 bg-amber-50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <XCircle className="h-5 w-5 text-amber-600" />
+                      <span className="text-sm font-semibold text-amber-800">รอมอบ</span>
+                    </div>
+                    <p className="text-3xl font-bold text-amber-600">
+                      {spins.filter(s => !s.claimed).length}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Table */}
+                <div className="rounded-lg border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>รหัส</TableHead>
+                        <TableHead>ชื่อ-นามสกุล</TableHead>
+                        <TableHead>รางวัล</TableHead>
+                        <TableHead>วันที่หมุน</TableHead>
+                        <TableHead>สถานะ</TableHead>
+                        <TableHead className="text-right">การกระทำ</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {spins.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-foreground/50 py-8">
+                            ยังไม่มีผู้ที่หมุนวงล้อ
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        spins
+                          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                          .map((spin) => {
+                            const participant = participants.find(p => p.id === spin.participant_id);
+                            return (
+                              <TableRow key={spin.participant_id}>
+                                <TableCell className="font-mono text-sm">{spin.claim_code}</TableCell>
+                                <TableCell>
+                                  {participant ? `${participant.first_name} ${participant.last_name}` : spin.participant_id}
+                                </TableCell>
+                                <TableCell className="font-semibold">{spin.prize}</TableCell>
+                                <TableCell className="text-sm text-foreground/70">
+                                  {new Date(spin.created_at).toLocaleString('th-TH')}
+                                </TableCell>
+                                <TableCell>
+                                  {spin.claimed ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs font-semibold">
+                                      <CheckCircle2 className="h-3 w-3" />
+                                      มอบแล้ว
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold">
+                                      <XCircle className="h-3 w-3" />
+                                      รอมอบ
+                                    </span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {!spin.claimed && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="border-green-300 text-green-700 hover:bg-green-50"
+                                      onClick={async () => {
+                                        if (confirm(`ยืนยันการมอบรางวัล "${spin.prize}" ให้ ${participant?.first_name} ${participant?.last_name}?`)) {
+                                          try {
+                                            const { markPrizeClaimed } = await import("@/services/firebase");
+                                            await markPrizeClaimed(spin.claim_code);
+                                            toast({
+                                              title: "มอบรางวัลสำเร็จ",
+                                              description: "บันทึกการมอบรางวัลเรียบร้อยแล้ว",
+                                            });
+                                            fetchDashboard(token!);
+                                          } catch (error) {
+                                            toast({
+                                              title: "เกิดข้อผิดพลาด",
+                                              description: error instanceof Error ? error.message : "ไม่สามารถบันทึกได้",
+                                              variant: "destructive",
+                                            });
+                                          }
+                                        }
+                                      }}
+                                    >
+                                      <CheckCircle2 className="h-4 w-4 mr-1" />
+                                      มอบแล้ว
+                                    </Button>
+                                  )}
+                                  {spin.claimed && spin.claimed_at && (
+                                    <span className="text-xs text-foreground/50">
+                                      {new Date(spin.claimed_at).toLocaleString('th-TH')}
+                                    </span>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="gemini" className="space-y-4">
+              <GeminiSettingsTab token={token} />
             </TabsContent>
 
             <TabsContent value="export" className="space-y-4">

@@ -5,25 +5,40 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { useToast } from "@/hooks/use-toast";
-import { firebaseDb } from "@/integrations/firebase/database";
-import { Search, CheckCircle2, XCircle, Gift, User, Phone, Calendar, ArrowLeft } from "lucide-react";
-import type { ParticipantRecord, SpinRecord } from "@/services/firebase";
+import { verifyClaimCode, markPrizeClaimed } from "@/services/firebase";
+import { Search, CheckCircle2, XCircle, Gift, User, ArrowLeft, AlertTriangle } from "lucide-react";
 
 const PrizeVerification = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [claimCode, setClaimCode] = useState("");
   const [searching, setSearching] = useState(false);
+  const [marking, setMarking] = useState(false);
   const [result, setResult] = useState<{
-    participant: ParticipantRecord;
-    spin: SpinRecord | null;
+    found: boolean;
+    participantId?: string;
+    participantName?: string;
+    prize?: string;
+    claimed?: boolean;
+    claimedAt?: string;
   } | null>(null);
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) {
+    const token = localStorage.getItem("adminToken");
+    if (!token) {
       toast({
-        title: "กรุณากรอกข้อมูล",
-        description: "กรอกชื่อ, เบอร์โทร หรือ Username เพื่อค้นหา",
+        title: "ไม่มีสิทธิ์",
+        description: "กรุณาเข้าสู่ระบบ Admin",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
+    if (!claimCode.trim() || claimCode.length !== 4) {
+      toast({
+        title: "กรุณากรอกรหัส",
+        description: "รหัสรับรางวัลต้องเป็นตัวเลข 4 หลัก",
         variant: "destructive",
       });
       return;
@@ -33,52 +48,22 @@ const PrizeVerification = () => {
     setResult(null);
 
     try {
-      const participants = await firebaseDb.get<Record<string, ParticipantRecord>>("participants");
+      const data = await verifyClaimCode(token, claimCode);
       
-      if (!participants) {
-        throw new Error("ไม่พบข้อมูลผู้เข้าร่วม");
-      }
-
-      const query = searchQuery.toLowerCase().trim();
-      
-      // ค้นหาจาก: ชื่อ, นามสกุล, เบอร์โทร, หรือ username
-      const found = Object.values(participants).find((p) => {
-        const fullName = `${p.first_name} ${p.last_name}`.toLowerCase();
-        const phone = p.phone_number?.replace(/\D/g, '') || '';
-        const queryPhone = query.replace(/\D/g, '');
-        
-        return (
-          fullName.includes(query) ||
-          p.first_name.toLowerCase().includes(query) ||
-          p.last_name.toLowerCase().includes(query) ||
-          p.username.toLowerCase().includes(query) ||
-          (phone && queryPhone && phone.includes(queryPhone))
-        );
-      });
-
-      if (!found) {
+      if (!data.found) {
         toast({
-          title: "ไม่พบข้อมูล",
-          description: "ไม่พบผู้เข้าร่วมที่ตรงกับข้อมูลที่ค้นหา",
+          title: "ไม่พบรหัสนี้",
+          description: "กรุณาตรวจสอบรหัสอีกครั้ง",
           variant: "destructive",
         });
+        setResult({ found: false });
         return;
       }
 
-      // ดึงข้อมูลรางวัล (spins เก็บเป็น object ที่ key คือ participant_id)
-      const allSpins = await firebaseDb.get<Record<string, SpinRecord>>("spins");
-      const userSpin = allSpins ? Object.values(allSpins).find(
-        (spin) => spin.participant_id === found.id
-      ) : null;
-
-      setResult({
-        participant: found,
-        spin: userSpin || null,
-      });
-
+      setResult(data);
       toast({
-        title: "พบข้อมูล",
-        description: `พบข้อมูลของ ${found.first_name} ${found.last_name}`,
+        title: "พบรางวัล!",
+        description: `รางวัลของ ${data.participantName}`,
       });
     } catch (error) {
       console.error("Search error:", error);
@@ -89,6 +74,43 @@ const PrizeVerification = () => {
       });
     } finally {
       setSearching(false);
+    }
+  };
+
+  const handleMarkClaimed = async () => {
+    if (!result || !result.participantId) return;
+
+    const token = localStorage.getItem("adminToken");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    setMarking(true);
+
+    try {
+      await markPrizeClaimed(token, result.participantId);
+      
+      // Update local result
+      setResult({
+        ...result,
+        claimed: true,
+        claimedAt: new Date().toISOString()
+      });
+
+      toast({
+        title: "✅ ยืนยันการมอบรางวัลสำเร็จ",
+        description: "ระบบบันทึกการมอบรางวัลแล้ว",
+      });
+    } catch (error) {
+      console.error("Mark claimed error:", error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: error instanceof Error ? error.message : "ไม่สามารถบันทึกได้",
+        variant: "destructive",
+      });
+    } finally {
+      setMarking(false);
     }
   };
 
@@ -109,7 +131,7 @@ const PrizeVerification = () => {
               <h1 className="text-4xl font-bold text-primary">ตรวจสอบรางวัล</h1>
             </div>
             <p className="text-lg text-foreground/80">
-              ค้นหาด้วยชื่อ, เบอร์โทร หรือ Username เพื่อตรวจสอบสถานะรางวัล
+              ใส่รหัสรับรางวัล 4 หลักเพื่อตรวจสอบและมอบรางวัล
             </p>
           </div>
 
@@ -117,18 +139,22 @@ const PrizeVerification = () => {
 
           {/* Search Box */}
           <div className="space-y-4">
-            <Label htmlFor="search" className="text-lg">
-              ค้นหาผู้เข้าร่วม
+            <Label htmlFor="claimCode" className="text-lg">
+              รหัสรับรางวัล (4 หลัก)
             </Label>
             <div className="flex gap-3">
               <Input
-                id="search"
+                id="claimCode"
                 type="text"
-                placeholder="ชื่อ, เบอร์โทร, หรือ Username"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                maxLength={4}
+                placeholder="1234"
+                value={claimCode}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  setClaimCode(value);
+                }}
                 onKeyPress={handleKeyPress}
-                className="text-lg"
+                className="text-3xl text-center font-mono tracking-widest"
               />
               <Button
                 onClick={handleSearch}
@@ -139,12 +165,12 @@ const PrizeVerification = () => {
                 {searching ? (
                   <>
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    กำลังค้นหา
+                    ค้นหา
                   </>
                 ) : (
                   <>
                     <Search className="h-5 w-5" />
-                    ค้นหา
+                    ตรวจสอบ
                   </>
                 )}
               </Button>
@@ -156,134 +182,121 @@ const PrizeVerification = () => {
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="pirate-divider" />
 
-              {/* Participant Info */}
-              <div className="rounded-2xl border-2 border-primary/20 bg-primary/5 p-6 space-y-4">
-                <h3 className="text-2xl font-bold text-primary flex items-center gap-2">
-                  <User className="h-6 w-6" />
-                  ข้อมูลผู้เข้าร่วม
-                </h3>
-                
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <p className="text-sm text-foreground/60 mb-1">ชื่อ-นามสกุล</p>
-                    <p className="text-lg font-semibold text-primary">
-                      {result.participant.first_name} {result.participant.last_name}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-foreground/60 mb-1">Username</p>
-                    <p className="text-lg font-semibold text-foreground">
-                      {result.participant.username}
-                    </p>
-                  </div>
-                  
-                  {result.participant.phone_number && (
-                    <div>
-                      <p className="text-sm text-foreground/60 mb-1 flex items-center gap-1">
-                        <Phone className="h-4 w-4" /> เบอร์โทรศัพท์
-                      </p>
-                      <p className="text-lg font-semibold text-foreground">
-                        {result.participant.phone_number}
-                      </p>
+              {result.found ? (
+                <>
+                  {/* Participant Info */}
+                  <div className="rounded-2xl border-2 border-primary/20 bg-primary/5 p-6 space-y-4">
+                    <h3 className="text-2xl font-bold text-primary flex items-center gap-2">
+                      <User className="h-6 w-6" />
+                      ข้อมูลผู้รับรางวัล
+                    </h3>
+                    
+                    <div className="grid gap-4">
+                      <div>
+                        <p className="text-sm text-foreground/60 mb-1">ชื่อ-นามสกุล</p>
+                        <p className="text-2xl font-bold text-primary">
+                          {result.participantName}
+                        </p>
+                      </div>
                     </div>
-                  )}
-                  
-                  <div>
-                    <p className="text-sm text-foreground/60 mb-1">คะแนนสะสม</p>
-                    <p className="text-lg font-semibold text-accent">
-                      {result.participant.points} คะแนน
-                    </p>
                   </div>
-                  
-                  <div className="md:col-span-2">
-                    <p className="text-sm text-foreground/60 mb-1 flex items-center gap-1">
-                      <Calendar className="h-4 w-4" /> วันที่ลงทะเบียน
-                    </p>
-                    <p className="text-lg font-semibold text-foreground">
-                      {new Date(result.participant.created_at).toLocaleDateString('th-TH', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  </div>
-                </div>
-              </div>
 
-              {/* Prize Status */}
-              <div className={`rounded-2xl border-2 p-6 space-y-4 ${
-                result.spin
-                  ? "border-accent/30 bg-accent/10"
-                  : "border-foreground/20 bg-foreground/5"
-              }`}>
-                <h3 className="text-2xl font-bold flex items-center gap-2">
-                  {result.spin ? (
-                    <>
-                      <CheckCircle2 className="h-6 w-6 text-accent" />
-                      <span className="text-accent">ได้รับรางวัลแล้ว</span>
-                    </>
+                  {/* Prize Status */}
+                  {result.claimed ? (
+                    <div className="rounded-2xl border-2 border-red-400/50 bg-red-50 p-6 space-y-4">
+                      <h3 className="text-2xl font-bold text-red-600 flex items-center gap-2">
+                        <AlertTriangle className="h-6 w-6" />
+                        รางวัลนี้มอบไปแล้ว
+                      </h3>
+                      
+                      <div className="space-y-3">
+                        <div className="p-4 rounded-lg bg-white border border-red-300">
+                          <p className="text-sm text-foreground/60 mb-2">รางวัลที่ได้รับ</p>
+                          <p className="text-3xl font-bold text-red-600 flex items-center gap-2">
+                            <Gift className="h-8 w-8" />
+                            {result.prize}
+                          </p>
+                        </div>
+                        
+                        {result.claimedAt && (
+                          <div>
+                            <p className="text-sm text-foreground/60 mb-1">วันที่มอบรางวัล</p>
+                            <p className="text-lg font-semibold text-foreground">
+                              {new Date(result.claimedAt).toLocaleString('th-TH', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="p-4 rounded-lg bg-red-100 border-2 border-red-400">
+                          <p className="text-lg font-bold text-red-700 text-center">
+                            ⚠️ รางวัลนี้ถูกรับไปแล้ว กรุณาตรวจสอบอีกครั้ง
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   ) : (
-                    <>
-                      <XCircle className="h-6 w-6 text-foreground/60" />
-                      <span className="text-foreground/80">ยังไม่ได้รับรางวัล</span>
-                    </>
+                    <div className="rounded-2xl border-2 border-green-400/50 bg-green-50 p-6 space-y-4">
+                      <h3 className="text-2xl font-bold text-green-600 flex items-center gap-2">
+                        <CheckCircle2 className="h-6 w-6" />
+                        พร้อมมอบรางวัล
+                      </h3>
+                      
+                      <div className="space-y-3">
+                        <div className="p-6 rounded-lg bg-white border-2 border-green-400">
+                          <p className="text-sm text-foreground/60 mb-2">รางวัล</p>
+                          <p className="text-4xl font-bold text-green-600 flex items-center gap-3">
+                            <Gift className="h-10 w-10" />
+                            {result.prize}
+                          </p>
+                        </div>
+
+                        <div className="p-6 rounded-lg bg-green-100 border-2 border-green-400 text-center space-y-4">
+                          <p className="text-lg font-semibold text-green-800">
+                            ✅ ยืนยันตัวตนสำเร็จ
+                          </p>
+                          <p className="text-sm text-green-700">
+                            กรุณามอบรางวัลให้ผู้รับ แล้วกดปุ่มด้านล่างเพื่อยืนยันการมอบรางวัล
+                          </p>
+                          <Button
+                            onClick={handleMarkClaimed}
+                            disabled={marking}
+                            size="lg"
+                            className="w-full bg-green-600 hover:bg-green-700 text-white gap-2"
+                          >
+                            {marking ? (
+                              <>
+                                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                กำลังบันทึก...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="h-5 w-5" />
+                                ยืนยันการมอบรางวัลแล้ว
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   )}
-                </h3>
-
-                {result.spin ? (
-                  <div className="space-y-3">
-                    <div className="p-4 rounded-lg bg-white/80 border border-accent/20">
-                      <p className="text-sm text-foreground/60 mb-2">รางวัลที่ได้รับ</p>
-                      <p className="text-3xl font-bold text-accent flex items-center gap-2">
-                        <Gift className="h-8 w-8" />
-                        {result.spin.prize}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm text-foreground/60 mb-1">วันที่หมุนวงล้อ</p>
-                      <p className="text-lg font-semibold text-foreground">
-                        {new Date(result.spin.created_at).toLocaleDateString('th-TH', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-lg bg-accent/20 border border-accent/30">
-                      <p className="text-sm font-semibold text-accent">
-                        ✅ สามารถรับรางวัลได้ - แสดงหน้านี้กับทีมงานเพื่อรับรางวัล
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-foreground/70">
-                      ผู้เข้าร่วมยังไม่ได้หมุนวงล้อ
-                    </p>
-                    
-                    {result.participant.points >= 400 ? (
-                      <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-                        <p className="text-sm font-semibold text-primary">
-                          💡 มีคะแนนเพียงพอแล้ว สามารถไปหมุนวงล้อได้ที่หน้า "วงล้อสมบัติ"
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="p-4 rounded-lg bg-foreground/5 border border-foreground/10">
-                        <p className="text-sm text-foreground/70">
-                          ต้องสะสมเพิ่มอีก {400 - result.participant.points} คะแนน เพื่อหมุนวงล้อ
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                </>
+              ) : (
+                <div className="rounded-2xl border-2 border-foreground/20 bg-foreground/5 p-8 text-center">
+                  <XCircle className="h-16 w-16 text-foreground/40 mx-auto mb-4" />
+                  <h3 className="text-2xl font-bold text-foreground/80 mb-2">
+                    ไม่พบรหัสนี้
+                  </h3>
+                  <p className="text-foreground/60">
+                    กรุณาตรวจสอบรหัสและลองอีกครั้ง
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -292,11 +305,11 @@ const PrizeVerification = () => {
             <Button
               variant="outline"
               size="lg"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/admin")}
               className="gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              กลับหน้าแรก
+              กลับหน้า Admin
             </Button>
             
             {result && (
@@ -304,13 +317,13 @@ const PrizeVerification = () => {
                 variant="secondary"
                 size="lg"
                 onClick={() => {
-                  setSearchQuery("");
+                  setClaimCode("");
                   setResult(null);
                 }}
                 className="gap-2"
               >
                 <Search className="h-4 w-4" />
-                ค้นหาใหม่
+                ตรวจสอบรหัสใหม่
               </Button>
             )}
           </div>
@@ -321,4 +334,3 @@ const PrizeVerification = () => {
 };
 
 export default PrizeVerification;
-
