@@ -158,6 +158,8 @@ export interface DashboardResponse {
   locations: LocationRecord[];
   prizes: PrizeRecord[];
   spins: SpinRecord[]; // ✅ เพิ่มข้อมูลรางวัลที่ได้
+  checkins: CheckinRecord[]; // ✅ ข้อมูลการเช็กอินสถานที่
+  subEventCheckins: SubEventCheckinRecord[]; // ✅ ข้อมูลการเข้ากิจกรรมย่อย
   settings: {
     pointsRequiredForWheel: number;
   };
@@ -1156,11 +1158,13 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
   }
 
   // Get locations from Firebase (source of truth for admin)
-  const [locationsRecord, participantsRecord, prizesRecord, spinsRecord, pointsRequired] = await Promise.all([
+  const [locationsRecord, participantsRecord, prizesRecord, spinsRecord, checkinsRecord, subEventCheckinsRecord, pointsRequired] = await Promise.all([
     firebaseDb.get<Record<string, LocationRecord>>("locations"),
     firebaseDb.get<Record<string, ParticipantRecord>>("participants"),
     firebaseDb.get<Record<string, PrizeRecord>>("prizes"),
     firebaseDb.get<Record<string, SpinRecord>>("spins"), // ✅ ดึงข้อมูลรางวัล
+    firebaseDb.get<Record<string, Record<string, CheckinRecord>>>("checkins"), // ✅ ดึงข้อมูล check-ins
+    firebaseDb.get<Record<string, Record<string, SubEventCheckinRecord>>>("sub_event_checkins"), // ✅ ดึงข้อมูล sub-event check-ins
     getPointsRequired(),
   ]);
 
@@ -1170,6 +1174,22 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
   const locationsArr = objectValues(locationsRecord ?? {});
   const prizesArr = objectValues(prizesRecord ?? {});
   const spinsArr = objectValues(spinsRecord ?? {}); // ✅ แปลง spins เป็น array
+  
+  // ✅ แปลง check-ins จาก nested object เป็น flat array
+  const checkinsArr: CheckinRecord[] = [];
+  Object.values(checkinsRecord ?? {}).forEach((participantCheckins) => {
+    Object.values(participantCheckins ?? {}).forEach((checkin) => {
+      checkinsArr.push(checkin);
+    });
+  });
+  
+  // ✅ แปลง sub-event check-ins จาก nested object เป็น flat array
+  const subEventCheckinsArr: SubEventCheckinRecord[] = [];
+  Object.values(subEventCheckinsRecord ?? {}).forEach((participantSubEventCheckins) => {
+    Object.values(participantSubEventCheckins ?? {}).forEach((subEventCheckin) => {
+      subEventCheckinsArr.push(subEventCheckin);
+    });
+  });
 
   return {
     ok: true,
@@ -1181,6 +1201,12 @@ export const getDashboardData = async (token: string): Promise<DashboardResponse
       (a, b) => new Date((a as any).created_at).getTime() - new Date((b as any).created_at).getTime(),
     ),
     spins: spinsArr.sort( // ✅ ส่งข้อมูลรางวัล
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    ),
+    checkins: checkinsArr.sort( // ✅ ส่งข้อมูล check-ins
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    ),
+    subEventCheckins: subEventCheckinsArr.sort( // ✅ ส่งข้อมูล sub-event check-ins
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     ),
     settings: {

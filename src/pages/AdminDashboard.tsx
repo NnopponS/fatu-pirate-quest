@@ -531,6 +531,113 @@ const AdminDashboard = () => {
     URL.revokeObjectURL(url);
   };
 
+  const exportLocationCheckins = () => {
+    if (!dashboard) return;
+
+    const header = [
+      "Checkin ID",
+      "Participant ID",
+      "Username",
+      "ชื่อ-นามสกุล",
+      "Location ID",
+      "ชื่อสถานที่",
+      "Method",
+      "เช็กอินเมื่อ",
+    ];
+
+    const rows = dashboard.checkins.map((checkin) => {
+      const participant = dashboard.participants.find((p) => p.id === checkin.participant_id);
+      const location = dashboard.locations.find((l) => l.id === checkin.location_id);
+      return [
+        `${checkin.participant_id}-${checkin.location_id}`,
+        checkin.participant_id,
+        participant?.username ?? "",
+        participant ? `${participant.first_name} ${participant.last_name}` : "",
+        String(checkin.location_id),
+        location?.name ?? "",
+        checkin.method,
+        new Date(checkin.created_at).toISOString(),
+      ];
+    });
+
+    const csvContent = [header, ...rows]
+      .map((row) =>
+        row
+          .map((value) => {
+            const sanitized = String(value).replace(/"/g, '""');
+            return `"${sanitized}"`;
+          })
+          .join(","),
+      )
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `fatu_location_checkins_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportSubEventCheckins = () => {
+    if (!dashboard) return;
+
+    const header = [
+      "Checkin ID",
+      "Participant ID",
+      "Username",
+      "ชื่อ-นามสกุล",
+      "Sub Event ID",
+      "ชื่อกิจกรรม",
+      "Location ID",
+      "ชื่อสถานที่",
+      "คะแนนที่ได้",
+      "เข้าร่วมเมื่อ",
+    ];
+
+    const rows = dashboard.subEventCheckins.map((checkin) => {
+      const participant = dashboard.participants.find((p) => p.id === checkin.participant_id);
+      const location = dashboard.locations.find((l) => l.id === checkin.location_id);
+      const subEvent = location?.sub_events?.find((se) => se.id === checkin.sub_event_id);
+      return [
+        `${checkin.participant_id}-${checkin.sub_event_id}`,
+        checkin.participant_id,
+        participant?.username ?? "",
+        participant ? `${participant.first_name} ${participant.last_name}` : "",
+        checkin.sub_event_id,
+        subEvent?.name ?? "",
+        String(checkin.location_id),
+        location?.name ?? "",
+        String(checkin.points_awarded),
+        new Date(checkin.created_at).toISOString(),
+      ];
+    });
+
+    const csvContent = [header, ...rows]
+      .map((row) =>
+        row
+          .map((value) => {
+            const sanitized = String(value).replace(/"/g, '""');
+            return `"${sanitized}"`;
+          })
+          .join(","),
+      )
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `fatu_subevent_checkins_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (!token) {
     return null;
   }
@@ -692,16 +799,22 @@ const AdminDashboard = () => {
 
             <TabsContent value="locations" className="space-y-4">
               <div className="pirate-card px-6 py-8 space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary/15 text-secondary">
-                    <MapPin className="h-6 w-6" />
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary/15 text-secondary">
+                      <MapPin className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-semibold text-primary">จัดการจุดเช็กอิน</h2>
+                      <p className="text-sm text-foreground/70">
+                        แก้ไขรายละเอียด อัปโหลดรูปภาพ และสร้าง QR Code สำหรับแต่ละจุด
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-semibold text-primary">จัดการจุดเช็กอิน</h2>
-                    <p className="text-sm text-foreground/70">
-                      แก้ไขรายละเอียด อัปโหลดรูปภาพ และสร้าง QR Code สำหรับแต่ละจุด
-                    </p>
-                  </div>
+                  <Button variant="outline" className="gap-2" onClick={exportLocationCheckins}>
+                    <Download className="h-4 w-4" />
+                    Export Check-ins
+                  </Button>
                 </div>
 
                 <div className="grid gap-6">
@@ -718,6 +831,25 @@ const AdminDashboard = () => {
             </TabsContent>
 
             <TabsContent value="subevents" className="space-y-4">
+              <div className="pirate-card px-6 py-8 space-y-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/15 text-accent">
+                      <Calendar className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-semibold text-primary">กิจกรรมย่อย</h2>
+                      <p className="text-sm text-foreground/70">
+                        จัดการกิจกรรมย่อยภายในแต่ละจุดเช็กอิน
+                      </p>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="gap-2" onClick={exportSubEventCheckins}>
+                    <Download className="h-4 w-4" />
+                    Export Check-ins
+                  </Button>
+                </div>
+              </div>
               <AdminSubEventManager
                 locations={dashboard.locations}
                 onSave={saveSubEvents}

@@ -25,15 +25,36 @@ export const SpinWheel = ({ onSpin, disabled, prizes }: SpinWheelProps) => {
     setSpinning(true);
     setResult(null);
 
-    // Random rotation (3-5 full spins + random angle)
-    const spins = 3 + Math.random() * 2; // 3-5 full rotations
-    const randomAngle = Math.random() * 360; // Random final position
-    const totalRotation = rotation + (spins * 360) + randomAngle;
-    
-    setRotation(totalRotation);
-
     try {
+      // ✅ Get the prize first
       const prize = await onSpin();
+      
+      // ✅ Find which segment this prize is in
+      const prizeIndex = prizes.findIndex(p => p.name === prize);
+      
+      if (prizeIndex === -1) {
+        // Prize not found in list, use random rotation
+        const spins = 3 + Math.random() * 2;
+        const randomAngle = Math.random() * 360;
+        const totalRotation = rotation + (spins * 360) + randomAngle;
+        setRotation(totalRotation);
+      } else {
+        // ✅ Calculate the angle for this prize
+        const segmentAngle = 360 / prizes.length;
+        const prizeAngle = (prizeIndex * segmentAngle) + (segmentAngle / 2); // Center of segment
+        
+        // ✅ The pointer is at the top (0°), so we need to rotate the wheel
+        // so that the prize segment is at the top
+        // We rotate counter-clockwise, so we need to subtract the angle
+        const targetAngle = 360 - prizeAngle;
+        
+        // ✅ Add multiple full rotations for effect (5-7 spins)
+        const spins = 5 + Math.random() * 2;
+        const totalRotation = rotation + (spins * 360) + targetAngle;
+        
+        setRotation(totalRotation);
+      }
+
       // Show result after animation completes
       setTimeout(() => {
         setResult(prize);
@@ -41,7 +62,7 @@ export const SpinWheel = ({ onSpin, disabled, prizes }: SpinWheelProps) => {
       }, 4000); // Match animation duration
     } catch {
       setSpinning(false);
-      setRotation(rotation); // Reset on error
+      // Don't reset rotation on error to show what was spun
     }
   };
 
