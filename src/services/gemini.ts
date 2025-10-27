@@ -142,11 +142,10 @@ ${userContextText}
     // Reference: https://developer.puter.com/tutorials/free-gemini-api/
     const fullPrompt = `${systemPrompt}\n\n---\n\nคำถามจาก User: ${userMessage}`;
     
-    // Call Puter AI with official format
-    const response = await puter.ai.chat(fullPrompt, {
+    // Call Puter AI with official format (Anonymous mode - no auth popup)
+    const response = await puter.ai.chat(fullPrompt, undefined, {
       model: 'google/gemini-2.5-flash', // Latest Gemini 2.5 Flash - Fast & Smart
       stream: false,
-      mode: 'background', // Run in background to prevent loading popup
     });
 
     // Extract content from response (official format: response.message.content)
