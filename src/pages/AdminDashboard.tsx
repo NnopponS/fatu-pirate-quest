@@ -1309,6 +1309,29 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
+                {/* Search Box */}
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/50" />
+                    <Input
+                      type="text"
+                      placeholder="ค้นหาด้วยรหัส, ชื่อ, นามสกุล หรือรางวัล..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  {searchQuery && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setSearchQuery("")}
+                    >
+                      ล้าง
+                    </Button>
+                  )}
+                </div>
+
                 {/* Table */}
                 <div className="rounded-lg border overflow-hidden">
                   <Table>
@@ -1332,6 +1355,19 @@ const AdminDashboard = () => {
                       ) : (
                         dashboard.spins
                           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                          .filter((spin) => {
+                            if (!searchQuery) return true;
+                            const participant = dashboard.participants.find(p => p.id === spin.participant_id);
+                            const searchLower = searchQuery.toLowerCase();
+                            return (
+                              spin.claim_code.toLowerCase().includes(searchLower) ||
+                              spin.prize.toLowerCase().includes(searchLower) ||
+                              (participant && (
+                                participant.first_name.toLowerCase().includes(searchLower) ||
+                                participant.last_name.toLowerCase().includes(searchLower)
+                              ))
+                            );
+                          })
                           .map((spin) => {
                             const participant = dashboard.participants.find(p => p.id === spin.participant_id);
                             return (
@@ -1364,10 +1400,10 @@ const AdminDashboard = () => {
                                       variant="outline"
                                       className="border-green-300 text-green-700 hover:bg-green-50"
                                       onClick={async () => {
-                                        if (confirm(`ยืนยันการมอบรางวัล "${spin.prize}" ให้ ${participant?.first_name} ${participant?.last_name}?`)) {
+                                        if (confirm(`ยืนยันการมอบรางวัล "${spin.prize}" ให้ ${participant?.first_name} ${participant?.last_name}?\n\nรหัส: ${spin.claim_code}`)) {
                                           try {
                                             const { markPrizeClaimed } = await import("@/services/firebase");
-                                            await markPrizeClaimed(spin.claim_code);
+                                            await markPrizeClaimed(token!, spin.participant_id);
                                             toast({
                                               title: "มอบรางวัลสำเร็จ",
                                               description: "บันทึกการมอบรางวัลเรียบร้อยแล้ว",
