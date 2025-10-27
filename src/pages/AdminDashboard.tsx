@@ -55,7 +55,6 @@ import {
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { AdminLocationManager } from "@/components/AdminLocationManager";
 import { AdminParticipantManager } from "@/components/AdminParticipantManager";
-import { AdminHeroCardManager } from "@/components/AdminHeroCardManager";
 import { AdminSubEventManager } from "@/components/AdminSubEventManager";
 import { HeroCardsTab } from "@/components/HeroCardsTabContent";
 import { supabase } from "@/integrations/supabase/client";
@@ -1260,7 +1259,7 @@ const AdminDashboard = () => {
             </TabsContent>
 
             <TabsContent value="herocards" className="space-y-4">
-              <AdminHeroCardManager token={token} onRefresh={() => fetchDashboard(token!)} />
+              <HeroCardsTab token={token} />
             </TabsContent>
 
             <TabsContent value="prize-claims" className="space-y-4">
