@@ -1,15 +1,22 @@
 import { firebaseDb } from "@/integrations/firebase/database";
 
-// Declare puter global from Puter.js
+// Declare puter global from Puter.js (following official API)
 declare global {
   interface Window {
     puter: {
       ai: {
-        chat: (message: string, options?: any) => Promise<string>;
+        chat: (message: string, imageUrl?: string | any, options?: any) => Promise<any>;
       };
     };
   }
 }
+
+// Puter global (no window prefix needed)
+declare const puter: {
+  ai: {
+    chat: (message: string, imageUrl?: string | any, options?: any) => Promise<any>;
+  };
+};
 
 interface PuterSettings {
   knowledgeBase?: string; // Context/knowledge for the chatbot
@@ -49,19 +56,14 @@ export interface UserContext {
 }
 
 // Chat with pirate using Puter.js AI (FREE! No API key needed!)
+// Following official tutorial: https://developer.puter.com/tutorials/free-gemini-api/
 export const chatWithPirate = async (
   userMessage: string,
   userContext?: UserContext
 ): Promise<string> => {
   // Check if Puter.js is loaded
-  if (typeof window === 'undefined' || !window.puter) {
+  if (typeof puter === 'undefined') {
     throw new Error("Puter.js is not loaded. Please refresh the page.");
-  }
-
-  // Set Puter to NOT require authentication for AI calls
-  // This prevents the annoying login popup
-  if (window.puter && typeof (window.puter as any).setAuthMode === 'function') {
-    (window.puter as any).setAuthMode('optional');
   }
 
   const settings = await getGeminiSettings();
@@ -136,27 +138,26 @@ ${userContextText}
 8. เรียกชื่อ User ถ้ามีข้อมูลชื่อ เพื่อให้เป็นกันเอง`;
 
   try {
-    // Use Puter.js AI chat with Gemini model (Anonymous/No Auth)
+    // Use Puter.js AI chat following official API
+    // Reference: https://developer.puter.com/tutorials/free-gemini-api/
     const fullPrompt = `${systemPrompt}\n\n---\n\nคำถามจาก User: ${userMessage}`;
     
-    // Call AI without authentication requirement
-    const response = await window.puter.ai.chat(fullPrompt, {
-      model: "gemini-2.0-flash-exp", // Use Gemini through Puter
-      temperature: 0.9,
-      max_tokens: 200,
-      // Anonymous mode - no login required
+    // Call Puter AI with official format
+    const response = await puter.ai.chat(fullPrompt, {
+      model: 'google/gemini-2.0-flash-lite-001', // Fast & Free model
       stream: false,
     });
 
-    return response;
+    // Extract content from response (official format: response.message.content)
+    if (response?.message?.content) {
+      return response.message.content;
+    } else if (typeof response === 'string') {
+      return response;
+    } else {
+      throw new Error("Invalid response format");
+    }
   } catch (error: any) {
     console.error("Puter AI chat error:", error);
-    
-    // If it's an auth error, try to help user
-    if (error?.message?.includes('auth') || error?.message?.includes('login')) {
-      throw new Error("กรุณารอสักครู่... กำลังเชื่อมต่อ AI");
-    }
-    
     throw new Error("ข้าไม่สามารถตอบได้ในตอนนี้ ลองใหม่อีกครั้งนะ!");
   }
 };
