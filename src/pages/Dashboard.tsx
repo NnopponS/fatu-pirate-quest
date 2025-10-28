@@ -132,8 +132,24 @@ const Dashboard = () => {
     loadData();
   }, [participantId, navigate, loadData, toast]);
 
-  // Calculate progress
-  const completedLocations = locations.filter(loc => checkins.includes(loc.id));
+  // Calculate progress - เปลี่ยนจาก location checkin เป็น sub-event completion
+  const completedLocations = useMemo(() => {
+    return locations.filter(loc => {
+      // ถ้ามีกิจกรรมย่อยที่ให้คะแนน (points_awarded > 0) ในสถานที่นี้
+      const hasScoreableSubEvents = loc.sub_events?.some(se => (se.points_awarded ?? 100) > 0);
+      
+      if (!hasScoreableSubEvents) return true; // ถ้าไม่มีกิจกรรมย่อยที่ให้คะแนน ให้ถือว่า completed
+      
+      // ตรวจสอบว่ามีกิจกรรมย่อยที่ให้คะแนนที่ทำแล้วในสถานที่นี้หรือไม่
+      const hasCompletedSubEvent = subEventCheckins.some(checkin => 
+        checkin.location_id === loc.id && 
+        loc.sub_events?.find(se => se.id === checkin.sub_event_id && (se.points_awarded ?? 100) > 0)
+      );
+      
+      return hasCompletedSubEvent;
+    });
+  }, [locations, subEventCheckins]);
+  
   const progressPercentage = locations.length > 0 ? (completedLocations.length / locations.length) * 100 : 0;
   const canSpin = points >= pointsRequired;
 
@@ -289,7 +305,7 @@ const Dashboard = () => {
             <div className="p-4 rounded-xl bg-accent/10 border border-accent/20">
               <MapPin className="h-5 w-5 text-accent mb-2" />
               <p className="text-2xl font-bold text-accent">{completedLocations.length}/{locations.length}</p>
-              <p className="text-xs text-foreground/70">สถานที่เช็กอิน</p>
+              <p className="text-xs text-foreground/70">สถานที่ทำกิจกรรม</p>
             </div>
             
             <div className="p-4 rounded-xl bg-secondary/10 border border-secondary/20">
@@ -368,7 +384,7 @@ const Dashboard = () => {
             />
           </div>
           <p className="text-sm text-foreground/70 mt-2">
-            เช็กอินแล้ว {completedLocations.length} จาก {locations.length} สถานที่
+            ทำกิจกรรมครบแล้ว {completedLocations.length} จาก {locations.length} สถานที่
           </p>
         </div>
 
@@ -381,48 +397,47 @@ const Dashboard = () => {
 
           <div className="grid gap-4">
             {locations.map(location => {
-              const isCheckedIn = checkins.includes(location.id);
+              const hasCompletedSubEvent = completedLocations.some(loc => loc.id === location.id);
               const locationSubEvents = subEventCheckins.filter(se => se.location_id === location.id);
               
               return (
                 <div 
                   key={location.id}
                   className={`p-4 rounded-xl border-2 transition-all ${
-                    isCheckedIn 
+                    hasCompletedSubEvent 
                       ? 'border-green-400 bg-green-50' 
-                      : 'border-gray-300 bg-gray-50'
+                      : 'border-gray-300 bg-gray协助'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        {isCheckedIn ? (
+                        {hasCompletedSubEvent ? (
                           <CheckCircle2 className="h-5 w-5 text-green-600" />
                         ) : (
                           <XCircle className="h-5 w-5 text-gray-400" />
                         )}
-                        <h3 className={`text-lg font-bold ${isCheckedIn ? 'text-green-700' : 'text-gray-700'}`}>
+                        <h3 className={`text-lg font-bold ${hasCompletedSubEvent ? 'text-green-700' : 'text-gray-700'}`}>
                           {location.name}
                         </h3>
                       </div>
                       
                       <div className="flex items-center gap-4 text-sm">
-                        <span className={isCheckedIn ? 'text-green-600' : 'text-gray-500'}>
-                          <Gift className="inline h-4 w-4 mr-1" />
-                          {location.points} คะแนน
+                        <span className={hasCompletedSubEvent ? 'text-green-600' : 'text-gray-500'}>
+                          🎁 มีกิจกรรมย่อย
                         </span>
                         
                         {locationSubEvents.length > 0 && (
                           <span className="text-secondary">
                             <CheckCircle2 className="inline h-4 w-4 mr-1" />
-                            {locationSubEvents.length} กิจกรรม
+                            ทำแล้ว {locationSubEvents.length} กิจกรรม
                           </span>
                         )}
                       </div>
                       
-                      {!isCheckedIn && (
+                      {!hasCompletedSubEvent && (
                         <p className="text-sm text-gray-600 mt-2">
-                          ⚠️ ท่านยังไม่ได้เช็กอินที่นี่
+                          ⚠️ ยังไม่ได้ทำกิจกรรมย่อยที่สถานที่นี้
                         </p>
                       )}
                     </div>

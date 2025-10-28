@@ -1006,9 +1006,9 @@ export const checkinSubEvent = async (
   }
 
   // คำนวณคะแนนที่จะได้รับ
-  // ถ้า sub-event กำหนด points_awarded = 0 → ไม่ให้คะแนนเลย
-  // ถ้าไม่ได้กำหนด → default = 100
-  // แต่ถ้าเคยได้คะแนนจากสถานที่นี้แล้ว → ให้ 0
+  // - ถ้า sub-event กำหนด points_awarded = 0 → ไม่ให้คะแนน
+  // - ถ้าไม่กำหนด → default = 100
+  // - ถ้าเคยทำกิจกรรมย่อยที่ให้คะแนนในสถานที่นี้แล้ว → ให้ 0
   const SUB_EVENT_BASE_POINTS = foundSubEvent.points_awarded ?? 100;
   const pointsToAward = SUB_EVENT_BASE_POINTS === 0 ? 0 : (hasGottenPointsFromThisLocation ? 0 : SUB_EVENT_BASE_POINTS);
 

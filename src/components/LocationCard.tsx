@@ -70,7 +70,7 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageU
             }`}
           >
             {checkedIn ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Clock className="h-3.5 w-3.5" />}
-            <span className="text-xs">{checkedIn ? "เช็กอินแล้ว" : "ยังไม่ได้เช็กอิน"}</span>
+            <span className="text-xs">{checkedIn ? "ทำกิจกรรมแล้ว" : "ยังไม่ได้ทำ"}</span>
           </span>
         </div>
 
