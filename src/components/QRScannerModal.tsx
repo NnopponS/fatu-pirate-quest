@@ -25,6 +25,7 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [hasDetected, setHasDetected] = useState(false);
+  const frameSkipRef = useRef(0);
 
   // Method to check if we should use BarcodeDetector or jsQR
   const hasBarcodeDetector = typeof window !== "undefined" && "BarcodeDetector" in window;
@@ -47,6 +48,7 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
 
     setScanning(false);
     setHasDetected(false);
+    frameSkipRef.current = 0; // Reset frame counter
   }, []);
 
   const startScanning = useCallback(async () => {
@@ -62,12 +64,12 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
         setScanMethod('jsqr');
       }
 
-      // Request camera
+      // Request camera with lower resolution for better performance
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
           facingMode: { ideal: 'environment' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+          width: { ideal: 640, max: 640 },
+          height: { ideal: 480, max: 480 }
         },
       });
 
@@ -98,9 +100,16 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
         }
       });
 
-      // Start scanning based on method
+      // Start scanning based on method - with frame skipping for performance
       const scan = async () => {
         if (hasDetected || !videoRef.current || !videoRef.current.srcObject) {
+          return;
+        }
+
+        // Skip frames - only process every 5th frame for better performance
+        frameSkipRef.current++;
+        if (frameSkipRef.current % 5 !== 0) {
+          animationFrameRef.current = requestAnimationFrame(scan);
           return;
         }
 
@@ -121,7 +130,7 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
               return;
             }
           } else {
-            // Use jsQR fallback
+            // Use jsQR fallback with scaled down canvas for performance
             const canvas = canvasRef.current;
             if (!canvas) return;
 
@@ -131,8 +140,10 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
             const video = videoRef.current;
             
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
-              canvas.height = video.videoHeight;
-              canvas.width = video.videoWidth;
+              // Scale down to 320x240 for faster processing
+              const scale = 0.5;
+              canvas.height = video.videoHeight * scale;
+              canvas.width = video.videoWidth * scale;
               
               context.drawImage(video, 0, 0, canvas.width, canvas.height);
               const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
