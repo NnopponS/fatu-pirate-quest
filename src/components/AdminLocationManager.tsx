@@ -194,20 +194,27 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
     const updatedSubEvents = [...subEvents, newSubEventData];
     setSubEvents(updatedSubEvents);
 
-    if (onSaveSubEvents) {
-      try {
-        await onSaveSubEvents(location.id, updatedSubEvents);
-        toast({ title: "เพิ่มกิจกรรมสำเร็จ" });
-        setNewSubEvent({ name: "", description: "", time: "", image_url: "", points_awarded: "100" });
-        setShowAddSubEvent(false);
-      } catch (error) {
-        toast({
-          title: "เพิ่มกิจกรรมไม่สำเร็จ",
-          description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
-          variant: "destructive",
-        });
+      if (onSaveSubEvents) {
+        try {
+          await onSaveSubEvents(location.id, updatedSubEvents);
+          
+          // Trigger force refresh event for immediate updates
+          window.dispatchEvent(new CustomEvent('force-map-refresh'));
+          
+          toast({ 
+            title: "เพิ่มกิจกรรมสำเร็จ",
+            description: "กิจกรรมจะแสดงในแผนที่ภายในไม่กี่วินาที"
+          });
+          setNewSubEvent({ name: "", description: "", time: "", image_url: "", points_awarded: "100" });
+          setShowAddSubEvent(false);
+        } catch (error) {
+          toast({
+            title: "เพิ่มกิจกรรมไม่สำเร็จ",
+            description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
+            variant: "destructive",
+          });
+        }
       }
-    }
   };
 
   const handleSaveSubEvent = async (subEventId: string) => {
@@ -223,6 +230,9 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
 
       if (onSaveSubEvents) {
         await onSaveSubEvents(location.id, updatedSubEvents);
+        
+        // Trigger force refresh event for immediate updates
+        window.dispatchEvent(new CustomEvent('force-map-refresh'));
       }
 
       setEditingSubEvents((prev) => {
@@ -231,7 +241,10 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
         return newState;
       });
 
-      toast({ title: "บันทึกกิจกรรมสำเร็จ" });
+      toast({ 
+        title: "บันทึกกิจกรรมสำเร็จ",
+        description: "ข้อมูลถูกอัปเดตแล้ว"
+      });
     } catch (error) {
       toast({
         title: "บันทึกกิจกรรมไม่สำเร็จ",
@@ -252,9 +265,15 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
 
       if (onSaveSubEvents) {
         await onSaveSubEvents(location.id, updatedSubEvents);
+        
+        // Trigger force refresh event for immediate updates
+        window.dispatchEvent(new CustomEvent('force-map-refresh'));
       }
 
-      toast({ title: "ลบกิจกรรมสำเร็จ" });
+      toast({ 
+        title: "ลบกิจกรรมสำเร็จ",
+        description: "ข้อมูลถูกอัปเดตแล้ว"
+      });
     } catch (error) {
       toast({
         title: "ลบกิจกรรมไม่สำเร็จ",

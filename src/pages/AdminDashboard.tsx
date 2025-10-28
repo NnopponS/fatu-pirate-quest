@@ -298,12 +298,12 @@ const AdminDashboard = () => {
         sub_events: subEvents,
       });
       
-      // Clear map cache to refresh data on Map page
-      const { clearAppCache } = await import("@/services/firebase");
-      clearAppCache("mapData");
-      
+      // Cache is automatically cleared by updateLocation
       toast({ title: "อัปเดตกิจกรรมย่อยแล้ว" });
       fetchDashboard(token);
+      
+      // Trigger force refresh event for all map pages
+      window.dispatchEvent(new CustomEvent('force-map-refresh'));
     } catch (error) {
       toast({
         title: "บันทึกกิจกรรมย่อยไม่สำเร็จ",

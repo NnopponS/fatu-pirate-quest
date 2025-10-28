@@ -88,20 +88,23 @@ const Map = () => {
     try {
       // Load all data including locations from getMapData (Firebase source)
       if (participantId) {
-        const data = await getMapData(participantId);
-        setLocations(
-          data.locations.map((location: any) => ({
-            id: location.id,
-            name: location.name,
-            lat: location.lat,
-            lng: location.lng,
-            points: location.points,
-            mapUrl: location.mapUrl || location.map_url,
-            imageUrl: location.imageUrl || location.image_url,
-            description: location.description,
-            sub_events: location.sub_events,
-          }))
-        );
+        const data: any = await getMapData(participantId);
+        
+        // Transform and set locations
+        const transformedLocations = data.locations.map((location: any) => ({
+          id: location.id,
+          name: location.name,
+          lat: location.lat,
+          lng: location.lng,
+          points: location.points,
+          mapUrl: location.mapUrl || location.map_url,
+          imageUrl: location.imageUrl || location.image_url,
+          description: location.description,
+          // Ensure sub_events is always an array
+          sub_events: location.sub_events && Array.isArray(location.sub_events) ? location.sub_events : [],
+        }));
+        
+        setLocations(transformedLocations);
         setCheckins(data.checkins);
         setPoints(data.points ?? 0);
         setPointsRequired(data.pointsRequired);
@@ -111,23 +114,34 @@ const Map = () => {
           const completedIds = data.subEventCheckins.map((se: any) => se.sub_event_id);
           setCompletedSubEvents(completedIds);
         }
+        
+        console.log("Map data loaded:", {
+          locationsCount: transformedLocations.length,
+          totalSubEvents: transformedLocations.reduce((sum, loc) => sum + (loc.sub_events?.length || 0), 0),
+          checkinsCount: data.checkins.length
+        });
       } else {
         // Load locations from getMapData for anonymous users
-        const data = await getMapData('');
-        setLocations(
-          data.locations.map((location: any) => ({
-            id: location.id,
-            name: location.name,
-            lat: location.lat,
-            lng: location.lng,
-            points: location.points,
-            mapUrl: location.mapUrl || location.map_url,
-            imageUrl: location.imageUrl || location.image_url,
-            description: location.description,
-            sub_events: location.sub_events,
-          }))
-        );
+        const data: any = await getMapData('');
+        const transformedLocations = data.locations.map((location: any) => ({
+          id: location.id,
+          name: location.name,
+          lat: location.lat,
+          lng: location.lng,
+          points: location.points,
+          mapUrl: location.mapUrl || location.map_url,
+          imageUrl: location.imageUrl || location.image_url,
+          description: location.description,
+          sub_events: location.sub_events && Array.isArray(location.sub_events) ? location.sub_events : [],
+        }));
+        
+        setLocations(transformedLocations);
         setPointsRequired(data.pointsRequired);
+        
+        console.log("Map data loaded (anonymous):", {
+          locationsCount: transformedLocations.length,
+          totalSubEvents: transformedLocations.reduce((sum, loc) => sum + (loc.sub_events?.length || 0), 0),
+        });
       }
     } catch (error: unknown) {
       toast({
@@ -148,6 +162,7 @@ const Map = () => {
     const pollInterval = setInterval(() => {
       // Only reload if document is visible (not in background tab)
       if (document.visibilityState === 'visible') {
+        console.log("Auto-refreshing map data...");
         loadData();
       }
     }, 3000);
@@ -155,15 +170,24 @@ const Map = () => {
     // Also reload when tab becomes visible again
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        console.log("Tab visible again, reloading map data...");
         loadData();
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    // Listen for custom event to force refresh
+    const handleForceRefresh = () => {
+      console.log("Force refresh triggered, reloading map data...");
+      loadData();
+    };
+    window.addEventListener('force-map-refresh', handleForceRefresh);
+
     // Cleanup on unmount
     return () => {
       clearInterval(pollInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('force-map-refresh', handleForceRefresh);
     };
   }, [loadData]);
 

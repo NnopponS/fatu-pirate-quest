@@ -10,7 +10,7 @@ const DEFAULT_POINTS_REQUIRED = 300; // ✅ เปลี่ยนจาก 400 �
 
 // 🚀 Simple Cache Layer - เก็บข้อมูลไว้ชั่วคราวเพื่อลดการเรียก Firebase
 const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 30000; // 30 seconds
+const CACHE_TTL = 10000; // 10 seconds - reduced for more dynamic updates
 
 function getCached<T>(key: string): T | null {
   const cached = cache.get(key);
@@ -1318,6 +1318,10 @@ export const updateLocation = async (token: string, location: Partial<LocationRe
   } catch (error) {
     console.warn('Supabase update failed, but Firebase updated successfully:', error);
   }
+
+  // Clear cache immediately when locations are updated
+  clearCache('mapData');
+  console.log('Cache cleared after location update');
 };
 
 export const regenerateLocationQR = async (token: string, locationId: number) => {

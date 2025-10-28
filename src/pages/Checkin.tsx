@@ -78,13 +78,18 @@ const Checkin = () => {
       if (subEventId) {
         setIsSubEvent(true);
         try {
-          // Load sub-event info
-          const mapData = await getMapData(participantId);
+          // Clear cache and load fresh sub-event info with retry
+          const { clearAppCache } = await import("@/services/firebase");
+          clearAppCache();
+          
+          // Try to get map data with retry
+          let mapData = await getMapData(participantId);
           let foundSubEvent: any = null;
           let parentLocation: any = null;
 
+          // Look for sub-event in all locations
           for (const location of mapData.locations) {
-            if (location.sub_events) {
+            if (location.sub_events && Array.isArray(location.sub_events)) {
               const subEvent = location.sub_events.find((se: any) => se.id === subEventId);
               if (subEvent) {
                 foundSubEvent = subEvent;
@@ -94,9 +99,33 @@ const Checkin = () => {
             }
           }
 
+          // If not found, wait 2 seconds, clear cache again and retry once
           if (!foundSubEvent || !parentLocation) {
+            console.log("Sub-event not found immediately, waiting and retrying...");
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            clearAppCache();
+            mapData = await getMapData(participantId);
+            
+            for (const location of mapData.locations) {
+              if (location.sub_events && Array.isArray(location.sub_events)) {
+                const subEvent = location.sub_events.find((se: any) => se.id === subEventId);
+                if (subEvent) {
+                  foundSubEvent = subEvent;
+                  parentLocation = location;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (!foundSubEvent || !parentLocation) {
+            console.error("Sub-event not found after retry:", {
+              subEventId,
+              availableSubEvents: mapData.locations.flatMap((loc: any) => loc.sub_events || []).map((se: any) => se.id),
+              locationsCount: mapData.locations.length
+            });
             setStatus("error");
-            setMessage("ไม่พบข้อมูลกิจกรรมนี้");
+            setMessage("ไม่พบข้อมูลกิจกรรมนี้ กรุณารอสักครู่แล้วสแกน QR Code อีกครั้ง");
             return;
           }
 
