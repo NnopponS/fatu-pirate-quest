@@ -55,15 +55,36 @@ export interface UserContext {
   prize?: string;
 }
 
+// Wait for Puter.js to be loaded (especially important on iOS)
+const waitForPuter = async (maxWaitTime = 5000): Promise<any> => {
+  const startTime = Date.now();
+  
+  while (Date.now() - startTime < maxWaitTime) {
+    const puterAPI = typeof puter !== 'undefined' ? puter : (window as any).puter;
+    if (puterAPI && puterAPI.ai && puterAPI.ai.chat) {
+      console.log('[Puter AI] Puter.js loaded successfully');
+      return puterAPI;
+    }
+    // Wait 100ms before checking again
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  
+  throw new Error("Puter.js failed to load. Please refresh the page.");
+};
+
 // Chat with pirate using Puter.js AI (FREE! No API key needed!)
 // Following official tutorial: https://developer.puter.com/tutorials/free-gemini-api/
 export const chatWithPirate = async (
   userMessage: string,
   userContext?: UserContext
 ): Promise<string> => {
-  // Check if Puter.js is loaded
-  if (typeof puter === 'undefined') {
-    throw new Error("Puter.js is not loaded. Please refresh the page.");
+  // Wait for Puter.js to be loaded (iOS compatibility)
+  let puterAPI;
+  try {
+    puterAPI = await waitForPuter();
+  } catch (error) {
+    console.error('[Puter AI] Puter.js not loaded:', error);
+    throw new Error("ระบบ AI ยังโหลดไม่เสร็จ กรุณารีเฟรชหน้าเว็บ");
   }
 
   const settings = await getGeminiSettings();
@@ -143,11 +164,26 @@ ${userContextText}
     // Reference: https://developer.puter.com/tutorials/free-gemini-api/
     const fullPrompt = `${systemPrompt}\n\n---\n\nคำถามจาก User: ${userMessage}`;
     
+    console.log('[Puter AI] Sending request...', { 
+      platform: navigator.platform,
+      userAgent: navigator.userAgent 
+    });
+    
+    // Create timeout promise (30 seconds)
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout - AI ใช้เวลานานเกินไป')), 30000);
+    });
+    
     // Call Puter AI with official format (Anonymous mode - no auth popup)
-    const response = await puter.ai.chat(fullPrompt, undefined, {
+    const apiPromise = puterAPI.ai.chat(fullPrompt, undefined, {
       model: 'google/gemini-2.5-flash', // Latest Gemini 2.5 Flash - Fast & Smart
       stream: false,
     });
+
+    // Race between API call and timeout
+    const response = await Promise.race([apiPromise, timeoutPromise]);
+
+    console.log('[Puter AI] Response received:', response);
 
     // Extract content from response (official format: response.message.content)
     if (response?.message?.content) {
@@ -155,11 +191,20 @@ ${userContextText}
     } else if (typeof response === 'string') {
       return response;
     } else {
+      console.error('[Puter AI] Invalid response format:', response);
       throw new Error("Invalid response format");
     }
   } catch (error: any) {
     console.error("Puter AI chat error:", error);
-    throw new Error("ข้าไม่สามารถตอบได้ในตอนนี้ ลองใหม่อีกครั้งนะ!");
+    
+    // More specific error messages
+    if (error.message?.includes('timeout')) {
+      throw new Error("ข้าคิดนานเกินไป! ลองถามใหม่อีกครั้งนะ");
+    } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+      throw new Error("ข้าติดต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบอินเทอร์เน็ตของเจ้าสิ!");
+    } else {
+      throw new Error("ข้าไม่สามารถตอบได้ในตอนนี้ ลองใหม่อีกครั้งนะ!");
+    }
   }
 };
 

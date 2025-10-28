@@ -44,8 +44,28 @@
 
   <body>
     <div id="root"></div>
-    <!-- Puter.js - Free AI & Cloud Services -->
-    <script src="https://js.puter.com/v2/"></script>
+    <!-- Puter.js - Free AI & Cloud Services (Load before React for iOS compatibility) -->
+    <script src="https://js.puter.com/v2/" crossorigin="anonymous"></script>
+    <script>
+      // Wait for Puter.js to be ready before loading React app (iOS fix)
+      window.addEventListener('load', function() {
+        console.log('[Puter] Window loaded, checking Puter.js availability...');
+        const checkPuter = setInterval(function() {
+          if (window.puter && window.puter.ai) {
+            console.log('[Puter] Puter.js ready!');
+            clearInterval(checkPuter);
+          }
+        }, 100);
+        
+        // Clear check after 10 seconds
+        setTimeout(function() {
+          clearInterval(checkPuter);
+          if (!window.puter || !window.puter.ai) {
+            console.error('[Puter] Puter.js failed to load after 10 seconds');
+          }
+        }, 10000);
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

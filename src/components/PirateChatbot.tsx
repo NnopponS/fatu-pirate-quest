@@ -98,7 +98,9 @@ export const PirateChatbot = ({ isOpen, onClose }: PirateChatbotProps) => {
     setLoading(true);
 
     try {
+      console.log('[Chatbot] Sending message to AI...', { input: input.trim(), hasContext: !!userContext });
       const response = await chatWithPirate(input.trim(), userContext);
+      console.log('[Chatbot] Received response from AI');
       
       const assistantMessage: Message = {
         role: "assistant",
@@ -108,28 +110,31 @@ export const PirateChatbot = ({ isOpen, onClose }: PirateChatbotProps) => {
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
-      console.error("Chat error:", error);
+      console.error("[Chatbot] Chat error:", error);
       
       const errorMessage = error instanceof Error ? error.message : "ไม่สามารถติดต่อข้าได้ในขณะนี้";
       
-      // Check if it's an API key issue
-      if (errorMessage.includes("API") || errorMessage.includes("configured")) {
-        toast({
-          title: "ข้าไม่สามารถตอบได้",
-          description: "ท่านผู้ดูแลยังไม่ได้ตั้งค่า API Key สำหรับข้า กรุณาติดต่อผู้ดูแลระบบ",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "เกิดข้อผิดพลาด",
-          description: errorMessage,
-          variant: "destructive"
-        });
-      }
+      // Show detailed error in toast
+      toast({
+        title: "ข้าไม่สามารถตอบได้",
+        description: errorMessage,
+        variant: "destructive"
+      });
 
+      // Show user-friendly error in chat
+      let chatErrorMessage = "โทษทีเจ้า... ข้ากำลังมีปัญหาในการตอบคำถามขณะนี้";
+      
+      if (errorMessage.includes("โหลด") || errorMessage.includes("load")) {
+        chatErrorMessage = "ระบบ AI ยังโหลดไม่เสร็จ กรุณารอสักครู่แล้วลองใหม่ หรือรีเฟรชหน้าเว็บ 🔄";
+      } else if (errorMessage.includes("timeout") || errorMessage.includes("คิดนาน")) {
+        chatErrorMessage = "ข้าคิดนานเกินไป! ลองถามใหม่อีกครั้งนะ หรือลองทำให้คำถามสั้นลงดู 🤔";
+      } else if (errorMessage.includes("network") || errorMessage.includes("อินเทอร์เน็ต")) {
+        chatErrorMessage = "ข้าติดต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบอินเทอร์เน็ตของเจ้าดูนะ 📶";
+      }
+      
       const errorMsg: Message = {
         role: "assistant",
-        content: "โทษทีเจ้า... ข้ากำลังมีปัญหาในการตอบคำถามขณะนี้ ลองถามข้าใหม่อีกครั้งได้ไหม? 🏴‍☠️",
+        content: chatErrorMessage,
         timestamp: new Date()
       };
       
@@ -139,7 +144,7 @@ export const PirateChatbot = ({ isOpen, onClose }: PirateChatbotProps) => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -219,7 +224,7 @@ export const PirateChatbot = ({ isOpen, onClose }: PirateChatbotProps) => {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder="ถามข้าสิ... (เช่น มีอะไรน่าทำบ้าง?)"
             disabled={loading}
             className="flex-1"

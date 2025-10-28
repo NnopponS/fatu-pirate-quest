@@ -300,6 +300,48 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Quick Action Buttons - Moved to Top */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Button
+            size="lg"
+            onClick={() => navigate("/map")}
+            className="pirate-button gap-2 h-20"
+          >
+            <MapPin className="h-6 w-6" />
+            <div className="text-left">
+              <p className="font-bold">แผนที่</p>
+              <p className="text-xs opacity-90">ไปหาสมบัติ</p>
+            </div>
+          </Button>
+
+          <Button
+            size="lg"
+            onClick={() => navigate("/map")}
+            variant="secondary"
+            className="gap-2 h-20"
+          >
+            <QrCode className="h-6 w-6" />
+            <div className="text-left">
+              <p className="font-bold">สแกน QR</p>
+              <p className="text-xs opacity-90">เช็กอิน/กิจกรรม</p>
+            </div>
+          </Button>
+
+          <Button
+            size="lg"
+            onClick={() => navigate("/rewards")}
+            className={`gap-2 h-20 ${canSpin ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 hover:bg-gray-500'}`}
+          >
+            <Trophy className="h-6 w-6" />
+            <div className="text-left">
+              <p className="font-bold">หมุนวงล้อ</p>
+              <p className="text-xs opacity-90">
+                {canSpin ? 'พร้อมหมุนแล้ว!' : `อีก ${pointsRequired - points} คะแนน`}
+              </p>
+            </div>
+          </Button>
+        </div>
+
         {/* Progress Bar */}
         <div className="pirate-card px-6 py-5">
           <div className="flex items-center justify-between mb-3">
@@ -320,38 +362,6 @@ const Dashboard = () => {
           <p className="text-sm text-foreground/70 mt-2">
             เช็กอินแล้ว {completedLocations.length} จาก {locations.length} สถานที่
           </p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <Button
-            size="lg"
-            onClick={() => navigate("/map")}
-            className="h-auto py-6 flex-col gap-2 pirate-button"
-          >
-            <MapPin className="h-6 w-6" />
-            <span>แผนที่สมบัติ</span>
-          </Button>
-          
-          <Button
-            size="lg"
-            onClick={() => navigate("/rewards")}
-            className={`h-auto py-6 flex-col gap-2 ${canSpin ? 'pirate-button' : 'opacity-50'}`}
-            disabled={!canSpin}
-          >
-            <Trophy className="h-6 w-6" />
-            <span>หมุนวงล้อ</span>
-          </Button>
-          
-          <Button
-            size="lg"
-            onClick={() => navigate("/profile")}
-            variant="outline"
-            className="h-auto py-6 flex-col gap-2"
-          >
-            <User className="h-6 w-6" />
-            <span>ข้อมูลข้า</span>
-          </Button>
         </div>
 
         {/* Locations Progress */}
@@ -483,48 +493,6 @@ const Dashboard = () => {
               ))}
             </div>
           )}
-        </div>
-
-        {/* Quick Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Button
-            size="lg"
-            onClick={() => navigate("/map")}
-            className="pirate-button gap-2 h-20"
-          >
-            <MapPin className="h-6 w-6" />
-            <div className="text-left">
-              <p className="font-bold">แผนที่</p>
-              <p className="text-xs opacity-90">ไปหาสมบัติ</p>
-            </div>
-          </Button>
-
-          <Button
-            size="lg"
-            onClick={() => navigate("/map")}
-            variant="secondary"
-            className="gap-2 h-20"
-          >
-            <QrCode className="h-6 w-6" />
-            <div className="text-left">
-              <p className="font-bold">สแกน QR</p>
-              <p className="text-xs opacity-90">เช็กอิน/กิจกรรม</p>
-            </div>
-          </Button>
-
-          <Button
-            size="lg"
-            onClick={() => navigate("/rewards")}
-            className={`gap-2 h-20 ${canSpin ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 hover:bg-gray-500'}`}
-          >
-            <Trophy className="h-6 w-6" />
-            <div className="text-left">
-              <p className="font-bold">หมุนวงล้อ</p>
-              <p className="text-xs opacity-90">
-                {canSpin ? 'พร้อมหมุนแล้ว!' : `อีก ${pointsRequired - points} คะแนน`}
-              </p>
-            </div>
-          </Button>
         </div>
 
         {/* Call to Action */}
