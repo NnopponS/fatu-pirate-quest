@@ -153,7 +153,24 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
   const handleSave = async () => {
     setSaving(true);
     try {
-      await onSave(draft);
+      // Ensure sub_events are included in the save
+      const locationToSave = { ...draft, sub_events: subEvents };
+      await onSave(locationToSave);
+      
+      // Show success and force refresh
+      toast({ 
+        title: "บันทึกการเปลี่ยนแปลงสำเร็จ",
+        description: "ข้อมูลถูกอัปเดตแล้ว"
+      });
+      
+      // Trigger force refresh event for immediate updates
+      window.dispatchEvent(new CustomEvent('force-map-refresh'));
+    } catch (error) {
+      toast({
+        title: "บันทึกไม่สำเร็จ",
+        description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }
@@ -340,12 +357,19 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
   };
 
   return (
-    <div className="space-y-4 rounded-lg border border-primary/20 bg-card p-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
-          <MapPin className="h-5 w-5" />
-          จุดที่ {location.id}: {location.name}
-        </h3>
+    <div className="space-y-6 rounded-xl border-2 border-primary/20 bg-gradient-to-br from-white to-amber-50/30 p-6 shadow-lg">
+      <div className="flex items-center justify-between border-b-2 border-primary/20 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg">
+            <MapPin className="h-6 w-6" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-primary flex items-center gap-2">
+              จุดที่ {location.id}: {draft.name}
+            </h3>
+            <p className="text-sm text-foreground/60">Edit location details and sub-events</p>
+          </div>
+        </div>
       </div>
 
       {draft.image_url && (
@@ -422,14 +446,24 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 pt-2 border-t-2 border-primary/20">
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="flex-1 gap-2"
+          className="flex-1 gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg"
+          size="lg"
         >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          บันทึกการเปลี่ยนแปลง
+          {saving ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              กำลังบันทึก...
+            </>
+          ) : (
+            <>
+              <Save className="h-5 w-5" />
+              บันทึกการเปลี่ยนแปลงทั้งหมด
+            </>
+          )}
         </Button>
       </div>
 

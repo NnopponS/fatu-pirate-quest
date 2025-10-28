@@ -294,14 +294,28 @@ const Map = () => {
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between px-2">
-                <h2 className="text-2xl font-bold text-gray-800">🗺️ จุดล่าสมบัติทั้งหมด</h2>
-                <span className="rounded-full bg-amber-100 px-4 py-1 text-sm font-bold text-amber-800 border-2 border-amber-300">
-                  ⚓ {checkins.length}/{locations.length} จุด
-                </span>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2 py-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 shadow-lg">
+                <div>
+                  <h2 className="text-3xl font-bold text-amber-900 flex items-center gap-3">
+                    <span className="text-4xl">🗺️</span>
+                    <span>จุดล่าสมบัติทั้งหมด</span>
+                  </h2>
+                  <p className="text-sm text-amber-700 mt-1">สะสมคะแนนจากการเช็กอินและร่วมกิจกรรม</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-center bg-white px-6 py-3 rounded-xl border-2 border-amber-300 shadow-md">
+                    <p className="text-4xl font-black text-amber-600">{checkins.length}</p>
+                    <p className="text-xs text-amber-700 font-semibold">เช็กอินแล้ว</p>
+                  </div>
+                  <span className="text-2xl text-amber-600">/</span>
+                  <div className="text-center bg-white px-6 py-3 rounded-xl border-2 border-amber-300 shadow-md">
+                    <p className="text-4xl font-black text-amber-600">{locations.length}</p>
+                    <p className="text-xs text-amber-700 font-semibold">ทั้งหมด</p>
+                  </div>
+                </div>
               </div>
               
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-2">
                 {locations.map((location, idx) => (
                   <div 
                     key={location.id} 

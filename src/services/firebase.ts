@@ -458,22 +458,19 @@ const ensureDefaults = async () => {
   ]);
 
   if (!locations || Object.keys(locations).length === 0) {
+    // Only initialize if no locations exist
     await firebaseDb.update("locations", DEFAULT_LOCATIONS);
   } else {
-    // Always update all location data to ensure sync with DEFAULT_LOCATIONS
+    // Check if we need to add new locations from DEFAULT_LOCATIONS
+    // But DON'T overwrite existing custom changes to name, description, etc.
     const updates: Record<string, any> = {};
     Object.entries(DEFAULT_LOCATIONS).forEach(([key, defaultLoc]) => {
       const existingLoc = locations[key];
-      if (existingLoc) {
-        // Update name, sub_events, display_order, and other fields
-        updates[`${key}/name`] = defaultLoc.name;
-        updates[`${key}/sub_events`] = defaultLoc.sub_events || [];
-        updates[`${key}/display_order`] = defaultLoc.display_order || defaultLoc.id;
-        if (defaultLoc.description) updates[`${key}/description`] = defaultLoc.description;
-      } else {
-        // Create new location if it doesn't exist
+      if (!existingLoc) {
+        // Only create new location if it doesn't exist
         updates[key] = defaultLoc;
       }
+      // Don't update existing locations - preserve user changes
     });
     if (Object.keys(updates).length > 0) {
       await firebaseDb.update("locations", updates);
@@ -1318,23 +1315,34 @@ export const updateLocation = async (token: string, location: Partial<LocationRe
   if (location.description !== undefined) updates.description = location.description;
   if (location.sub_events !== undefined) updates.sub_events = location.sub_events;
   if (location.display_order !== undefined) updates.display_order = location.display_order;
+  // Add lat/lng if provided to keep them in sync
+  if (location.lat !== undefined) updates.lat = location.lat;
+  if (location.lng !== undefined) updates.lng = location.lng;
 
-  // Update in both Firebase (source of truth) and Supabase (for public display)
+  console.log('Updating location:', location.id, updates);
+
+  // Update in Firebase (source of truth)
   await firebaseDb.update(`locations/${location.id}`, updates);
   
-  // Also update in Supabase (ignore errors if RLS blocks it)
-  try {
-    await supabase
-      .from('locations')
-      .update(updates)
-      .eq('id', location.id);
-  } catch (error) {
-    console.warn('Supabase update failed, but Firebase updated successfully:', error);
-  }
-
   // Clear cache immediately when locations are updated
   clearCache('mapData');
   console.log('Cache cleared after location update');
+  
+  // Also try to update in Supabase, but don't fail if it errors (Firebase is source of truth)
+  try {
+    const { error } = await supabase
+      .from('locations')
+      .update(updates)
+      .eq('id', location.id);
+    
+    if (error) {
+      console.warn('Supabase update failed (this is OK, Firebase is source of truth):', error);
+    } else {
+      console.log('Successfully synced to Supabase');
+    }
+  } catch (error) {
+    console.warn('Supabase update error (this is OK, Firebase is source of truth):', error);
+  }
 };
 
 export const regenerateLocationQR = async (token: string, locationId: number) => {

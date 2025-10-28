@@ -274,9 +274,15 @@ const AdminDashboard = () => {
         image_url: location.image_url,
         description: location.description,
         display_order: location.display_order,
+        // Ensure sub_events are included if they exist
+        sub_events: location.sub_events,
       });
-      toast({ title: "อัปเดตจุดเช็กอินแล้ว" });
-      fetchDashboard(token);
+      
+      // Trigger force refresh event for immediate updates
+      window.dispatchEvent(new CustomEvent('force-map-refresh'));
+      
+      // Fetch dashboard to refresh the UI
+      await fetchDashboard(token);
     } catch (error) {
       toast({
         title: "บันทึกจุดเช็กอินไม่สำเร็จ",
