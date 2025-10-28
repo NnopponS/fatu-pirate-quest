@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { getGeminiSettings, saveGeminiSettings } from "@/services/gemini";
-import { Save, Loader2, Bot, ExternalLink } from "lucide-react";
+import { Save, Loader2, Bot, ExternalLink, Plus, Trash2 } from "lucide-react";
 
 interface GeminiSettingsTabProps {
   token: string | null;
@@ -15,7 +15,7 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [openRouterKey, setOpenRouterKey] = useState("");
+  const [openRouterKeys, setOpenRouterKeys] = useState<string[]>(['']);
   const [knowledgeBase, setKnowledgeBase] = useState("");
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
     try {
       const settings = await getGeminiSettings();
       if (settings) {
-        setOpenRouterKey(settings.openRouterKey || "");
+        setOpenRouterKeys(settings.openRouterKeys && settings.openRouterKeys.length > 0 ? settings.openRouterKeys : ['']);
         setKnowledgeBase(settings.knowledgeBase || "");
       }
     } catch (error) {
@@ -49,14 +49,17 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
 
     setSaving(true);
     try {
+      // Filter out empty keys
+      const validKeys = openRouterKeys.filter(key => key.trim());
+      
       await saveGeminiSettings(token, {
-        openRouterKey: openRouterKey.trim() || undefined,
+        openRouterKeys: validKeys.length > 0 ? validKeys : undefined,
         knowledgeBase: knowledgeBase.trim() || undefined,
       });
 
       toast({
         title: "บันทึกสำเร็จ",
-        description: "ตั้งค่า AI Chatbot สำเร็จแล้ว",
+        description: `ตั้งค่า AI Chatbot สำเร็จแล้ว (${validKeys.length} API Keys)`,
       });
     } catch (error) {
       console.error("Save error:", error);
@@ -121,26 +124,89 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="openRouterKey">OpenRouter API Key (ไม่บังคับ - มี default key)</Label>
-          <Input
-            id="openRouterKey"
-            type="password"
-            value={openRouterKey}
-            onChange={(e) => setOpenRouterKey(e.target.value)}
-            placeholder="sk-or-v1-..."
-          />
-          <p className="text-xs text-foreground/60">
-            💡 ถ้าไม่ใส่จะใช้ key เริ่มต้น (อาจมี rate limit) - สมัครฟรีได้ที่{' '}
-            <a 
-              href="https://openrouter.ai/keys" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="underline font-semibold"
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label>OpenRouter API Keys (ไม่บังคับ - มี default key)</Label>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setOpenRouterKeys([...openRouterKeys, ''])}
+              className="gap-1"
             >
-              openrouter.ai/keys
-            </a>
-          </p>
+              <Plus className="h-3 w-3" />
+              เพิ่ม Key
+            </Button>
+          </div>
+
+          <div className="space-y-3">
+            {openRouterKeys.map((key, index) => (
+              <div key={index} className="flex gap-2">
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-foreground/70 w-16">
+                      Key {index + 1}:
+                    </span>
+                    <Input
+                      type="password"
+                      value={key}
+                      onChange={(e) => {
+                        const newKeys = [...openRouterKeys];
+                        newKeys[index] = e.target.value;
+                        setOpenRouterKeys(newKeys);
+                      }}
+                      placeholder="sk-or-v1-..."
+                      className="flex-1"
+                    />
+                    {openRouterKeys.length > 1 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setOpenRouterKeys(openRouterKeys.filter((_, i) => i !== index));
+                        }}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  {index === 0 && (
+                    <p className="text-xs text-foreground/60 ml-16">
+                      ⭐ Key หลัก - จะลองอันนี้ก่อน
+                    </p>
+                  )}
+                  {index > 0 && (
+                    <p className="text-xs text-orange-600 ml-16">
+                      🔄 Fallback Key {index} - ใช้ถ้า key ก่อนหน้าหมด
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+            <p className="text-sm text-blue-900 font-semibold mb-1">
+              💡 วิธีใช้งาน Multiple API Keys:
+            </p>
+            <ul className="text-xs text-blue-800 space-y-1 list-disc list-inside ml-2">
+              <li>ใส่หลาย keys เพื่อป้องกัน rate limit</li>
+              <li>ระบบจะลอง Key 1 ก่อน ถ้าหมดจะไปใช้ Key 2, 3, ... อัตโนมัติ</li>
+              <li>ถ้าไม่ใส่เลยจะใช้ default key (อาจช้า)</li>
+              <li>สมัครฟรีได้ที่{' '}
+                <a 
+                  href="https://openrouter.ai/keys" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="underline font-semibold"
+                >
+                  openrouter.ai/keys
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
 

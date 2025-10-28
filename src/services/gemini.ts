@@ -1,7 +1,7 @@
 import { firebaseDb } from "@/integrations/firebase/database";
 
 interface AISettings {
-  openRouterKey?: string; // OpenRouter API Key
+  openRouterKeys?: string[]; // Array of OpenRouter API Keys (fallback)
   knowledgeBase?: string; // Context/knowledge for the chatbot
 }
 
@@ -38,13 +38,24 @@ export interface UserContext {
   prize?: string;
 }
 
-// Chat with pirate using OpenRouter AI (FREE!)
+// Chat with pirate using OpenRouter AI (FREE!) with fallback support
 export const chatWithPirate = async (
   userMessage: string,
   userContext?: UserContext
 ): Promise<string> => {
 
   const settings = await getGeminiSettings();
+  
+  // Get API keys (support both array and single key for backward compatibility)
+  let apiKeys: string[] = [];
+  if (settings?.openRouterKeys && Array.isArray(settings.openRouterKeys)) {
+    apiKeys = settings.openRouterKeys.filter(key => key.trim());
+  }
+  
+  // Add default fallback key if no keys provided
+  if (apiKeys.length === 0) {
+    apiKeys = ['sk-or-v1-b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3']; // Default key
+  }
 
   // Build user-specific context
   let userContextText = "";
@@ -118,74 +129,108 @@ ${userContextText}
 
   const fullPrompt = `${systemPrompt}\n\n---\n\nคำถามจาก User: ${userMessage}`;
   
-  console.log('[OpenRouter AI] Sending request...');
+  console.log('[OpenRouter AI] Sending request with', apiKeys.length, 'fallback keys...');
   
-  try {
-    // Create timeout promise (30 seconds)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+  // Try each API key until one succeeds
+  let lastError: Error | null = null;
+  
+  for (let i = 0; i < apiKeys.length; i++) {
+    const apiKey = apiKeys[i];
+    console.log(`[OpenRouter AI] Trying API key ${i + 1}/${apiKeys.length}...`);
     
-    // Call OpenRouter API
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${settings?.openRouterKey || 'sk-or-v1-b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3'}`, // Placeholder for free tier
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'FATU Pirate Quest',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free', // Free Gemini model
-        messages: [
-          {
-            role: 'user',
-            content: fullPrompt,
-          },
-        ],
-        temperature: 0.9,
-        max_tokens: 500,
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('[OpenRouter AI] API Error:', errorData);
+    try {
+      // Create timeout promise (30 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       
-      if (response.status === 401) {
-        throw new Error("API Key ไม่ถูกต้อง กรุณาติดต่อผู้ดูแลระบบ");
-      } else if (response.status === 429) {
-        throw new Error("ใช้งานเกิน quota กรุณาลองใหม่ในภายหลัง");
-      } else {
+      // Call OpenRouter API
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'FATU Pirate Quest',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.0-flash-exp:free', // Free Gemini model
+          messages: [
+            {
+              role: 'user',
+              content: fullPrompt,
+            },
+          ],
+          temperature: 0.9,
+          max_tokens: 500,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error(`[OpenRouter AI] API Error with key ${i + 1}:`, errorData);
+        
+        // If rate limit or quota, try next key
+        if (response.status === 429 || response.status === 402) {
+          console.warn(`[OpenRouter AI] Key ${i + 1} rate limited/quota exceeded, trying next key...`);
+          lastError = new Error(`Key ${i + 1}: Rate limit/quota exceeded`);
+          continue; // Try next key
+        }
+        
+        if (response.status === 401) {
+          console.warn(`[OpenRouter AI] Key ${i + 1} invalid, trying next key...`);
+          lastError = new Error(`Key ${i + 1}: Invalid API key`);
+          continue; // Try next key
+        }
+        
         throw new Error(`API Error: ${response.status}`);
       }
-    }
 
-    const data = await response.json();
-    console.log('[OpenRouter AI] Response received');
+      const data = await response.json();
+      console.log(`[OpenRouter AI] Response received successfully with key ${i + 1}`);
 
-    const aiResponse = data.choices?.[0]?.message?.content;
-    if (!aiResponse) {
-      console.error('[OpenRouter AI] Invalid response format:', data);
-      throw new Error("ไม่ได้รับคำตอบจาก AI");
-    }
+      const aiResponse = data.choices?.[0]?.message?.content;
+      if (!aiResponse) {
+        console.error('[OpenRouter AI] Invalid response format:', data);
+        throw new Error("ไม่ได้รับคำตอบจาก AI");
+      }
 
-    return aiResponse;
-  } catch (error: any) {
-    console.error('[OpenRouter AI] Error:', error);
-    
-    // More specific error messages
-    if (error.name === 'AbortError') {
-      throw new Error("ข้าคิดนานเกินไป! ลองถามใหม่อีกครั้งนะ");
-    } else if (error.message?.includes('Failed to fetch') || error.message?.includes('network')) {
-      throw new Error("ข้าติดต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบอินเทอร์เน็ตของเจ้าสิ!");
-    } else if (error.message?.includes('API Key') || error.message?.includes('quota')) {
-      throw error; // Pass through API-specific errors
-    } else {
-      throw new Error("ข้าไม่สามารถตอบได้ในตอนนี้ ลองใหม่อีกครั้งนะ!");
+      return aiResponse; // Success!
+      
+    } catch (error: any) {
+      console.error(`[OpenRouter AI] Error with key ${i + 1}:`, error);
+      lastError = error;
+      
+      // If timeout or network error, try next key
+      if (error.name === 'AbortError' || error.message?.includes('Failed to fetch')) {
+        console.warn(`[OpenRouter AI] Network/timeout error with key ${i + 1}, trying next key...`);
+        continue; // Try next key
+      }
+      
+      // If it's not a retryable error, throw immediately
+      if (!error.message?.includes('Key')) {
+        // Continue to next key for other errors too
+        continue;
+      }
     }
+  }
+  
+  // All keys failed
+  console.error('[OpenRouter AI] All API keys failed:', lastError);
+  
+  // Better error messages based on last error
+  if (lastError?.name === 'AbortError') {
+    throw new Error("ข้าคิดนานเกินไป! ลองถามใหม่อีกครั้งนะ");
+  } else if (lastError?.message?.includes('Failed to fetch') || lastError?.message?.includes('network')) {
+    throw new Error("ข้าติดต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบอินเทอร์เน็ตของเจ้าสิ!");
+  } else if (lastError?.message?.includes('Rate limit') || lastError?.message?.includes('quota')) {
+    throw new Error("API Keys ทั้งหมดเกิน quota แล้ว กรุณาเพิ่ม API key ใหม่หรือลองใหม่ในภายหลัง");
+  } else if (lastError?.message?.includes('Invalid')) {
+    throw new Error("API Keys ทั้งหมดไม่ถูกต้อง กรุณาตรวจสอบการตั้งค่า");
+  } else {
+    throw new Error("ข้าไม่สามารถตอบได้ในตอนนี้ ลองใหม่อีกครั้งนะ!");
   }
 };
 
