@@ -15,6 +15,7 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [openRouterKey, setOpenRouterKey] = useState("");
   const [knowledgeBase, setKnowledgeBase] = useState("");
 
   useEffect(() => {
@@ -26,6 +27,7 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
     try {
       const settings = await getGeminiSettings();
       if (settings) {
+        setOpenRouterKey(settings.openRouterKey || "");
         setKnowledgeBase(settings.knowledgeBase || "");
       }
     } catch (error) {
@@ -48,12 +50,13 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
     setSaving(true);
     try {
       await saveGeminiSettings(token, {
+        openRouterKey: openRouterKey.trim() || undefined,
         knowledgeBase: knowledgeBase.trim() || undefined,
       });
 
       toast({
         title: "บันทึกสำเร็จ",
-        description: "ตั้งค่า AI Chatbot สำเร็จแล้ว (ใช้ Puter.js ฟรี!)",
+        description: "ตั้งค่า AI Chatbot สำเร็จแล้ว",
       });
     } catch (error) {
       console.error("Save error:", error);
@@ -84,39 +87,60 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
         <div>
           <h2 className="text-2xl font-semibold text-primary">ตั้งค่า AI Chatbot โจรสลัด</h2>
           <p className="text-sm text-foreground/70">
-            ใช้ <a href="https://developer.puter.com/" target="_blank" rel="noopener noreferrer" className="underline font-semibold">Puter.js</a> - ฟรี ไม่ต้อง API Key!
+            ใช้ <a href="https://openrouter.ai/" target="_blank" rel="noopener noreferrer" className="underline font-semibold">OpenRouter</a> - Free Tier!
           </p>
         </div>
       </div>
 
       <div className="pirate-divider" />
 
-      {/* Puter.js Info */}
+      {/* OpenRouter API Key */}
       <div className="space-y-4">
         <div className="p-4 rounded-xl bg-green-50 border border-green-200">
           <div className="flex items-start gap-2">
             <div className="text-green-600 text-xl">✨</div>
             <div className="flex-1 space-y-2">
               <p className="text-sm text-green-900 font-semibold">
-                ตอนนี้ใช้ Puter.js - AI ฟรี! (Gemini 2.5 Flash)
+                ตอนนี้ใช้ OpenRouter - AI ฟรี! (Gemini 2.0 Flash)
               </p>
               <ul className="text-sm text-green-800 space-y-1 list-disc list-inside">
-                <li>Model: <strong>Gemini 2.5 Flash</strong> - เร็ว ฉลาด ตอบได้ดี!</li>
-                <li>ไม่ต้องมี API Key</li>
-                <li>ไม่มีค่าใช้จ่าย (Free Forever)</li>
+                <li>Model: <strong>Gemini 2.0 Flash (Free)</strong> - เร็ว ฉลาด ใช้ได้ทุก platform รวม iOS!</li>
+                <li>Free Tier - ไม่มีค่าใช้จ่าย</li>
                 <li>รองรับ Gemini, Claude, GPT และอีกมากมาย</li>
-                <li>พัฒนาโดย <a 
-                  href="https://puter.com" 
+                <li>ได้ API Key ฟรีจาก <a 
+                  href="https://openrouter.ai/keys" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="underline font-semibold inline-flex items-center gap-1"
                 >
-                  Puter.com
+                  OpenRouter.ai
                   <ExternalLink className="h-3 w-3" />
                 </a></li>
               </ul>
             </div>
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="openRouterKey">OpenRouter API Key (ไม่บังคับ - มี default key)</Label>
+          <Input
+            id="openRouterKey"
+            type="password"
+            value={openRouterKey}
+            onChange={(e) => setOpenRouterKey(e.target.value)}
+            placeholder="sk-or-v1-..."
+          />
+          <p className="text-xs text-foreground/60">
+            💡 ถ้าไม่ใส่จะใช้ key เริ่มต้น (อาจมี rate limit) - สมัครฟรีได้ที่{' '}
+            <a 
+              href="https://openrouter.ai/keys" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="underline font-semibold"
+            >
+              openrouter.ai/keys
+            </a>
+          </p>
         </div>
       </div>
 

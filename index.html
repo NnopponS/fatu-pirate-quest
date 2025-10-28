@@ -44,47 +44,6 @@
 
   <body>
     <div id="root"></div>
-    <!-- Puter.js - Free AI & Cloud Services -->
-    <script src="https://js.puter.com/v2/"></script>
-    <script>
-      // Ensure Puter is available globally for iOS
-      (function() {
-        console.log('[Puter] Initializing Puter.js check...');
-        
-        // Check immediately if Puter is already loaded
-        if (window.puter) {
-          console.log('[Puter] Puter.js already loaded!', window.puter);
-          window.puterReady = true;
-          return;
-        }
-        
-        // Wait for Puter to load
-        var checkInterval = setInterval(function() {
-          if (window.puter && window.puter.ai && typeof window.puter.ai.chat === 'function') {
-            console.log('[Puter] Puter.js loaded successfully!', {
-              hasPuter: !!window.puter,
-              hasAI: !!window.puter.ai,
-              hasChat: typeof window.puter.ai.chat === 'function'
-            });
-            window.puterReady = true;
-            clearInterval(checkInterval);
-          }
-        }, 100);
-        
-        // Timeout after 15 seconds
-        setTimeout(function() {
-          clearInterval(checkInterval);
-          if (!window.puter || !window.puter.ai) {
-            console.error('[Puter] Failed to load after 15 seconds', {
-              hasPuter: !!window.puter,
-              hasAI: window.puter && !!window.puter.ai,
-              windowKeys: Object.keys(window).filter(k => k.includes('puter'))
-            });
-            window.puterReady = false;
-          }
-        }, 15000);
-      })();
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

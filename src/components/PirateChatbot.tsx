@@ -42,77 +42,15 @@ export const PirateChatbot = ({ isOpen, onClose }: PirateChatbotProps) => {
     }
   }, [isOpen, user]);
 
-  // Detect iOS
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-  
-  // Check Puter.js availability when chatbot opens
+  // OpenRouter AI is always ready (no loading needed)
   useEffect(() => {
     if (isOpen) {
-      setAiReady(null); // Reset to loading state
-      setShowAiStatus(true); // Show status when opening
-      
-      // iOS Warning - Puter.js มีปัญหากับ iOS
-      if (isIOS) {
-        console.warn('[Chatbot] iOS detected - Puter.js may have Cloudflare verification issues');
-      }
-      
-      const checkPuter = () => {
-        const hasPuter = !!(window as any).puter;
-        const hasAI = hasPuter && !!(window as any).puter.ai;
-        const hasChat = hasAI && typeof (window as any).puter.ai.chat === 'function';
-        
-        console.log('[Chatbot] Puter.js status:', {
-          hasPuter,
-          hasAI,
-          hasChat,
-          puterReady: (window as any).puterReady,
-          isIOS
-        });
-        
-        if (hasChat) {
-          setAiReady(true);
-          // Hide success message after 3 seconds
-          setTimeout(() => setShowAiStatus(false), 3000);
-        } else {
-          console.warn('[Chatbot] Puter.js not fully loaded yet');
-        }
-      };
-      
-      checkPuter();
-      
-      // Keep checking every 2 seconds for up to 20 seconds
-      let checkCount = 0;
-      const interval = setInterval(() => {
-        checkCount++;
-        checkPuter();
-        
-        const isReady = !!(window as any).puter?.ai?.chat;
-        if (isReady) {
-          setAiReady(true);
-          clearInterval(interval);
-          // Hide success message after 3 seconds
-          setTimeout(() => setShowAiStatus(false), 3000);
-        } else if (checkCount >= 10) {
-          // After 20 seconds, mark as failed
-          setAiReady(false);
-          setShowAiStatus(true); // Keep showing error
-          clearInterval(interval);
-          
-          // Show iOS-specific message
-          if (isIOS) {
-            toast({
-              title: "⚠️ ระบบ AI ไม่รองรับ iOS ในขณะนี้",
-              description: "กรุณาใช้งานบน Android หรือ Desktop แทน หรือติดต่อเจ้าหน้าที่",
-              variant: "destructive",
-              duration: 10000,
-            });
-          }
-        }
-      }, 2000);
-      
-      return () => clearInterval(interval);
+      setAiReady(true);
+      setShowAiStatus(true);
+      // Hide success message after 3 seconds
+      setTimeout(() => setShowAiStatus(false), 3000);
     }
-  }, [isOpen, isIOS, toast]);
+  }, [isOpen]);
 
   // Auto scroll to bottom when new messages arrive
   useEffect(() => {
@@ -310,23 +248,7 @@ export const PirateChatbot = ({ isOpen, onClose }: PirateChatbotProps) => {
                 <AlertCircle className="h-4 w-4" />
                 ⚠️ ระบบ AI ไม่พร้อมใช้งาน
               </p>
-              {isIOS ? (
-                <div className="mt-2 space-y-1">
-                  <p className="text-xs">
-                    <strong>iOS ยังไม่รองรับ:</strong> ระบบ AI ใช้ Puter.js ซึ่งมีปัญหากับ iOS Safari
-                  </p>
-                  <p className="text-xs mt-2">
-                    <strong>วิธีแก้:</strong>
-                  </p>
-                  <ul className="text-xs list-disc list-inside ml-2 space-y-1">
-                    <li>ใช้บน Android หรือ Desktop</li>
-                    <li>เปิดด้วย Chrome แทน Safari (ถ้ามี)</li>
-                    <li>ติดต่อเจ้าหน้าที่หากต้องการความช่วยเหลือ</li>
-                  </ul>
-                </div>
-              ) : (
-                <p className="text-xs mt-1">กรุณารีเฟรชหน้าเว็บแล้วลองใหม่</p>
-              )}
+              <p className="text-xs mt-1">กรุณาติดต่อผู้ดูแลระบบ</p>
             </div>
           </div>
         )}

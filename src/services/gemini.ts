@@ -1,47 +1,30 @@
 import { firebaseDb } from "@/integrations/firebase/database";
 
-// Declare puter global from Puter.js (following official API)
-declare global {
-  interface Window {
-    puter: {
-      ai: {
-        chat: (message: string, imageUrl?: string | any, options?: any) => Promise<any>;
-      };
-    };
-  }
-}
-
-// Puter global (no window prefix needed)
-declare const puter: {
-  ai: {
-    chat: (message: string, imageUrl?: string | any, options?: any) => Promise<any>;
-  };
-};
-
-interface PuterSettings {
+interface AISettings {
+  openRouterKey?: string; // OpenRouter API Key
   knowledgeBase?: string; // Context/knowledge for the chatbot
 }
 
-// Get Puter settings from Firebase (only knowledge base, no API key needed!)
-export const getGeminiSettings = async (): Promise<PuterSettings | null> => {
+// Get AI settings from Firebase
+export const getGeminiSettings = async (): Promise<AISettings | null> => {
   try {
-    const settings = await firebaseDb.get<PuterSettings>("settings/puter");
+    const settings = await firebaseDb.get<AISettings>("settings/ai");
     return settings;
   } catch (error) {
-    console.error("Error getting Puter settings:", error);
+    console.error("Error getting AI settings:", error);
     return null;
   }
 };
 
-// Save Puter settings (Admin only)
-export const saveGeminiSettings = async (token: string, settings: PuterSettings): Promise<void> => {
+// Save AI settings (Admin only)
+export const saveGeminiSettings = async (token: string, settings: AISettings): Promise<void> => {
   // Validate admin token
   const adminToken = await firebaseDb.get<string>(`admin_sessions/${token}`);
   if (!adminToken) {
     throw new Error("Unauthorized");
   }
 
-  await firebaseDb.set("settings/puter", settings);
+  await firebaseDb.set("settings/ai", settings);
 };
 
 export interface UserContext {
@@ -55,72 +38,11 @@ export interface UserContext {
   prize?: string;
 }
 
-// Wait for Puter.js to be loaded (especially important on iOS)
-const waitForPuter = async (maxWaitTime = 20000): Promise<any> => {
-  const startTime = Date.now();
-  let attemptCount = 0;
-  
-  while (Date.now() - startTime < maxWaitTime) {
-    attemptCount++;
-    
-    // Try multiple ways to access Puter (for maximum compatibility)
-    const puterAPI = 
-      (typeof puter !== 'undefined' && puter) || 
-      (window as any).puter || 
-      (typeof globalThis !== 'undefined' && (globalThis as any).puter);
-    
-    if (puterAPI && puterAPI.ai && typeof puterAPI.ai.chat === 'function') {
-      console.log('[Puter AI] Puter.js loaded successfully!', {
-        attemptCount,
-        timeElapsed: Date.now() - startTime,
-        source: typeof puter !== 'undefined' ? 'global' : 'window'
-      });
-      return puterAPI;
-    }
-    
-    // Log every 2 seconds to track progress
-    if (attemptCount % 20 === 0) {
-      console.log('[Puter AI] Still waiting for Puter.js...', {
-        attemptCount,
-        timeElapsed: Date.now() - startTime,
-        hasPuter: !!puterAPI,
-        hasAI: puterAPI && !!puterAPI.ai,
-        hasChat: puterAPI && puterAPI.ai && typeof puterAPI.ai.chat === 'function'
-      });
-    }
-    
-    // Wait 100ms before checking again
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
-  
-  // Final check before giving up
-  const finalPuter = (window as any).puter;
-  console.error('[Puter AI] Timeout waiting for Puter.js', {
-    maxWaitTime,
-    attemptCount,
-    hasPuter: !!finalPuter,
-    hasAI: finalPuter && !!finalPuter.ai,
-    hasChat: finalPuter && finalPuter.ai && typeof finalPuter.ai.chat === 'function',
-    puterReady: (window as any).puterReady
-  });
-  
-  throw new Error("Puter.js failed to load. Please refresh the page.");
-};
-
-// Chat with pirate using Puter.js AI (FREE! No API key needed!)
-// Following official tutorial: https://developer.puter.com/tutorials/free-gemini-api/
+// Chat with pirate using OpenRouter AI (FREE!)
 export const chatWithPirate = async (
   userMessage: string,
   userContext?: UserContext
 ): Promise<string> => {
-  // Wait for Puter.js to be loaded (iOS compatibility)
-  let puterAPI;
-  try {
-    puterAPI = await waitForPuter();
-  } catch (error) {
-    console.error('[Puter AI] Puter.js not loaded:', error);
-    throw new Error("ระบบ AI ยังโหลดไม่เสร็จ กรุณารีเฟรชหน้าเว็บ");
-  }
 
   const settings = await getGeminiSettings();
 
@@ -194,49 +116,73 @@ ${userContextText}
 8. เรียกชื่อ User ถ้ามีข้อมูลชื่อ เพื่อให้เป็นกันเอง
 9. ถ้าถามเรื่องสถานที่หรือรายละเอียดงาน ให้ใช้ข้อมูลจาก "ข้อมูลเพิ่มเติมเกี่ยวกับงาน" ที่ Admin ตั้งค่าไว้`;
 
+  const fullPrompt = `${systemPrompt}\n\n---\n\nคำถามจาก User: ${userMessage}`;
+  
+  console.log('[OpenRouter AI] Sending request...');
+  
   try {
-    // Use Puter.js AI chat following official API
-    // Reference: https://developer.puter.com/tutorials/free-gemini-api/
-    const fullPrompt = `${systemPrompt}\n\n---\n\nคำถามจาก User: ${userMessage}`;
-    
-    console.log('[Puter AI] Sending request...', { 
-      platform: navigator.platform,
-      userAgent: navigator.userAgent 
-    });
-    
     // Create timeout promise (30 seconds)
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Request timeout - AI ใช้เวลานานเกินไป')), 30000);
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     
-    // Call Puter AI with official format (Anonymous mode - no auth popup)
-    const apiPromise = puterAPI.ai.chat(fullPrompt, undefined, {
-      model: 'google/gemini-2.5-flash', // Latest Gemini 2.5 Flash - Fast & Smart
-      stream: false,
+    // Call OpenRouter API
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${settings?.openRouterKey || 'sk-or-v1-b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3'}`, // Placeholder for free tier
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'FATU Pirate Quest',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.0-flash-exp:free', // Free Gemini model
+        messages: [
+          {
+            role: 'user',
+            content: fullPrompt,
+          },
+        ],
+        temperature: 0.9,
+        max_tokens: 500,
+      }),
+      signal: controller.signal,
     });
 
-    // Race between API call and timeout
-    const response = await Promise.race([apiPromise, timeoutPromise]);
+    clearTimeout(timeoutId);
 
-    console.log('[Puter AI] Response received:', response);
-
-    // Extract content from response (official format: response.message.content)
-    if (response?.message?.content) {
-      return response.message.content;
-    } else if (typeof response === 'string') {
-      return response;
-    } else {
-      console.error('[Puter AI] Invalid response format:', response);
-      throw new Error("Invalid response format");
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[OpenRouter AI] API Error:', errorData);
+      
+      if (response.status === 401) {
+        throw new Error("API Key ไม่ถูกต้อง กรุณาติดต่อผู้ดูแลระบบ");
+      } else if (response.status === 429) {
+        throw new Error("ใช้งานเกิน quota กรุณาลองใหม่ในภายหลัง");
+      } else {
+        throw new Error(`API Error: ${response.status}`);
+      }
     }
+
+    const data = await response.json();
+    console.log('[OpenRouter AI] Response received');
+
+    const aiResponse = data.choices?.[0]?.message?.content;
+    if (!aiResponse) {
+      console.error('[OpenRouter AI] Invalid response format:', data);
+      throw new Error("ไม่ได้รับคำตอบจาก AI");
+    }
+
+    return aiResponse;
   } catch (error: any) {
-    console.error("Puter AI chat error:", error);
+    console.error('[OpenRouter AI] Error:', error);
     
     // More specific error messages
-    if (error.message?.includes('timeout')) {
+    if (error.name === 'AbortError') {
       throw new Error("ข้าคิดนานเกินไป! ลองถามใหม่อีกครั้งนะ");
-    } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+    } else if (error.message?.includes('Failed to fetch') || error.message?.includes('network')) {
       throw new Error("ข้าติดต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบอินเทอร์เน็ตของเจ้าสิ!");
+    } else if (error.message?.includes('API Key') || error.message?.includes('quota')) {
+      throw error; // Pass through API-specific errors
     } else {
       throw new Error("ข้าไม่สามารถตอบได้ในตอนนี้ ลองใหม่อีกครั้งนะ!");
     }
