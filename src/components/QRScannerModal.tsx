@@ -25,7 +25,6 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [hasDetected, setHasDetected] = useState(false);
-  const frameSkipRef = useRef(0);
 
   // Method to check if we should use BarcodeDetector or jsQR
   const hasBarcodeDetector = typeof window !== "undefined" && "BarcodeDetector" in window;
@@ -48,7 +47,6 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
 
     setScanning(false);
     setHasDetected(false);
-    frameSkipRef.current = 0; // Reset frame counter
   }, []);
 
   const startScanning = useCallback(async () => {
@@ -100,16 +98,9 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
         }
       });
 
-      // Start scanning based on method - with frame skipping for performance
+      // Start scanning based on method
       const scan = async () => {
         if (hasDetected || !videoRef.current || !videoRef.current.srcObject) {
-          return;
-        }
-
-        // Skip frames - only process every 5th frame for better performance
-        frameSkipRef.current++;
-        if (frameSkipRef.current % 5 !== 0) {
-          animationFrameRef.current = requestAnimationFrame(scan);
           return;
         }
 
