@@ -121,6 +121,8 @@ interface DashboardResponse {
   locations: LocationRow[];
   prizes: PrizeRow[];
   spins: SpinRow[]; // ✅ เพิ่มข้อมูลรางวัล
+  checkins: any[];
+  subEventCheckins: any[];
   settings: {
     pointsRequiredForWheel: number;
   };
