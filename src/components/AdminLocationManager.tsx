@@ -86,9 +86,14 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
           const checkinData = `SUBEVENT|${subEvent.id}|${sig}|${currentVersion}`;
           
           const qrDataUrl = await QRCode.toDataURL(checkinData, {
-            width: 512,
-            margin: 2,
-            color: { dark: "#000000", light: "#FFFFFF" },
+            width: 1000,
+            margin: 4,
+            errorCorrectionLevel: 'H', // High error correction for better scanning
+            color: { 
+              dark: "#000000", 
+              light: "#FFFFFF" 
+            },
+            type: 'image/png',
           });
           
           codes[subEvent.id] = qrDataUrl;
