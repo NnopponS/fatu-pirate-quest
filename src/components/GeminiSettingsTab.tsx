@@ -15,7 +15,7 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [openRouterKeys, setOpenRouterKeys] = useState<string[]>(['']);
+  const [geminiApiKeys, setGeminiApiKeys] = useState<string[]>(['']);
   const [knowledgeBase, setKnowledgeBase] = useState("");
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
     try {
       const settings = await getGeminiSettings();
       if (settings) {
-        setOpenRouterKeys(settings.openRouterKeys && settings.openRouterKeys.length > 0 ? settings.openRouterKeys : ['']);
+        setGeminiApiKeys(settings.geminiApiKeys && settings.geminiApiKeys.length > 0 ? settings.geminiApiKeys : ['']);
         setKnowledgeBase(settings.knowledgeBase || "");
       }
     } catch (error) {
@@ -50,10 +50,10 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
     setSaving(true);
     try {
       // Filter out empty keys
-      const validKeys = openRouterKeys.filter(key => key.trim());
+      const validKeys = geminiApiKeys.filter(key => key.trim());
       
       await saveGeminiSettings(token, {
-        openRouterKeys: validKeys.length > 0 ? validKeys : undefined,
+        geminiApiKeys: validKeys.length > 0 ? validKeys : undefined,
         knowledgeBase: knowledgeBase.trim() || undefined,
       });
 
@@ -90,33 +90,33 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
         <div>
           <h2 className="text-2xl font-semibold text-primary">ตั้งค่า AI Chatbot โจรสลัด</h2>
           <p className="text-sm text-foreground/70">
-            ใช้ <a href="https://openrouter.ai/" target="_blank" rel="noopener noreferrer" className="underline font-semibold">OpenRouter</a> - Free Tier!
+            ใช้ <a href="https://ai.google.dev/" target="_blank" rel="noopener noreferrer" className="underline font-semibold">Google Gemini</a> Direct API
           </p>
         </div>
       </div>
 
       <div className="pirate-divider" />
 
-      {/* OpenRouter API Key */}
+      {/* Google Gemini API Key */}
       <div className="space-y-4">
         <div className="p-4 rounded-xl bg-green-50 border border-green-200">
           <div className="flex items-start gap-2">
             <div className="text-green-600 text-xl">✨</div>
             <div className="flex-1 space-y-2">
               <p className="text-sm text-green-900 font-semibold">
-                ตอนนี้ใช้ OpenRouter - AI ฟรี! (Gemini 2.0 Flash)
+                ใช้ Google Gemini Direct API
               </p>
               <ul className="text-sm text-green-800 space-y-1 list-disc list-inside">
-                <li>Model: <strong>Gemini 2.0 Flash (Free)</strong> - เร็ว ฉลาด ใช้ได้ทุก platform รวม iOS!</li>
-                <li>Free Tier - ไม่มีค่าใช้จ่าย</li>
-                <li>รองรับ Gemini, Claude, GPT และอีกมากมาย</li>
+                <li>Model: <strong>Gemini 2.0 Flash Experimental</strong> - เร็ว ฉลาด</li>
+                <li>Free tier - 60 requests/min สำหรับ production</li>
+                <li>ไม่มี rate limit issues เหมือน OpenRouter</li>
                 <li>ได้ API Key ฟรีจาก <a 
-                  href="https://openrouter.ai/keys" 
+                  href="https://aistudio.google.com/app/apikey" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="underline font-semibold inline-flex items-center gap-1"
                 >
-                  OpenRouter.ai
+                  Google AI Studio
                   <ExternalLink className="h-3 w-3" />
                 </a></li>
               </ul>
@@ -126,12 +126,12 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label>OpenRouter API Keys (ไม่บังคับ - มี default key)</Label>
+            <Label>Google Gemini API Keys (จำเป็น)</Label>
             <Button
               type="button"
               size="sm"
               variant="outline"
-              onClick={() => setOpenRouterKeys([...openRouterKeys, ''])}
+              onClick={() => setGeminiApiKeys([...geminiApiKeys, ''])}
               className="gap-1"
             >
               <Plus className="h-3 w-3" />
@@ -140,7 +140,7 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
           </div>
 
           <div className="space-y-3">
-            {openRouterKeys.map((key, index) => (
+            {geminiApiKeys.map((key, index) => (
               <div key={index} className="flex gap-2">
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
@@ -151,20 +151,20 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
                       type="password"
                       value={key}
                       onChange={(e) => {
-                        const newKeys = [...openRouterKeys];
+                        const newKeys = [...geminiApiKeys];
                         newKeys[index] = e.target.value;
-                        setOpenRouterKeys(newKeys);
+                        setGeminiApiKeys(newKeys);
                       }}
-                      placeholder="sk-or-v1-..."
+                      placeholder="AIza..."
                       className="flex-1"
                     />
-                    {openRouterKeys.length > 1 && (
+                    {geminiApiKeys.length > 1 && (
                       <Button
                         type="button"
                         size="sm"
                         variant="ghost"
                         onClick={() => {
-                          setOpenRouterKeys(openRouterKeys.filter((_, i) => i !== index));
+                          setGeminiApiKeys(geminiApiKeys.filter((_, i) => i !== index));
                         }}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
@@ -194,17 +194,17 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
             <ul className="text-xs text-blue-800 space-y-1 list-disc list-inside ml-2">
               <li>ใส่หลาย keys เพื่อป้องกัน rate limit</li>
               <li>ระบบจะลอง Key 1 ก่อน ถ้าหมดจะไปใช้ Key 2, 3, ... อัตโนมัติ</li>
-              <li>ถ้าไม่ใส่เลยจะใช้ default key (อาจช้า)</li>
-              <li>สมัครฟรีได้ที่{' '}
+              <li>สมัคร API Key ฟรีได้ที่{' '}
                 <a 
-                  href="https://openrouter.ai/keys" 
+                  href="https://aistudio.google.com/app/apikey" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="underline font-semibold"
                 >
-                  openrouter.ai/keys
+                  Google AI Studio
                 </a>
               </li>
+              <li>Free tier: 60 requests/min - เพียงพอสำหรับใช้งาน</li>
             </ul>
           </div>
         </div>

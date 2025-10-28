@@ -1,9 +1,13 @@
 import { firebaseDb } from "@/integrations/firebase/database";
 
 interface AISettings {
-  openRouterKeys?: string[]; // Array of OpenRouter API Keys (fallback)
+  geminiApiKeys?: string[]; // Array of Google Gemini API Keys (fallback)
   knowledgeBase?: string; // Context/knowledge for the chatbot
 }
+
+// Simple in-memory cache to reduce API calls
+const requestCache = new Map<string, { response: string; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
 
 // Get AI settings from Firebase
 export const getGeminiSettings = async (): Promise<AISettings | null> => {
@@ -44,21 +48,29 @@ export const chatWithPirate = async (
   userContext?: UserContext
 ): Promise<string> => {
 
+  // Check cache first to reduce API calls
+  const cacheKey = `${userMessage}-${JSON.stringify(userContext || {})}`;
+  const cached = requestCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    console.log('[Gemini AI] ✅ Using cached response');
+    return cached.response;
+  }
+
   const settings = await getGeminiSettings();
   
   // Get API keys (support both array and single key for backward compatibility)
   let apiKeys: string[] = [];
-  if (settings?.openRouterKeys && Array.isArray(settings.openRouterKeys)) {
-    apiKeys = settings.openRouterKeys.filter(key => key.trim());
+  if (settings?.geminiApiKeys && Array.isArray(settings.geminiApiKeys)) {
+    apiKeys = settings.geminiApiKeys.filter(key => key.trim());
   }
   
   // If no valid keys found, throw error (don't use placeholder)
   if (apiKeys.length === 0) {
-    console.error('[OpenRouter AI] No API keys configured!');
+    console.error('[Gemini AI] No API keys configured!');
     throw new Error("ยังไม่มีการตั้งค่า API Key กรุณาติดต่อผู้ดูแลระบบให้ตั้งค่าใน Admin Dashboard");
   }
   
-  console.log(`[OpenRouter AI] Found ${apiKeys.length} API key(s) to try`);
+  console.log(`[Gemini AI] Found ${apiKeys.length} API key(s) to try`);
 
   // Build user-specific context
   let userContextText = "";
@@ -123,7 +135,7 @@ ${userContextText}
 1. ตอบเป็นภาษาไทยเท่านั้น
 2. ใช้ "ข้า" และ "เจ้า" ตลอดเวลา
 3. ใช้คำพูดแบบโจรสลัด เช่น "อาฮอย!", "ฮาฮอย!", "เออ เจ้าหนู"
-4. ตอบสั้นๆ กระชับ ไม่เกิน 3-4 ประโยค
+
 
 📌 สำคัญ - การระบุแหล่งที่มาของข้อมูล:
 5. ⚓ ถ้าตอบจากข้อมูลที่มีให้ข้างต้น (ข้อมูลของลูกเรือ หรือข้อมูลเพิ่มเติมเกี่ยวกับงาน):
@@ -147,7 +159,7 @@ ${userContextText}
 
   const fullPrompt = `${systemPrompt}\n\n---\n\nคำถามจาก User: ${userMessage}`;
   
-  console.log('[OpenRouter AI] Sending request with', apiKeys.length, 'fallback keys...');
+  console.log('[Gemini AI] Sending request with', apiKeys.length, 'fallback keys...');
   
   // Try each API key until one succeeds
   let lastError: Error | null = null;
@@ -155,35 +167,34 @@ ${userContextText}
   for (let i = 0; i < apiKeys.length; i++) {
     const apiKey = apiKeys[i];
     const keyPreview = `${apiKey.substring(0, 10)}...${apiKey.substring(apiKey.length - 4)}`;
-    console.log(`[OpenRouter AI] Trying key ${i + 1}/${apiKeys.length} (${keyPreview})...`);
+    console.log(`[Gemini AI] Trying key ${i + 1}/${apiKeys.length} (${keyPreview})...`);
     
     try {
-      const timeoutDuration = 60000; // 60s timeout for all platforms
+      const timeoutDuration = 60000; // 60s timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
       
-      console.log(`[OpenRouter AI] Timeout set to ${timeoutDuration}ms`);
+      console.log(`[Gemini AI] Timeout set to ${timeoutDuration}ms`);
       
+      // Call Google Gemini Direct API
+      const model = 'gemini-2.0-flash-exp';
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       
-      // Call OpenRouter API
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'FATU Pirate Quest',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.0-flash-exp:free', // Free Gemini model
-          messages: [
-            {
-              role: 'user',
-              content: fullPrompt,
-            },
-          ],
-          temperature: 0.9,
-          max_tokens: 500,
+          contents: [{
+            parts: [{
+              text: fullPrompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.9,
+            maxOutputTokens: 500,
+          },
         }),
         signal: controller.signal,
       });
@@ -193,7 +204,7 @@ ${userContextText}
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         
-        console.error(`[OpenRouter AI] ❌ Key ${i + 1} failed:`, {
+        console.error(`[Gemini AI] ❌ Key ${i + 1} failed:`, {
           status: response.status,
           statusText: response.statusText,
           error: errorData,
@@ -202,42 +213,45 @@ ${userContextText}
         
         // If rate limit or quota, try next key
         if (response.status === 429 || response.status === 402) {
-          console.warn(`[OpenRouter AI] 🚫 Key ${i + 1} (${keyPreview}): Rate limit/quota exceeded`);
+          console.warn(`[Gemini AI] 🚫 Key ${i + 1} (${keyPreview}): Rate limit/quota exceeded`);
           const errorMsg = errorData?.error?.message || 'Quota exceeded';
           lastError = new Error(`Key ${i + 1}: ${errorMsg}`);
           continue; // Try next key
         }
         
         if (response.status === 401) {
-          console.warn(`[OpenRouter AI] 🔑 Key ${i + 1} (${keyPreview}): Invalid/unauthorized`);
+          console.warn(`[Gemini AI] 🔑 Key ${i + 1} (${keyPreview}): Invalid/unauthorized`);
           lastError = new Error(`Key ${i + 1}: Invalid API key`);
           continue; // Try next key
         }
         
         // For other errors, try next key too
-        console.warn(`[OpenRouter AI] ⚠️ Key ${i + 1} (${keyPreview}): Error ${response.status}`);
+        console.warn(`[Gemini AI] ⚠️ Key ${i + 1} (${keyPreview}): Error ${response.status}`);
         lastError = new Error(`Key ${i + 1}: HTTP ${response.status} - ${errorData?.error?.message || response.statusText}`);
         continue;
       }
 
       const data = await response.json();
-      console.log(`[OpenRouter AI] ✅ Success with key ${i + 1}!`);
+      console.log(`[Gemini AI] ✅ Success with key ${i + 1}!`);
 
-      const aiResponse = data.choices?.[0]?.message?.content;
+      const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!aiResponse) {
-        console.error('[OpenRouter AI] Invalid response format:', data);
+        console.error('[Gemini AI] Invalid response format:', data);
         throw new Error("ไม่ได้รับคำตอบจาก AI");
       }
 
+      // Cache the response
+      requestCache.set(cacheKey, { response: aiResponse, timestamp: Date.now() });
+      
       return aiResponse; // Success!
       
     } catch (error: any) {
-      console.error(`[OpenRouter AI] Error with key ${i + 1}:`, error);
+      console.error(`[Gemini AI] Error with key ${i + 1}:`, error);
       lastError = error;
       
       // If timeout or network error, try next key
       if (error.name === 'AbortError' || error.message?.includes('Failed to fetch')) {
-        console.warn(`[OpenRouter AI] Network/timeout error with key ${i + 1}, trying next key...`);
+        console.warn(`[Gemini AI] Network/timeout error with key ${i + 1}, trying next key...`);
         continue; // Try next key
       }
       
@@ -250,9 +264,9 @@ ${userContextText}
   }
   
   // All keys failed
-  console.error('[OpenRouter AI] ❌ ALL KEYS FAILED!');
-  console.error('[OpenRouter AI] Last error:', lastError);
-  console.error('[OpenRouter AI] Total keys tried:', apiKeys.length);
+  console.error('[Gemini AI] ❌ ALL KEYS FAILED!');
+  console.error('[Gemini AI] Last error:', lastError);
+  console.error('[Gemini AI] Total keys tried:', apiKeys.length);
   
   // Better error messages based on last error
   if (lastError?.name === 'AbortError') {
