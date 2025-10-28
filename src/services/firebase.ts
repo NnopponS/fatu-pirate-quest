@@ -1425,6 +1425,8 @@ export const savePrize = async (token: string, prize: PrizeRecord) => {
     name: prize.name,
     weight: prize.weight,
     stock: prize.stock,
+    description: prize.description,
+    image_url: prize.image_url,
   });
 };
 
@@ -1624,13 +1626,39 @@ export const resetAllData = async (token: string) => {
     firebaseDb.update(`participants/${participant.id}`, { points: 0 })
   );
 
-  // Delete all checkins and sub-event checkins
+  // Delete all checkins and sub-event checkins - must delete each participant's checkins recursively
+  const checkinsRecord = await firebaseDb.get<Record<string, any>>("checkins");
+  const subEventCheckinsRecord = await firebaseDb.get<Record<string, any>>("sub_event_checkins");
+  const spinsRecord = await firebaseDb.get<Record<string, any>>("spins");
+
+  const checkinsDeletePromises = checkinsRecord 
+    ? Object.keys(checkinsRecord).map(participantId => 
+        firebaseDb.remove(`checkins/${participantId}`)
+      )
+    : [];
+
+  const subEventCheckinsDeletePromises = subEventCheckinsRecord
+    ? Object.keys(subEventCheckinsRecord).map(participantId =>
+        firebaseDb.remove(`sub_event_checkins/${participantId}`)
+      )
+    : [];
+
+  const spinsDeletePromises = spinsRecord
+    ? Object.keys(spinsRecord).map(participantId =>
+        firebaseDb.remove(`spins/${participantId}`)
+      )
+    : [];
+
+  // Execute all deletions and resets
   await Promise.all([
     ...resetPromises,
-    firebaseDb.remove("checkins"),
-    firebaseDb.remove("sub_event_checkins"),
-    firebaseDb.remove("spins"), // Also reset all spin records
+    ...checkinsDeletePromises,
+    ...subEventCheckinsDeletePromises,
+    ...spinsDeletePromises,
   ]);
+
+  // Clear all cache
+  clearCache();
 
   console.log("[Admin] Reset all data - cleared checkins, sub-event checkins, spins, and reset all points to 0");
 };
