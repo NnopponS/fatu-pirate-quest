@@ -8,7 +8,6 @@ import {
   savePrize as savePrizeApi,
   setSpinThreshold as setSpinThresholdApi,
   updateLocation as updateLocationApi,
-  regenerateLocationQR as regenerateLocationQRApi,
   deleteParticipant as deleteParticipantApi,
   updateParticipant as updateParticipantApi,
   getHeroCards,
@@ -56,7 +55,6 @@ import {
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { AdminLocationManager } from "@/components/AdminLocationManager";
 import { AdminParticipantManager } from "@/components/AdminParticipantManager";
-import { AdminSubEventManager } from "@/components/AdminSubEventManager";
 import { HeroCardsTab } from "@/components/HeroCardsTabContent";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from 'xlsx';
@@ -289,24 +287,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const regenerateQR = async (locationId: number) => {
-    if (!token) return;
-    
-    try {
-      await regenerateLocationQRApi(token, locationId);
-      toast({ 
-        title: "สร้าง QR Code ใหม่สำเร็จ",
-        description: "QR code เวอร์ชันเก่าจะใช้ไม่ได้แล้ว" 
-      });
-      fetchDashboard(token);
-    } catch (error) {
-      toast({
-        title: "สร้าง QR ไม่สำเร็จ",
-        description: errorMessage(error),
-        variant: "destructive",
-      });
-    }
-  };
 
   const saveSubEvents = async (locationId: number, subEvents: any[]) => {
     if (!token) return;
@@ -1071,22 +1051,18 @@ const AdminDashboard = () => {
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-            <TabsList className="grid w-full grid-cols-4 md:grid-cols-5 lg:grid-cols-9 bg-white/80">
+            <TabsList className="grid w-full grid-cols-4 md:grid-cols-5 lg:grid-cols-8 bg-white/80">
               <TabsTrigger value="participants" className="gap-2">
                 <Users className="h-4 w-4" />
                 ลูกเรือ
               </TabsTrigger>
               <TabsTrigger value="locations" className="gap-2">
                 <MapPin className="h-4 w-4" />
-                จุดเช็กอิน
-              </TabsTrigger>
-              <TabsTrigger value="subevents" className="gap-2">
-                <Calendar className="h-4 w-4" />
-                กิจกรรมย่อย
+                จุดเช็กอิน & กิจกรรม
               </TabsTrigger>
               <TabsTrigger value="prizes" className="gap-2">
                 <Gift className="h-4 w-4" />
-                รางวัล
+                รางวัล & มอบรางวัล
               </TabsTrigger>
               <TabsTrigger value="herocards" className="gap-2">
                 <Layers className="h-4 w-4" />
@@ -1095,10 +1071,6 @@ const AdminDashboard = () => {
               <TabsTrigger value="export" className="gap-2">
                 <FileSpreadsheet className="h-4 w-4" />
                 Export Data
-              </TabsTrigger>
-              <TabsTrigger value="prize-claims" className="gap-2">
-                <Trophy className="h-4 w-4" />
-                รางวัล
               </TabsTrigger>
               <TabsTrigger value="gemini" className="gap-2">
                 <Bot className="h-4 w-4" />
@@ -1219,40 +1191,16 @@ const AdminDashboard = () => {
                       key={location.id}
                       location={location}
                       onSave={saveLocation}
-                      onGenerateQR={regenerateQR}
+                      onSaveSubEvents={saveSubEvents}
                     />
                   ))}
                 </div>
               </div>
             </TabsContent>
 
-            <TabsContent value="subevents" className="space-y-4">
-              <div className="pirate-card px-6 py-8 space-y-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/15 text-accent">
-                      <Calendar className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-semibold text-primary">กิจกรรมย่อย</h2>
-                      <p className="text-sm text-foreground/70">
-                        จัดการกิจกรรมย่อยภายในแต่ละจุดเช็กอิน
-                      </p>
-                    </div>
-                  </div>
-                  <Button variant="outline" className="gap-2" onClick={exportSubEventCheckins}>
-                    <Download className="h-4 w-4" />
-                    Export Check-ins
-                  </Button>
-                </div>
-              </div>
-              <AdminSubEventManager
-                locations={dashboard.locations}
-                onSave={saveSubEvents}
-              />
-            </TabsContent>
 
             <TabsContent value="prizes" className="space-y-4">
+              {/* Prize Management Section */}
               <div className="pirate-card px-6 py-8 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/15 text-accent">
@@ -1493,20 +1441,15 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               </div>
-            </TabsContent>
 
-            <TabsContent value="herocards" className="space-y-4">
-              <HeroCardsTab token={token} />
-            </TabsContent>
-
-            <TabsContent value="prize-claims" className="space-y-4">
-              <div className="pirate-card px-6 py-8 space-y-6">
+              {/* Prize Claims Management Section */}
+              <div className="pirate-card px-6 py-8 space-y-6 mt-8">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
                     <Trophy className="h-6 w-6" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-semibold text-primary">จัดการรางวัล</h2>
+                    <h2 className="text-2xl font-semibold text-primary">จัดการการมอบรางวัล</h2>
                     <p className="text-sm text-foreground/70">
                       ตรวจสอบและยืนยันการมอบรางวัล
                     </p>
@@ -1674,6 +1617,10 @@ const AdminDashboard = () => {
                   </Table>
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="herocards" className="space-y-4">
+              <HeroCardsTab token={token} />
             </TabsContent>
 
             <TabsContent value="gemini" className="space-y-4">
