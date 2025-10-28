@@ -42,7 +42,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-gradient-to-b from-sky-400 via-sky-300 to-blue-500">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-gradient-to-b from-amber-900 via-amber-800 to-amber-700">
       {/* Skip Button */}
       <Button
         onClick={handleSkip}
