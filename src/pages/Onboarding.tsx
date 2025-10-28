@@ -106,7 +106,6 @@ const Onboarding = () => {
                   </p>
                 </div>
               </div>
-            </div>
           )
         </div>
       )
