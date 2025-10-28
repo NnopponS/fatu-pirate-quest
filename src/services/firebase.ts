@@ -1030,23 +1030,11 @@ export const checkinSubEvent = async (
 
   const updatedPoints = participant.points + pointsToAward;
 
-  // Auto check-in location if not already checked in (no points, just record)
-  const existingLocationCheckin = await firebaseDb.get<CheckinRecord>(
-    `checkins/${participantId}/${parentLocation.id}`
-  );
-
   await Promise.all([
     firebaseDb.set(`sub_event_checkins/${participantId}/${subEventId}`, subEventCheckin),
     pointsToAward > 0 
       ? firebaseDb.update(`participants/${participantId}`, { points: updatedPoints })
       : Promise.resolve(),
-    // Auto check-in location without points
-    existingLocationCheckin ? Promise.resolve() : firebaseDb.set(`checkins/${participantId}/${parentLocation.id}`, {
-      participant_id: participantId,
-      location_id: parentLocation.id,
-      method: "subevent_auto",
-      created_at: new Date().toISOString(),
-    } as CheckinRecord),
   ]);
 
   return { ok: true, pointsAdded: pointsToAward };

@@ -25,9 +25,10 @@ interface LocationCardProps {
   imageUrl?: string;
   description?: string;
   subEvents?: SubEvent[];
+  completedSubEvents?: string[];
 }
 
-export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageUrl, description, subEvents }: LocationCardProps) => {
+export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageUrl, description, subEvents, completedSubEvents = [] }: LocationCardProps) => {
   const mapsUrl = mapUrl ?? `https://www.google.com/maps?q=${lat},${lng}`;
   const [isEventsOpen, setIsEventsOpen] = useState(false);
   const [selectedSubEvent, setSelectedSubEvent] = useState<SubEvent | null>(null);
@@ -62,16 +63,23 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageU
               <p className={`text-xs ${checkedIn ? 'text-green-700' : 'text-amber-800'}`}>{description}</p>
             )}
           </div>
-          <span
-            className={`pirate-chip flex-shrink-0 ${
-              checkedIn 
-                ? "bg-green-600 text-white border-green-700" 
-                : "bg-amber-600 text-white border-amber-700"
-            }`}
-          >
-            {checkedIn ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Clock className="h-3.5 w-3.5" />}
-            <span className="text-xs">{checkedIn ? "ทำกิจกรรมแล้ว" : "ยังไม่ได้ทำ"}</span>
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className={`pirate-chip flex-shrink-0 ${
+                checkedIn 
+                  ? "bg-green-600 text-white border-green-700 shadow-lg animate-pulse" 
+                  : "bg-amber-600 text-white border-amber-700"
+              }`}
+            >
+              {checkedIn ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Clock className="h-3.5 w-3.5" />}
+              <span className="text-xs font-bold">{checkedIn ? "✓ เช็กอินแล้ว" : "ยังไม่ได้ทำ"}</span>
+            </span>
+            {subEvents && subEvents.length > 0 && (
+              <span className="px-2 py-1 bg-blue-100 border border-blue-400 rounded-lg text-xs font-bold text-blue-800">
+                {completedSubEvents.filter(id => subEvents.some(se => se.id === id)).length}/{subEvents.length} กิจกรรม
+              </span>
+            )}
+          </div>
         </div>
 
         {subEvents && subEvents.length > 0 && (

@@ -260,7 +260,25 @@ const Checkin = () => {
         });
       }
 
-      setTimeout(() => navigate("/map"), 2500);
+      // Navigate back to map and trigger bottle animation if location has sub-events
+      setTimeout(async () => {
+        try {
+          const mapData = await getMapData(participantId);
+          const location = isSubEvent 
+            ? mapData.locations.find((l: any) => l.sub_events?.some((se: any) => se.id === subEventInfo?.id))
+            : mapData.locations.find((l: any) => l.id === locationInfo?.id);
+          
+          if (location && location.sub_events && location.sub_events.length > 0) {
+            // Store location info for bottle animation
+            sessionStorage.setItem('showBottleAnimation', 'true');
+            sessionStorage.setItem('bottleLocationId', location.id.toString());
+          }
+        } catch (error) {
+          console.error('Error checking for sub-events:', error);
+        }
+        
+        navigate("/map");
+      }, 2500);
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
@@ -285,6 +303,15 @@ const Checkin = () => {
         ]}
         interval={4000}
       />
+      <style>{`
+        @keyframes sparkle {
+          0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+          50% { opacity: 1; transform: scale(1) rotate(180deg); }
+        }
+        .animate-sparkle {
+          animation: sparkle 2s ease-in-out infinite;
+        }
+      `}</style>
       <div className="container mx-auto max-w-3xl px-4 py-16">
         <div className="pirate-card px-8 py-12 text-center space-y-6">
           {status === "loading" && (
@@ -296,14 +323,22 @@ const Checkin = () => {
 
           {status === "confirm" && !isSubEvent && locationInfo && (
             <>
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-400/20 to-orange-600/20 rounded-full blur-3xl" />
-                <MapPin className="relative mx-auto h-20 w-20 text-amber-600 animate-in fade-in zoom-in" />
+              {/* Pirate Header */}
+              <div className="relative mb-4">
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/30 to-orange-600/30 rounded-full blur-3xl" />
+                <div className="relative flex items-center justify-center gap-3">
+                  <MapPin className="h-16 w-16 text-amber-600" />
+                  <ShipWheel className="h-12 w-12 text-amber-500 animate-spin" style={{ animationDuration: '3s' }} />
+                </div>
               </div>
-              <h2 className="text-3xl font-semibold text-amber-600">ยืนยันการเช็กอิน</h2>
+              
+              <h2 className="text-4xl font-bold text-amber-900 mb-2" style={{ fontFamily: 'Pirata One, serif' }}>
+                ⚓ ยืนยันการเช็กอิน ⚓
+              </h2>
+              <p className="text-amber-700 italic">ตรวจสอบข้อมูลก่อนออกเดินทาง</p>
               
               {locationInfo.imageUrl && (
-                <div className="mx-auto w-full max-w-sm overflow-hidden rounded-xl border-2 border-amber-300 shadow-lg">
+                <div className="mx-auto w-full max-w-sm overflow-hidden rounded-2xl border-4 border-amber-600 shadow-2xl ring-4 ring-amber-500/20">
                   <img 
                     src={locationInfo.imageUrl} 
                     alt={locationInfo.name}
@@ -313,44 +348,52 @@ const Checkin = () => {
               )}
 
               <div className="space-y-4 text-left">
-                <div className="rounded-xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-orange-100 p-5 shadow-md">
-                  <div className="flex items-center gap-2 text-sm text-amber-700 mb-2 font-semibold">
-                    <User className="h-5 w-5" />
-                    <span>ผู้เช็กอิน</span>
+                {/* Pirate Parchment Style Cards */}
+                <div className="rounded-2xl border-4 border-amber-600 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 p-6 shadow-xl relative overflow-hidden" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(139,115,85,0.15) 1px, transparent 0)', backgroundSize: '40px 40px' }}>
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-amber-600/10 rounded-full blur-2xl" />
+                  <div className="flex items-center gap-3 text-sm text-amber-800 mb-3 font-bold">
+                    <User className="h-6 w-6" />
+                    <span className="uppercase tracking-wider">ลูกเรือที่ทำการเช็กอิน</span>
                   </div>
-                  <p className="text-2xl font-bold text-amber-900">{userName}</p>
+                  <p className="text-3xl font-black text-amber-900">{userName}</p>
                 </div>
 
-                <div className="rounded-xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-orange-100 p-5 shadow-md">
-                  <div className="flex items-center gap-2 text-sm text-amber-700 mb-2 font-semibold">
-                    <MapPin className="h-5 w-5" />
-                    <span>สถานที่</span>
+                <div className="rounded-2xl border-4 border-amber-600 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 p-6 shadow-xl relative overflow-hidden" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(139,115,85,0.15) 1px, transparent 0)', backgroundSize: '40px 40px' }}>
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-amber-600/10 rounded-full blur-2xl" />
+                  <div className="flex items-center gap-3 text-sm text-amber-800 mb-3 font-bold">
+                    <MapPin className="h-6 w-6" />
+                    <span className="uppercase tracking-wider">จุดล่าสมบัติ</span>
                   </div>
-                  <p className="text-2xl font-bold text-amber-900">{locationInfo.name}</p>
-                  <p className="text-sm text-amber-800 mt-3 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
-                    คะแนนที่ได้รับ: <span className="font-bold text-amber-900">⚓ {locationInfo.points} แต้ม</span>
-                  </p>
+                  <p className="text-3xl font-black text-amber-900 mb-3">{locationInfo.name}</p>
+                  <div className="bg-gradient-to-r from-yellow-200 to-orange-200 rounded-xl px-4 py-3 border-2 border-amber-400 shadow-inner">
+                    <p className="text-base font-black text-amber-900">
+                      💎 คะแนนที่ได้รับ: <span className="text-2xl">⚓ +{locationInfo.points}</span>
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <p className="text-sm text-amber-700 font-medium">
-                กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนยืนยันการเช็กอิน
-              </p>
+              <div className="bg-amber-100 border-4 border-amber-500 rounded-xl px-4 py-3 text-center">
+                <p className="text-sm font-bold text-amber-900">
+                  ⚠️ ตรวจสอบข้อมูลให้ถูกต้องก่อนยืนยัน
+                </p>
+              </div>
 
               <div className="flex gap-3">
                 <Button 
                   onClick={handleConfirmCheckin}
-                  className="flex-1 gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg"
+                  className="flex-1 gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-xl border-4 border-amber-700 hover:scale-105 transition-transform"
                   size="lg"
+                  style={{ fontFamily: 'Pirata One, serif' }}
                 >
-                  <CheckCircle2 className="h-5 w-5" />
-                  ยืนยันเช็กอิน
+                  <CheckCircle2 className="h-6 w-6" />
+                  <span className="text-lg">ยืนยันเช็กอิน</span>
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => navigate("/map")}
                   size="lg"
-                  className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                  className="border-4 border-amber-600 text-amber-900 hover:bg-amber-100 font-bold px-6"
                 >
                   ยกเลิก
                 </Button>
@@ -360,14 +403,22 @@ const Checkin = () => {
 
           {status === "confirm" && isSubEvent && subEventInfo && (
             <>
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-amber-600/20 rounded-full blur-3xl" />
-                <Calendar className="relative mx-auto h-20 w-20 text-amber-600 animate-in fade-in zoom-in" />
+              {/* Pirate Header */}
+              <div className="relative mb-4">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-400/30 to-amber-600/30 rounded-full blur-3xl" />
+                <div className="relative flex items-center justify-center gap-3">
+                  <Calendar className="h-16 w-16 text-purple-600" />
+                  <span className="text-6xl">🏴‍☠️</span>
+                </div>
               </div>
-              <h2 className="text-3xl font-semibold text-amber-600">🏴‍☠️ ยืนยันการเข้าร่วมกิจกรรม</h2>
+              
+              <h2 className="text-4xl font-bold text-purple-900 mb-2" style={{ fontFamily: 'Pirata One, serif' }}>
+                ภารกิจพิเศษ!
+              </h2>
+              <p className="text-purple-700 italic">ร่วมกิจกรรมเพื่อรับรางวัล</p>
               
               {subEventInfo.image_url && (
-                <div className="mx-auto w-full max-w-sm overflow-hidden rounded-xl border-2 border-amber-300 shadow-lg">
+                <div className="mx-auto w-full max-w-sm overflow-hidden rounded-2xl border-4 border-purple-600 shadow-2xl ring-4 ring-purple-500/20">
                   <img 
                     src={subEventInfo.image_url} 
                     alt={subEventInfo.name}
@@ -377,64 +428,76 @@ const Checkin = () => {
               )}
 
               <div className="space-y-4 text-left">
-                <div className="rounded-xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-orange-100 p-5 shadow-md">
-                  <div className="flex items-center gap-2 text-sm text-amber-700 mb-2 font-semibold">
-                    <User className="h-5 w-5" />
-                    <span>ผู้เข้าร่วม</span>
+                {/* Pirate Parchment Style Cards */}
+                <div className="rounded-2xl border-4 border-purple-600 bg-gradient-to-br from-purple-50 via-amber-50 to-yellow-50 p-6 shadow-xl relative overflow-hidden" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(139,115,85,0.15) 1px, transparent 0)', backgroundSize: '40px 40px' }}>
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-purple-600/10 rounded-full blur-2xl" />
+                  <div className="flex items-center gap-3 text-sm text-purple-800 mb-3 font-bold">
+                    <User className="h-6 w-6" />
+                    <span className="uppercase tracking-wider">ลูกเรือที่มาถึง</span>
                   </div>
-                  <p className="text-2xl font-bold text-amber-900">{userName}</p>
+                  <p className="text-3xl font-black text-purple-900">{userName}</p>
                 </div>
 
-                <div className="rounded-xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-orange-100 p-5 shadow-md">
-                  <div className="flex items-center gap-2 text-sm text-amber-700 mb-2 font-semibold">
-                    <Calendar className="h-5 w-5" />
-                    <span>กิจกรรม</span>
+                <div className="rounded-2xl border-4 border-purple-600 bg-gradient-to-br from-purple-50 via-amber-50 to-yellow-50 p-6 shadow-xl relative overflow-hidden" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(139,115,85,0.15) 1px, transparent 0)', backgroundSize: '40px 40px' }}>
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-purple-600/10 rounded-full blur-2xl" />
+                  <div className="flex items-center gap-3 text-sm text-purple-800 mb-3 font-bold">
+                    <Calendar className="h-6 w-6" />
+                    <span className="uppercase tracking-wider">ภารกิจ</span>
                   </div>
-                  <p className="text-2xl font-bold text-amber-900">⚓ {subEventInfo.name}</p>
+                  <p className="text-3xl font-black text-purple-900 mb-3">⚓ {subEventInfo.name}</p>
                   {subEventInfo.time && (
-                    <p className="text-sm text-amber-800 mt-2">🕐 {subEventInfo.time}</p>
+                    <p className="text-base text-purple-800 font-semibold bg-purple-100 rounded-lg px-3 py-2 mb-2">🕐 {subEventInfo.time}</p>
                   )}
                   {subEventInfo.description && (
-                    <p className="text-sm text-amber-800 mt-2 leading-relaxed">{subEventInfo.description}</p>
+                    <p className="text-base text-purple-800 leading-relaxed border-l-4 border-purple-500 pl-4">{subEventInfo.description}</p>
                   )}
                 </div>
 
-                <div className="rounded-xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-orange-100 p-5 shadow-md">
-                  <div className="flex items-center gap-2 text-sm text-amber-700 mb-2 font-semibold">
-                    <MapPin className="h-5 w-5" />
-                    <span>สถานที่</span>
+                <div className="rounded-2xl border-4 border-amber-600 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 p-6 shadow-xl relative overflow-hidden" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(139,115,85,0.15) 1px, transparent 0)', backgroundSize: '40px 40px' }}>
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-amber-600/10 rounded-full blur-2xl" />
+                  <div className="flex items-center gap-3 text-sm text-amber-800 mb-3 font-bold">
+                    <MapPin className="h-6 w-6" />
+                    <span className="uppercase tracking-wider">จุดล่าสมบัติ</span>
                   </div>
-                  <p className="text-lg font-bold text-amber-900">{subEventInfo.location_name}</p>
+                  <p className="text-2xl font-black text-amber-900 mb-3">{subEventInfo.location_name}</p>
                   {(subEventInfo.points_awarded ?? 100) > 0 ? (
-                    <p className="text-sm text-amber-800 mt-3 bg-yellow-50 rounded-lg px-3 py-2 border border-yellow-300">
-                      💎 คะแนนพิเศษ: <span className="font-bold text-amber-900">+{subEventInfo.points_awarded ?? 100} แต้ม</span> (ครั้งแรกต่อสถานที่)
-                    </p>
+                    <div className="bg-gradient-to-r from-yellow-200 to-orange-200 rounded-xl px-4 py-3 border-2 border-amber-400 shadow-inner">
+                      <p className="text-base font-black text-amber-900">
+                        💎 คะแนนพิเศษ: <span className="text-2xl">+{subEventInfo.points_awarded ?? 100}</span>
+                      </p>
+                      <p className="text-sm text-amber-800 font-semibold mt-1">(ครั้งแรกต่อสถานที่)</p>
+                    </div>
                   ) : (
-                    <p className="text-sm text-gray-600 mt-3 bg-gray-50 rounded-lg px-3 py-2 border border-gray-300">
-                      ℹ️ กิจกรรมนี้ไม่มีคะแนน (บันทึกการเข้าร่วมเท่านั้น)
-                    </p>
+                    <div className="bg-gray-100 rounded-xl px-4 py-3 border-2 border-gray-300">
+                      <p className="text-sm text-gray-700 font-semibold">
+                        ℹ️ กิจกรรมนี้ไม่มีคะแนน (บันทึกการเข้าร่วมเท่านั้น)
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
 
-              <p className="text-sm text-amber-700 font-medium">
-                กรุณาตรวจสอบข้อมูลก่อนยืนยันการเข้าร่วมกิจกรรม
-              </p>
+              <div className="bg-purple-100 border-4 border-purple-500 rounded-xl px-4 py-3 text-center">
+                <p className="text-sm font-bold text-purple-900">
+                  ⚠️ ตรวจสอบข้อมูลก่อนยืนยัน
+                </p>
+              </div>
 
               <div className="flex gap-3">
                 <Button 
                   onClick={handleConfirmCheckin}
-                  className="flex-1 gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg"
+                  className="flex-1 gap-2 bg-gradient-to-r from-purple-600 to-amber-600 hover:from-purple-700 hover:to-amber-700 shadow-xl border-4 border-purple-700 hover:scale-105 transition-transform"
                   size="lg"
+                  style={{ fontFamily: 'Pirata One, serif' }}
                 >
-                  <CheckCircle2 className="h-5 w-5" />
-                  ยืนยันเข้าร่วมกิจกรรม
+                  <CheckCircle2 className="h-6 w-6" />
+                  <span className="text-lg">ยืนยันเข้าร่วม</span>
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => navigate("/map")}
                   size="lg"
-                  className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                  className="border-4 border-purple-600 text-purple-900 hover:bg-purple-100 font-bold px-6"
                 >
                   ยกเลิก
                 </Button>
@@ -451,44 +514,64 @@ const Checkin = () => {
 
           {status === "success" && (
             <>
-              <div className="relative">
+              <div className="relative mb-6">
                 <div className="absolute inset-0 bg-gradient-to-br from-green-400/30 to-green-600/30 rounded-full blur-3xl animate-pulse" />
-                <CheckCircle2 className="relative mx-auto h-24 w-24 text-green-600 animate-in fade-in zoom-in drop-shadow-lg" />
+                <div className="relative flex items-center justify-center gap-4">
+                  <CheckCircle2 className="h-24 w-24 text-green-600 animate-in fade-in zoom-in drop-shadow-lg" />
+                  <ShipWheel className="h-16 w-16 text-green-500 animate-spin" style={{ animationDuration: '2s' }} />
+                </div>
               </div>
               
-              <div className="space-y-3">
-                <h2 className="text-4xl font-bold text-green-600 animate-in fade-in slide-in-from-bottom-4">
-                  🎉 เช็กอินสำเร็จ! 🎉
+              <div className="space-y-4 mb-6">
+                <h2 className="text-5xl font-bold text-green-700 animate-in fade-in slide-in-from-bottom-4" style={{ fontFamily: 'Pirata One, serif' }}>
+                  🎉 สำเร็จแล้ว! 🎉
                 </h2>
-                <p className="text-xl text-green-700 font-semibold">{message}</p>
+                <p className="text-2xl text-green-800 font-semibold">{message}</p>
               </div>
 
               {pointsAdded > 0 && (
-                <div className="rounded-2xl border-4 border-green-500 bg-gradient-to-br from-green-50 to-green-100 p-8 shadow-2xl shadow-green-500/30 animate-in fade-in zoom-in">
-                  <p className="text-sm text-green-700 font-semibold mb-2">คะแนนที่ได้รับ</p>
-                  <div className="text-6xl font-black text-green-600 animate-bounce">
-                    +{pointsAdded}
+                <div className="rounded-3xl border-4 border-green-600 bg-gradient-to-br from-green-50 via-yellow-50 to-green-100 p-8 shadow-2xl shadow-green-500/30 animate-in fade-in zoom-in relative overflow-hidden" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(34,139,34,0.15) 1px, transparent 0)', backgroundSize: '50px 50px' }}>
+                  {/* Sparkle effects */}
+                  {[...Array(20)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="absolute w-2 h-2 bg-yellow-400 rounded-full animate-sparkle"
+                      style={{
+                        left: `${Math.random() * 100}%`,
+                        top: `${Math.random() * 100}%`,
+                        animationDelay: `${Math.random() * 3}s`,
+                        animationDuration: `${1 + Math.random()}s`
+                      }}
+                    />
+                  ))}
+                  <div className="relative z-10">
+                    <p className="text-sm text-green-700 font-bold mb-3 uppercase tracking-wider">💎 คะแนนที่ได้รับ</p>
+                    <div className="text-7xl font-black text-green-700 animate-bounce mb-3">
+                      +{pointsAdded}
+                    </div>
+                    <p className="text-2xl text-green-800 font-bold">แต้ม</p>
                   </div>
-                  <p className="text-lg text-green-700 font-semibold mt-2">แต้ม</p>
                 </div>
               )}
 
               {locationInfo && (
-                <div className="rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-green-100 p-5 shadow-md">
-                  <div className="flex items-center gap-2 text-sm text-green-700 mb-2 font-semibold">
-                    <User className="h-5 w-5" />
-                    <span>ผู้เช็กอิน</span>
+                <div className="rounded-2xl border-4 border-green-500 bg-gradient-to-br from-green-50 to-yellow-50 p-6 shadow-xl relative overflow-hidden" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(139,115,85,0.15) 1px, transparent 0)', backgroundSize: '40px 40px' }}>
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-green-600/10 rounded-full blur-2xl" />
+                  <div className="flex items-center gap-3 text-sm text-green-700 mb-3 font-bold">
+                    <User className="h-6 w-6" />
+                    <span className="uppercase tracking-wider">ลูกเรือ</span>
                   </div>
-                  <p className="text-xl font-bold text-green-900">{userName}</p>
+                  <p className="text-2xl font-black text-green-900">{userName}</p>
                 </div>
               )}
 
               <Button 
                 onClick={() => navigate("/map")}
                 size="lg"
-                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg shadow-green-500/30"
+                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-2xl border-4 border-green-800 hover:scale-105 transition-transform mt-6"
+                style={{ fontFamily: 'Pirata One, serif' }}
               >
-                กลับไปยังแผนที่
+                <span className="text-lg">🗺️ กลับไปยังแผนที่</span>
               </Button>
             </>
           )}

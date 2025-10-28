@@ -17,6 +17,8 @@ interface BottleQuestModalProps {
   subEvents: SubEvent[];
   alreadyCheckedIn: boolean;
   completedSubEvents: string[];
+  locationId?: number;
+  onCheckIn?: (locationId: number) => void;
 }
 
 export const BottleQuestModal = ({
@@ -25,9 +27,12 @@ export const BottleQuestModal = ({
   locationName,
   subEvents,
   alreadyCheckedIn,
-  completedSubEvents
+  completedSubEvents,
+  locationId,
+  onCheckIn
 }: BottleQuestModalProps) => {
   const [phase, setPhase] = useState<"water" | "bottle" | "opening" | "scroll">("water");
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -94,9 +99,35 @@ export const BottleQuestModal = ({
       {/* Bottle floating */}
       {phase === "bottle" && (
         <div className="relative z-10 animate-in zoom-in fade-in duration-1000">
-          <div className="text-9xl animate-float filter drop-shadow-2xl">
+          <div className="text-9xl animate-float filter drop-shadow-2xl transform hover:scale-110 transition-transform">
             🍾
           </div>
+          {/* Bubbles around bottle */}
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-4 h-4 bg-white/40 rounded-full animate-bubble"
+              style={{
+                left: `${30 + (i % 4) * 20}%`,
+                top: `${20 + Math.floor(i / 4) * 60}%`,
+                animationDelay: `${i * 0.2}s`,
+                animationDuration: `${2 + Math.random()}s`
+              }}
+            />
+          ))}
+          {/* Sparkles */}
+          {[...Array(12)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 bg-yellow-300 rounded-full animate-sparkle"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 3}s`,
+                animationDuration: `${1 + Math.random()}s`
+              }}
+            />
+          ))}
         </div>
       )}
 
@@ -273,14 +304,35 @@ export const BottleQuestModal = ({
                 </p>
               </div>
 
-              {/* Close button */}
-              <div className="flex justify-center pt-3 sm:pt-4">
+              {/* Action buttons */}
+              <div className="flex justify-center gap-3 pt-3 sm:pt-4">
+                {!alreadyCheckedIn && locationId && onCheckIn && (
+                  <Button
+                    onClick={async () => {
+                      setIsCheckingIn(true);
+                      try {
+                        onCheckIn(locationId);
+                      } catch (error) {
+                        console.error('Check-in error:', error);
+                      } finally {
+                        setIsCheckingIn(false);
+                      }
+                    }}
+                    size="lg"
+                    disabled={isCheckingIn}
+                    className="pirate-button text-sm sm:text-base md:text-lg px-6 sm:px-8 border-4 border-amber-700 hover:scale-105 transition-transform"
+                    style={{ fontFamily: 'Pirata One, serif' }}
+                  >
+                    {isCheckingIn ? 'กำลังเช็กอิน...' : '✓ เช็กอินเลย! ⚓'}
+                  </Button>
+                )}
                 <Button
                   onClick={onClose}
                   size="lg"
                   className="pirate-button text-sm sm:text-base md:text-lg px-6 sm:px-8"
+                  variant={alreadyCheckedIn || !onCheckIn ? "default" : "outline"}
                 >
-                  รับทราบแล้ว ⚓
+                  {alreadyCheckedIn ? 'รับทราบแล้ว ⚓' : 'มองดูก่อน'}
                 </Button>
               </div>
             </div>
@@ -306,6 +358,11 @@ export const BottleQuestModal = ({
           0%, 100% { transform: translateY(0) rotate(-5deg); }
           50% { transform: translateY(-20px) rotate(5deg); }
         }
+
+        @keyframes sparkle {
+          0%, 100% { opacity: 0; transform: scale(0); }
+          50% { opacity: 1; transform: scale(1) rotate(180deg); }
+        }
         
         .animate-float {
           animation: float 3s ease-in-out infinite;
@@ -313,6 +370,10 @@ export const BottleQuestModal = ({
         
         .animate-bubble {
           animation: bubble linear infinite;
+        }
+
+        .animate-sparkle {
+          animation: sparkle 2s ease-in-out infinite;
         }
       `}</style>
     </div>

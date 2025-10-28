@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getMapData } from "@/services/firebase";
+import { getMapData, checkinParticipant } from "@/services/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import { LocationCard } from "@/components/LocationCard";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ interface SubEventEntry {
   image_url?: string;
   time?: string;
   qr_code_version?: number;
+  points_awarded?: number;
 }
 
 interface LocationEntry {
@@ -166,6 +167,24 @@ const Map = () => {
   useEffect(() => {
     loadData();
 
+    // Check if we should show bottle animation after returning from check-in
+    const showBottleAnimation = sessionStorage.getItem('showBottleAnimation');
+    const bottleLocationId = sessionStorage.getItem('bottleLocationId');
+    
+    if (showBottleAnimation === 'true' && bottleLocationId) {
+      // Wait a bit for data to load, then show animation
+      setTimeout(() => {
+        const location = locations.find(loc => loc.id === parseInt(bottleLocationId, 10));
+        if (location && location.sub_events && location.sub_events.length > 0) {
+          setQuestLocation(location);
+          setQuestModalOpen(true);
+        }
+        // Clear the flag
+        sessionStorage.removeItem('showBottleAnimation');
+        sessionStorage.removeItem('bottleLocationId');
+      }, 500);
+    }
+
     // Poll for updates every 3 seconds (only when page is visible)
     const pollInterval = setInterval(() => {
       // Only reload if document is visible (not in background tab)
@@ -197,7 +216,54 @@ const Map = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('force-map-refresh', handleForceRefresh);
     };
-  }, [loadData]);
+  }, [loadData, locations]);
+
+  const handleCheckInFromModal = useCallback(async (locationId: number) => {
+    if (!scannedQrData || !scannedQrData.loc || !scannedQrData.sig || !participantId) {
+      toast({
+        title: "ข้อมูลไม่ครบ",
+        description: "ไม่สามารถเช็กอินได้ กรุณาสแกน QR Code ใหม่",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const result = await checkinParticipant(
+        participantId,
+        locationId,
+        scannedQrData.sig,
+        scannedQrData.version ? parseInt(scannedQrData.version, 10) : undefined
+      );
+
+      if (result.pointsAdded > 0) {
+        toast({
+          title: "เช็กอินสำเร็จ! 🎉",
+          description: `ได้รับ +${result.pointsAdded} คะแนน`,
+        });
+      } else {
+        toast({
+          title: "เช็กอินแล้ว",
+          description: "คุณเคยเช็กอินสถานที่นี้แล้ว",
+        });
+      }
+
+      // Refresh data
+      loadData();
+      
+      // Close modal after a delay to show success
+      setTimeout(() => {
+        setQuestModalOpen(false);
+      }, 1500);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
+      toast({
+        title: "เช็กอินไม่สำเร็จ",
+        description: message,
+        variant: "destructive",
+      });
+    }
+  }, [scannedQrData, participantId, toast, loadData]);
 
   return (
     <PirateBackdrop>
@@ -220,15 +286,15 @@ const Map = () => {
       />
       <div className="container mx-auto max-w-5xl px-4 py-16 space-y-12 animate-fade-in">
         <div className="flex flex-col items-center gap-4 text-center animate-scale-in">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-2 border-amber-400/50">
-            <Compass className="h-5 w-5 text-amber-700 animate-spin" style={{ animationDuration: '8s' }} />
-            <span className="text-sm font-bold text-amber-900">🏴‍☠️ 4 จุดล่าสมบัติ</span>
+          <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-amber-500/30 to-orange-500/30 border-2 border-amber-400/60 shadow-lg">
+            <Compass className="h-6 w-6 text-amber-700 animate-spin" style={{ animationDuration: '8s' }} />
+            <span className="text-base font-bold text-amber-900">🏴‍☠️ แผนที่สมบัติ FATU</span>
           </div>
-          <h1 className="pirate-heading md:text-5xl">
-            ท่องดินแดน FATU เช็กอินด้วย QR
+          <h1 className="pirate-heading md:text-5xl text-3xl">
+            ล่าสมบัติกันเถอะ! 🔑⚓
           </h1>
-          <p className="pirate-subheading max-w-2xl">
-            สะสมคะแนนจากการเช็กอินและร่วมกิจกรรม เพื่อปลดล็อกสมบัติ! ⚓💎
+          <p className="pirate-subheading max-w-2xl text-base">
+            เช็กอิน 4 สถานที่เพื่อสะสมคะแนน ร่วมกิจกรรมย่อยเพื่อรับคะแนนพิเศษ +100! ⚓💎
           </p>
         </div>
 
@@ -237,51 +303,54 @@ const Map = () => {
             <div className="relative space-y-4">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 shadow-lg">
-                    <Trophy className="h-7 w-7 text-white" />
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 shadow-xl">
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 animate-pulse" />
+                    <Trophy className="relative h-8 w-8 text-white" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-primary/70">⚔️ คะแนนสะสมของคุณ</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-primary/70 mb-1">⚔️ คะแนนสะสมของคุณ</p>
                     <h2 className="text-3xl font-black text-primary">
-                      {points} แต้ม
+                      {points.toLocaleString()} แต้ม
                     </h2>
+                    <p className="text-xs text-amber-700 font-semibold">
+                      เป้าหมาย: {pointsRequired.toLocaleString()} แต้ม
+                    </p>
                   </div>
                 </div>
                 
                 <Button 
                   size="lg" 
-                  className="gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all"
+                  className="gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-xl hover:shadow-2xl transition-all hover:scale-105"
                   onClick={() => setScannerOpen(true)}
                 >
                   <ScanLine className="h-5 w-5" />
-                  🏴‍☠️ สแกน QR
+                  🏴‍☠️ สแกน QR Code
                 </Button>
               </div>
 
-              <div className="flex items-center gap-3 rounded-xl border-2 border-amber-300 bg-amber-50/50 backdrop-blur-sm px-4 py-3">
-                <div className="flex-1">
-                  <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="font-semibold text-amber-900">⚓ ความคืบหน้า</span>
-                    <span className="font-bold text-amber-800">{points}/{pointsRequired}</span>
+              <div className="flex items-center gap-4 rounded-2xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 backdrop-blur-sm px-5 py-4 shadow-md">
+                <div className="flex-1 space-y-2">
+                  <div className="mb-2 flex items-center justify-between text-sm font-semibold">
+                    <span className="text-amber-900 flex items-center gap-2">
+                      <Trophy className="h-4 w-4" />
+                      ความคืบหน้าสะสมคะแนน
+                    </span>
+                    <span className="text-amber-800 font-black">{points.toLocaleString()}/{pointsRequired.toLocaleString()}</span>
                   </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-amber-200">
+                  <div className="h-4 overflow-hidden rounded-full bg-amber-200 shadow-inner">
                     <div 
-                      className="h-full rounded-full bg-gradient-to-r from-yellow-500 to-orange-600 transition-all duration-500"
+                      className="h-full rounded-full bg-gradient-to-r from-yellow-500 via-orange-500 to-orange-600 transition-all duration-700 shadow-lg relative"
                       style={{ width: `${Math.min((points / pointsRequired) * 100, 100)}%` }}
-                    />
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                    </div>
                   </div>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-amber-800">เหลืออีก</p>
-                  <p className="text-lg font-black text-amber-900">{Math.max(pointsRequired - points, 0)}</p>
+                  <p className="text-xs text-amber-700 font-semibold">
+                    {points >= pointsRequired ? '🎉 ครบแล้ว! ไปหมุนวงล้อได้เลย!' : `เหลืออีก ${(pointsRequired - points).toLocaleString()} คะแนน`}
+                  </p>
                 </div>
               </div>
 
-              {points >= pointsRequired && (
-                <div className="rounded-xl border-2 border-green-400 bg-gradient-to-r from-green-50 to-emerald-50 p-4 text-center animate-pulse">
-                  <p className="text-sm font-bold text-green-800">🎉 ฮาฮอย! ครบแล้ว! ไปหมุนวงล้อรับสมบัติได้เลย!</p>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -294,23 +363,23 @@ const Map = () => {
             </div>
           ) : (
             <>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2 py-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 shadow-lg">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-4 py-5 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-300 shadow-xl">
                 <div>
-                  <h2 className="text-3xl font-bold text-amber-900 flex items-center gap-3">
-                    <span className="text-4xl">🗺️</span>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-amber-900 flex items-center gap-3">
+                    <span className="text-3xl sm:text-4xl animate-bounce">🗺️</span>
                     <span>จุดล่าสมบัติทั้งหมด</span>
                   </h2>
-                  <p className="text-sm text-amber-700 mt-1">สะสมคะแนนจากการเช็กอินและร่วมกิจกรรม</p>
+                  <p className="text-sm text-amber-700 mt-1 font-medium">เช็กอิน + ร่วมกิจกรรม = คะแนนเพียบ!</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-center bg-white px-6 py-3 rounded-xl border-2 border-amber-300 shadow-md">
-                    <p className="text-4xl font-black text-amber-600">{checkins.length}</p>
-                    <p className="text-xs text-amber-700 font-semibold">เช็กอินแล้ว</p>
+                <div className="flex items-center gap-4">
+                  <div className="text-center bg-white px-5 py-3 rounded-xl border-2 border-amber-400 shadow-lg hover:shadow-xl transition-shadow">
+                    <p className="text-3xl sm:text-4xl font-black text-amber-600">{checkins.length}</p>
+                    <p className="text-xs text-amber-700 font-bold">เช็กอินแล้ว</p>
                   </div>
-                  <span className="text-2xl text-amber-600">/</span>
-                  <div className="text-center bg-white px-6 py-3 rounded-xl border-2 border-amber-300 shadow-md">
-                    <p className="text-4xl font-black text-amber-600">{locations.length}</p>
-                    <p className="text-xs text-amber-700 font-semibold">ทั้งหมด</p>
+                  <span className="text-2xl text-amber-600 font-bold">/</span>
+                  <div className="text-center bg-white px-5 py-3 rounded-xl border-2 border-amber-400 shadow-lg">
+                    <p className="text-3xl sm:text-4xl font-black text-amber-600">{locations.length}</p>
+                    <p className="text-xs text-amber-700 font-bold">ทั้งหมด</p>
                   </div>
                 </div>
               </div>
@@ -319,7 +388,7 @@ const Map = () => {
                 {locations.map((location, idx) => (
                   <div 
                     key={location.id} 
-                    className="animate-fade-in"
+                    className="animate-fade-in hover:scale-[1.02] transition-transform duration-300"
                     style={{ animationDelay: `${idx * 100}ms` }}
                   >
                     <LocationCard
@@ -333,6 +402,7 @@ const Map = () => {
                       description={location.description}
                       subEvents={location.sub_events}
                       checkedIn={checkins.includes(location.id)}
+                      completedSubEvents={completedSubEvents}
                     />
                   </div>
                 ))}
@@ -709,10 +779,6 @@ const Map = () => {
         isOpen={questModalOpen}
         onClose={() => {
           setQuestModalOpen(false);
-          // Navigate to checkin after closing modal
-          if (scannedQrData && scannedQrData.loc && scannedQrData.sig) {
-            navigate(`/checkin?loc=${scannedQrData.loc}&sig=${scannedQrData.sig}&v=${scannedQrData.version || '1'}`);
-          }
         }}
         locationName={questLocation?.name || ""}
         subEvents={questLocation?.sub_events?.map(se => ({
@@ -720,10 +786,12 @@ const Map = () => {
           name: se.name,
           description: se.description,
           time: se.time,
-          points_awarded: 100
+          points_awarded: se.points_awarded ?? 100
         })) || []}
         alreadyCheckedIn={questLocation ? checkins.includes(questLocation.id) : false}
         completedSubEvents={completedSubEvents}
+        locationId={questLocation?.id}
+        onCheckIn={handleCheckInFromModal}
       />
     </PirateBackdrop>
   );
