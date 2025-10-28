@@ -56,18 +56,53 @@ export interface UserContext {
 }
 
 // Wait for Puter.js to be loaded (especially important on iOS)
-const waitForPuter = async (maxWaitTime = 5000): Promise<any> => {
+const waitForPuter = async (maxWaitTime = 20000): Promise<any> => {
   const startTime = Date.now();
+  let attemptCount = 0;
   
   while (Date.now() - startTime < maxWaitTime) {
-    const puterAPI = typeof puter !== 'undefined' ? puter : (window as any).puter;
-    if (puterAPI && puterAPI.ai && puterAPI.ai.chat) {
-      console.log('[Puter AI] Puter.js loaded successfully');
+    attemptCount++;
+    
+    // Try multiple ways to access Puter (for maximum compatibility)
+    const puterAPI = 
+      (typeof puter !== 'undefined' && puter) || 
+      (window as any).puter || 
+      (typeof globalThis !== 'undefined' && (globalThis as any).puter);
+    
+    if (puterAPI && puterAPI.ai && typeof puterAPI.ai.chat === 'function') {
+      console.log('[Puter AI] Puter.js loaded successfully!', {
+        attemptCount,
+        timeElapsed: Date.now() - startTime,
+        source: typeof puter !== 'undefined' ? 'global' : 'window'
+      });
       return puterAPI;
     }
+    
+    // Log every 2 seconds to track progress
+    if (attemptCount % 20 === 0) {
+      console.log('[Puter AI] Still waiting for Puter.js...', {
+        attemptCount,
+        timeElapsed: Date.now() - startTime,
+        hasPuter: !!puterAPI,
+        hasAI: puterAPI && !!puterAPI.ai,
+        hasChat: puterAPI && puterAPI.ai && typeof puterAPI.ai.chat === 'function'
+      });
+    }
+    
     // Wait 100ms before checking again
     await new Promise(resolve => setTimeout(resolve, 100));
   }
+  
+  // Final check before giving up
+  const finalPuter = (window as any).puter;
+  console.error('[Puter AI] Timeout waiting for Puter.js', {
+    maxWaitTime,
+    attemptCount,
+    hasPuter: !!finalPuter,
+    hasAI: finalPuter && !!finalPuter.ai,
+    hasChat: finalPuter && finalPuter.ai && typeof finalPuter.ai.chat === 'function',
+    puterReady: (window as any).puterReady
+  });
   
   throw new Error("Puter.js failed to load. Please refresh the page.");
 };

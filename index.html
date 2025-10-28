@@ -44,27 +44,46 @@
 
   <body>
     <div id="root"></div>
-    <!-- Puter.js - Free AI & Cloud Services (Load before React for iOS compatibility) -->
-    <script src="https://js.puter.com/v2/" crossorigin="anonymous"></script>
+    <!-- Puter.js - Free AI & Cloud Services -->
+    <script src="https://js.puter.com/v2/"></script>
     <script>
-      // Wait for Puter.js to be ready before loading React app (iOS fix)
-      window.addEventListener('load', function() {
-        console.log('[Puter] Window loaded, checking Puter.js availability...');
-        const checkPuter = setInterval(function() {
-          if (window.puter && window.puter.ai) {
-            console.log('[Puter] Puter.js ready!');
-            clearInterval(checkPuter);
+      // Ensure Puter is available globally for iOS
+      (function() {
+        console.log('[Puter] Initializing Puter.js check...');
+        
+        // Check immediately if Puter is already loaded
+        if (window.puter) {
+          console.log('[Puter] Puter.js already loaded!', window.puter);
+          window.puterReady = true;
+          return;
+        }
+        
+        // Wait for Puter to load
+        var checkInterval = setInterval(function() {
+          if (window.puter && window.puter.ai && typeof window.puter.ai.chat === 'function') {
+            console.log('[Puter] Puter.js loaded successfully!', {
+              hasPuter: !!window.puter,
+              hasAI: !!window.puter.ai,
+              hasChat: typeof window.puter.ai.chat === 'function'
+            });
+            window.puterReady = true;
+            clearInterval(checkInterval);
           }
         }, 100);
         
-        // Clear check after 10 seconds
+        // Timeout after 15 seconds
         setTimeout(function() {
-          clearInterval(checkPuter);
+          clearInterval(checkInterval);
           if (!window.puter || !window.puter.ai) {
-            console.error('[Puter] Puter.js failed to load after 10 seconds');
+            console.error('[Puter] Failed to load after 15 seconds', {
+              hasPuter: !!window.puter,
+              hasAI: window.puter && !!window.puter.ai,
+              windowKeys: Object.keys(window).filter(k => k.includes('puter'))
+            });
+            window.puterReady = false;
           }
-        }, 10000);
-      });
+        }, 15000);
+      })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>

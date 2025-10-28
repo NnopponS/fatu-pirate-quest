@@ -31,6 +31,8 @@ export const PirateChatbot = ({ isOpen, onClose }: PirateChatbotProps) => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [userContext, setUserContext] = useState<any>(null);
+  const [aiReady, setAiReady] = useState<boolean | null>(null);
+  const [showAiStatus, setShowAiStatus] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Load user context when chatbot opens
@@ -39,6 +41,59 @@ export const PirateChatbot = ({ isOpen, onClose }: PirateChatbotProps) => {
       loadUserContext();
     }
   }, [isOpen, user]);
+
+  // Check Puter.js availability when chatbot opens
+  useEffect(() => {
+    if (isOpen) {
+      setAiReady(null); // Reset to loading state
+      setShowAiStatus(true); // Show status when opening
+      
+      const checkPuter = () => {
+        const hasPuter = !!(window as any).puter;
+        const hasAI = hasPuter && !!(window as any).puter.ai;
+        const hasChat = hasAI && typeof (window as any).puter.ai.chat === 'function';
+        
+        console.log('[Chatbot] Puter.js status:', {
+          hasPuter,
+          hasAI,
+          hasChat,
+          puterReady: (window as any).puterReady
+        });
+        
+        if (hasChat) {
+          setAiReady(true);
+          // Hide success message after 3 seconds
+          setTimeout(() => setShowAiStatus(false), 3000);
+        } else {
+          console.warn('[Chatbot] Puter.js not fully loaded yet');
+        }
+      };
+      
+      checkPuter();
+      
+      // Keep checking every 2 seconds for up to 20 seconds
+      let checkCount = 0;
+      const interval = setInterval(() => {
+        checkCount++;
+        checkPuter();
+        
+        const isReady = !!(window as any).puter?.ai?.chat;
+        if (isReady) {
+          setAiReady(true);
+          clearInterval(interval);
+          // Hide success message after 3 seconds
+          setTimeout(() => setShowAiStatus(false), 3000);
+        } else if (checkCount >= 10) {
+          // After 20 seconds, mark as failed
+          setAiReady(false);
+          setShowAiStatus(true); // Keep showing error
+          clearInterval(interval);
+        }
+      }, 2000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [isOpen]);
 
   // Auto scroll to bottom when new messages arrive
   useEffect(() => {
@@ -220,18 +275,43 @@ export const PirateChatbot = ({ isOpen, onClose }: PirateChatbotProps) => {
 
       {/* Input */}
       <div className="p-4 border-t bg-gray-50 rounded-b-xl">
+        {/* AI Status Indicator */}
+        {showAiStatus && aiReady === null && (
+          <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg animate-in fade-in">
+            <div className="flex items-center gap-2 text-sm text-blue-700">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>กำลังเตรียมระบบ AI...</span>
+            </div>
+          </div>
+        )}
+        {showAiStatus && aiReady === false && (
+          <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-lg animate-in fade-in">
+            <div className="text-sm text-red-700">
+              <p className="font-semibold">⚠️ ระบบ AI ไม่พร้อมใช้งาน</p>
+              <p className="text-xs mt-1">กรุณารีเฟรชหน้าเว็บแล้วลองใหม่</p>
+            </div>
+          </div>
+        )}
+        {showAiStatus && aiReady === true && (
+          <div className="mb-2 p-2 bg-green-50 border border-green-200 rounded-lg animate-in fade-in">
+            <div className="flex items-center gap-2 text-sm text-green-700">
+              <span>✅ ระบบ AI พร้อมแล้ว!</span>
+            </div>
+          </div>
+        )}
+        
         <div className="flex gap-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="ถามข้าสิ... (เช่น มีอะไรน่าทำบ้าง?)"
-            disabled={loading}
+            placeholder={aiReady === false ? "ระบบ AI ไม่พร้อม..." : "ถามข้าสิ... (เช่น มีอะไรน่าทำบ้าง?)"}
+            disabled={loading || aiReady === false}
             className="flex-1"
           />
           <Button
             onClick={handleSend}
-            disabled={!input.trim() || loading}
+            disabled={!input.trim() || loading || aiReady === false}
             className="pirate-button"
           >
             {loading ? (
