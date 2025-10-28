@@ -341,7 +341,7 @@ export const SpinWheel = ({ onSpin, disabled, prizes }: SpinWheelProps) => {
                 <div className="flex items-start justify-between gap-2">
                   <span className="font-medium text-primary">{prize.name}</span>
                   <span className="flex-shrink-0 rounded-full bg-accent/20 px-2 py-0.5 text-xs font-semibold text-accent">
-                    {prize.stock} ชิ้น
+                    🎁
                   </span>
                 </div>
               </div>

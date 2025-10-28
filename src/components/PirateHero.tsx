@@ -273,10 +273,10 @@ export const PirateHero = () => {
                         </p>
                       )}
                       
-                      {/* Stock Badge */}
+                      {/* Prize Badge */}
                       <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 border border-green-300 text-xs font-semibold text-green-700">
-                        <span>📦</span>
-                        <span>เหลือ {prize.stock} รางวัล</span>
+                        <span>🎁</span>
+                        <span>รางวัล</span>
                       </div>
                       
                       {/* Decorative Sparkles */}

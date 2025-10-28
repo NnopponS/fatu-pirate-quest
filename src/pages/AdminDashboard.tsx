@@ -51,6 +51,7 @@ import {
   CheckCircle2,
   XCircle,
   Trophy,
+  Loader2,
 } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { AdminLocationManager } from "@/components/AdminLocationManager";
@@ -59,6 +60,13 @@ import { AdminSubEventManager } from "@/components/AdminSubEventManager";
 import { HeroCardsTab } from "@/components/HeroCardsTabContent";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from 'xlsx';
+import {
+  getGoogleSheetsSettings,
+  saveGoogleSheetsSettings,
+  exportAllDataToGoogleSheets,
+  type GoogleSheetsSettings,
+} from "@/services/googleSheets";
+import { Switch } from "@/components/ui/switch";
 
 interface ParticipantRow {
   id: string;
@@ -147,6 +155,12 @@ const AdminDashboard = () => {
     order: "1"
   });
   const [searchQuery, setSearchQuery] = useState(""); // ✅ เพิ่ม search state
+  const [googleSheetsSettings, setGoogleSheetsSettings] = useState<GoogleSheetsSettings>({
+    enabled: false,
+    spreadsheetId: "",
+    range: "A1",
+  });
+  const [syncingToGoogleSheets, setSyncingToGoogleSheets] = useState(false);
 
   const adminUsername = useMemo(() => localStorage.getItem("adminUsername") ?? "admin", []);
   const { logout: authLogout } = useAuth();
@@ -203,6 +217,21 @@ const AdminDashboard = () => {
     setToken(sessionToken);
     fetchDashboard(sessionToken);
   }, [fetchDashboard, navigate]);
+
+  // Load Google Sheets settings
+  useEffect(() => {
+    const loadGoogleSheetsSettings = async () => {
+      try {
+        const settings = await getGoogleSheetsSettings();
+        if (settings) {
+          setGoogleSheetsSettings(settings);
+        }
+      } catch (error) {
+        console.error("Error loading Google Sheets settings:", error);
+      }
+    };
+    loadGoogleSheetsSettings();
+  }, []);
 
   const handleLocationChange = (index: number, field: keyof LocationRow, value: string) => {
     setLocationDrafts((prev) => {
@@ -894,6 +923,63 @@ const AdminDashboard = () => {
       title: "ดาวน์โหลดสำเร็จ",
       description: "ไฟล์ Excel ถูกดาวน์โหลดเรียบร้อยแล้ว",
     });
+  };
+
+  // Google Sheets functions
+  const handleGoogleSheetsSettingsChange = (field: keyof GoogleSheetsSettings, value: any) => {
+    setGoogleSheetsSettings((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const saveGoogleSheetsConfig = async () => {
+    if (!token) return;
+    
+    try {
+      await saveGoogleSheetsSettings(token, googleSheetsSettings);
+      toast({
+        title: "บันทึกการตั้งค่าแล้ว",
+        description: "ตั้งค่า Google Sheets ถูกบันทึกเรียบร้อย",
+      });
+    } catch (error) {
+      toast({
+        title: "บันทึกไม่สำเร็จ",
+        description: errorMessage(error),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const syncToGoogleSheets = async () => {
+    if (!dashboard || !token) return;
+    
+    if (!googleSheetsSettings.enabled || !googleSheetsSettings.spreadsheetId) {
+      toast({
+        title: "กรุณากำหนดค่า",
+        description: "กรุณาเปิดใช้งานและใส่ Spreadsheet ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSyncingToGoogleSheets(true);
+    try {
+      await exportAllDataToGoogleSheets(dashboard, googleSheetsSettings);
+      toast({
+        title: "✅ ส่งข้อมูลไป Google Sheets สำเร็จ",
+        description: "ข้อมูลถูกส่งไปยัง Google Sheets เรียบร้อยแล้ว",
+      });
+    } catch (error) {
+      console.error("Error syncing to Google Sheets:", error);
+      toast({
+        title: "❌ ส่งข้อมูลไม่สำเร็จ",
+        description: errorMessage(error),
+        variant: "destructive",
+      });
+    } finally {
+      setSyncingToGoogleSheets(false);
+    }
   };
 
   if (!token) {
@@ -1684,6 +1770,94 @@ const AdminDashboard = () => {
                         (ครบทุกข้อมูลในไฟล์เดียว) หรือ CSV Export หากต้องการเฉพาะข้อมูลบางส่วน
                       </p>
                     </div>
+                  </div>
+                </div>
+
+                {/* Google Sheets Integration */}
+                <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 px-6 py-8 shadow-lg">
+                  <div className="mb-6 flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
+                      <FileSpreadsheet className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-primary">Google Sheets Integration</h3>
+                      <p className="text-sm text-foreground/70">
+                        ส่งข้อมูลไปยัง Google Sheets แบบเรียลไทม์
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-white/50 px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium">เปิดใช้งาน Google Sheets</span>
+                        <span className="text-xs text-foreground/60">(Real-time Sync)</span>
+                      </div>
+                      <Switch
+                        checked={googleSheetsSettings.enabled}
+                        onCheckedChange={(checked) =>
+                          handleGoogleSheetsSettingsChange("enabled", checked)
+                        }
+                      />
+                    </div>
+
+                    {googleSheetsSettings.enabled && (
+                      <div className="space-y-3 rounded-lg border border-primary/20 bg-white/30 p-4">
+                        <div>
+                          <Label htmlFor="spreadsheet-id" className="text-sm font-medium">
+                            Spreadsheet ID
+                          </Label>
+                          <Input
+                            id="spreadsheet-id"
+                            placeholder="1ABcD...xyz (จาก Google Sheets URL)"
+                            value={googleSheetsSettings.spreadsheetId || ""}
+                            onChange={(e) =>
+                              handleGoogleSheetsSettingsChange("spreadsheetId", e.target.value)
+                            }
+                            className="mt-1"
+                          />
+                          <p className="mt-1 text-xs text-foreground/60">
+                            คัดลอกจาก URL เช่น: https://docs.google.com/spreadsheets/d/{"{"}SPREADSHEET_ID{"}"}/edit
+                          </p>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={saveGoogleSheetsConfig}
+                            className="flex-1 gap-2"
+                            size="sm"
+                          >
+                            <Save className="h-4 w-4" />
+                            บันทึกการตั้งค่า
+                          </Button>
+                          <Button
+                            onClick={syncToGoogleSheets}
+                            disabled={syncingToGoogleSheets || !dashboard}
+                            className="flex-1 gap-2"
+                            size="sm"
+                          >
+                            {syncingToGoogleSheets ? (
+                              <>
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                                กำลังส่งข้อมูล...
+                              </>
+                            ) : (
+                              <>
+                                <Download className="h-4 w-4" />
+                                ส่งข้อมูลไปยัง Sheets
+                              </>
+                            )}
+                          </Button>
+                        </div>
+
+                        <div className="rounded-lg border border-amber-400/40 bg-amber-50/50 px-3 py-2">
+                          <p className="text-xs text-amber-900">
+                            <strong>⚠️ หมายเหตุ:</strong> ต้องสร้าง Google Apps Script Web App ก่อน{" "}
+                            (ดูคำแนะนำในไฟล์ <code className="text-xs">src/services/googleSheets.ts</code>)
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

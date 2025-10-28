@@ -62,6 +62,7 @@ export interface SubEvent {
   time?: string; // เวลากิจกรรม (optional)
   qr_code_version?: number; // version ของ QR สำหรับ sub-event นี้
   points_awarded?: number; // คะแนนที่ได้ (default = 100, ถ้าเป็น 0 = ไม่ให้คะแนน)
+  display_order?: number; // ลำดับการแสดงผล
 }
 
 export interface LocationRecord {
@@ -297,56 +298,28 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     display_order: 4,
     sub_events: [
       { 
-        id: "3-workshop-am", 
+        id: "4-workshop-design", 
         name: "Workshop Theatrical Design", 
         location_id: 4, 
-        time: "รอบเช้า 10:00–11:30",
-        description: "เรียนรู้การออกแบบและจัดแสดงเวทีละครอย่างมืออาชีพ",
-        qr_code_version: 1 
-      },
-      { 
-        id: "3-workshop-pm", 
-        name: "Workshop Theatrical Design", 
-        location_id: 4, 
-        time: "รอบบ่าย 13:00–14:30, 14:45–16:15",
-        description: "เรียนรู้การออกแบบและจัดแสดงเวทีละครอย่างมืออาชีพ",
-        qr_code_version: 1 
-      },
-      { 
-        id: "3-show-wicked", 
-        name: "Wicked The Musical", 
-        location_id: 4, 
-        time: "10:00–10:30",
-        description: "การแสดงละครเพลงชื่อดัง Wicked",
+        description: "เรียนรู้การออกแบบแสงสำหรับเวทีละครอย่างมืออาชีพ",
         qr_code_version: 1,
-        points_awarded: 0 // การแสดงไม่ให้คะแนน
+        display_order: 1
       },
       { 
-        id: "3-show-akanoi", 
-        name: "ยักษ์ตัวแดง Akanoi", 
+        id: "4-workshop-acting", 
+        name: "Workshop Acting", 
         location_id: 4, 
-        time: "10:00–10:30",
-        description: "การแสดงละครยักษ์ตัวแดง Akanoi",
+        description: "เรียนรู้เกี่ยวกับการแสดงเบื้องต้นสำหรับผู้สนใจการแสดง",
         qr_code_version: 1,
-        points_awarded: 0 // การแสดงไม่ให้คะแนน
+        display_order: 2
       },
       { 
-        id: "3-show-lalaland", 
-        name: "ลา ลา แลนด์", 
+        id: "4-workshop-story", 
+        name: "Workshop Story Creation", 
         location_id: 4, 
-        time: "10:00–10:30",
-        description: "การแสดงละครเพลง La La Land",
+        description: "เรียนรู้การสร้างเรื่องราวสำหรับบทละครและหนังสั้น",
         qr_code_version: 1,
-        points_awarded: 0 // การแสดงไม่ให้คะแนน
-      },
-      { 
-        id: "3-show-mondo", 
-        name: "มณโฑ", 
-        location_id: 4, 
-        time: "14:00–14:40",
-        description: "การแสดงละครมณโฑ",
-        qr_code_version: 1,
-        points_awarded: 0 // การแสดงไม่ให้คะแนน
+        display_order: 3
       },
     ],
   },
