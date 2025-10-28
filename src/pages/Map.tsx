@@ -232,10 +232,14 @@ const Map = () => {
   }, [scannedQrData, participantId, toast, loadData]);
 
   const handleQrScan = useCallback((value: string) => {
+    console.log("📱 QR Code received in Map.tsx:", value);
     setScannerOpen(false);
-    if (!value) return;
+    if (!value) {
+      console.log("❌ Empty QR value, returning");
+      return;
+    }
       
-    console.log("QR Code scanned:", value);
+    console.log("✅ Processing QR Code:", value);
       
     let parsedData: typeof scannedQrData = {
       raw: value,
@@ -454,11 +458,14 @@ const Map = () => {
                 
                 <Button 
                   size="lg" 
-                  className="gap-2 sm:gap-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-xl hover:shadow-2xl transition-all hover:scale-105 text-base sm:text-lg px-6 py-5 sm:px-8 sm:py-6 font-bold"
-                  onClick={() => setScannerOpen(true)}
+                  className="gap-2 sm:gap-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-xl hover:shadow-2xl transition-all hover:scale-105 text-base sm:text-lg px-6 py-5 sm:px-8 sm:py-6 font-bold animate-pulse"
+                  onClick={() => {
+                    console.log('Opening QR Scanner...');
+                    setScannerOpen(true);
+                  }}
                 >
                   <ScanLine className="h-5 w-5 sm:h-6 sm:w-6" />
-                  <span>🏴‍☠️ สแกน</span>
+                  <span>🏴‍☠️ สแกน QR Code</span>
                 </Button>
               </div>
 
@@ -636,8 +643,16 @@ const Map = () => {
       {participantId && (
         <QRScannerModal 
           isOpen={scannerOpen}
-          onClose={() => setScannerOpen(false)}
-          onScan={handleQrScan}
+          onClose={() => {
+            console.log('Closing QR Scanner...');
+            setScannerOpen(false);
+            // Reset any scanning state
+            setScannedQrData(null);
+          }}
+          onScan={(value) => {
+            console.log('QR Scanner detected:', value);
+            handleQrScan(value);
+          }}
         />
       )}
 
