@@ -177,11 +177,23 @@ const Map = () => {
     };
   }, [loadData, locations]);
 
-  const handleCheckInFromModal = useCallback(async (locationId: number) => {
-    if (!scannedQrData || !scannedQrData.loc || !scannedQrData.sig || !participantId) {
+  const handleCheckInFromModal = useCallback(async (locationId: number, signature?: string, version?: string) => {
+    if (!participantId) {
       toast({
         title: "ข้อมูลไม่ครบ",
-        description: "ไม่สามารถเช็กอินได้ กรุณาสแกน QR Code ใหม่",
+        description: "ไม่สามารถเช็กอินได้ กรุณาเข้าสู่ระบบ",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const sig = signature || scannedQrData?.sig;
+    const ver = version || scannedQrData?.version;
+
+    if (!sig) {
+      toast({
+        title: "ข้อมูลไม่ครบ",
+        description: "ไม่พบ QR Signature กรุณาสแกน QR Code ใหม่",
         variant: "destructive",
       });
       return;
@@ -191,8 +203,8 @@ const Map = () => {
       const result = await checkinParticipant(
         participantId,
         locationId,
-        scannedQrData.sig,
-        scannedQrData.version ? parseInt(scannedQrData.version, 10) : undefined
+        sig,
+        ver ? parseInt(ver, 10) : undefined
       );
 
       if (result.pointsAdded > 0) {
@@ -208,10 +220,6 @@ const Map = () => {
       }
 
       loadData();
-      
-      setTimeout(() => {
-        setQuestModalOpen(false);
-      }, 1500);
     } catch (error) {
       const message = error instanceof Error ? error.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
       toast({
@@ -219,6 +227,7 @@ const Map = () => {
         description: message,
         variant: "destructive",
       });
+      throw error; // Re-throw to let BottleQuestModal handle it
     }
   }, [scannedQrData, participantId, toast, loadData]);
 
@@ -284,9 +293,27 @@ const Map = () => {
     }
       
     console.log("Setting scanned QR data:", parsedData);
+    
+    // If it's a valid checkin QR and location has sub-events, show bottle animation
+    if (parsedData.isValid && parsedData.type === 'checkin' && parsedData.loc && participantId) {
+      const locationId = parseInt(parsedData.loc);
+      const location = locations.find(loc => loc.id === locationId);
+      
+      // Save QR data for later use
+      setScannedQrData(parsedData);
+      
+      // If location has sub-events, show bottle modal directly
+      if (location && location.sub_events && location.sub_events.length > 0) {
+        setQuestLocation(location);
+        setQuestModalOpen(true);
+        return; // Don't show preview dialog
+      }
+    }
+    
+    // Show preview for other cases
     setScannedQrData(parsedData);
     setQrPreviewOpen(true);
-  }, []);
+  }, [locations, participantId]);
 
   return (
     <PirateBackdrop>
@@ -713,6 +740,8 @@ const Map = () => {
         alreadyCheckedIn={questLocation ? checkins.includes(questLocation.id) : false}
         completedSubEvents={completedSubEvents}
         locationId={questLocation?.id}
+        qrSignature={scannedQrData?.sig}
+        qrVersion={scannedQrData?.version}
         onCheckIn={handleCheckInFromModal}
       />
     </PirateBackdrop>

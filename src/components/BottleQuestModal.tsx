@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface SubEvent {
   id: string;
@@ -18,7 +19,9 @@ interface BottleQuestModalProps {
   alreadyCheckedIn: boolean;
   completedSubEvents: string[];
   locationId?: number;
-  onCheckIn?: (locationId: number) => void;
+  qrSignature?: string;
+  qrVersion?: string;
+  onCheckIn?: (locationId: number, signature?: string, version?: string) => void;
 }
 
 export const BottleQuestModal = ({
@@ -29,10 +32,13 @@ export const BottleQuestModal = ({
   alreadyCheckedIn,
   completedSubEvents,
   locationId,
+  qrSignature,
+  qrVersion,
   onCheckIn
 }: BottleQuestModalProps) => {
   const [phase, setPhase] = useState<"water" | "bottle" | "opening" | "scroll">("water");
   const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen) {
@@ -311,9 +317,21 @@ export const BottleQuestModal = ({
                     onClick={async () => {
                       setIsCheckingIn(true);
                       try {
-                        onCheckIn(locationId);
+                        await onCheckIn(locationId, qrSignature, qrVersion);
+                        toast({
+                          title: "เช็กอินสำเร็จ! 🎉",
+                          description: "ได้รับคะแนนแล้ว ตอนนี้สามารถร่วมกิจกรรมพิเศษได้",
+                        });
+                        setTimeout(() => {
+                          onClose();
+                        }, 1500);
                       } catch (error) {
                         console.error('Check-in error:', error);
+                        toast({
+                          title: "เช็กอินไม่สำเร็จ",
+                          description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
+                          variant: "destructive",
+                        });
                       } finally {
                         setIsCheckingIn(false);
                       }
