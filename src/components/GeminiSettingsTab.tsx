@@ -17,6 +17,7 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
   const [saving, setSaving] = useState(false);
   const [geminiApiKeys, setGeminiApiKeys] = useState<string[]>(['']);
   const [knowledgeBase, setKnowledgeBase] = useState("");
+  const [googleAppsScriptUrl, setGoogleAppsScriptUrl] = useState("");
 
   useEffect(() => {
     loadSettings();
@@ -29,6 +30,7 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
       if (settings) {
         setGeminiApiKeys(settings.geminiApiKeys && settings.geminiApiKeys.length > 0 ? settings.geminiApiKeys : ['']);
         setKnowledgeBase(settings.knowledgeBase || "");
+        setGoogleAppsScriptUrl(settings.googleAppsScriptUrl || "");
       }
     } catch (error) {
       console.error("Error loading settings:", error);
@@ -55,6 +57,7 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
       await saveGeminiSettings(token, {
         geminiApiKeys: validKeys.length > 0 ? validKeys : undefined,
         knowledgeBase: knowledgeBase.trim() || undefined,
+        googleAppsScriptUrl: googleAppsScriptUrl.trim() || undefined,
       });
 
       toast({
@@ -214,6 +217,21 @@ export const GeminiSettingsTab = ({ token }: GeminiSettingsTabProps) => {
 
       {/* Knowledge Base Section */}
       <div className="space-y-4">
+        {/* Google Apps Script URL */}
+        <div className="space-y-2">
+          <Label htmlFor="gasUrl">Google Apps Script URL (ถ้ามี)</Label>
+          <Input
+            id="gasUrl"
+            type="url"
+            placeholder="https://script.google.com/macros/s/AKfy.../exec"
+            value={googleAppsScriptUrl}
+            onChange={(e) => setGoogleAppsScriptUrl(e.target.value)}
+          />
+          <p className="text-xs text-foreground/60">
+            ตัวอย่าง: <code className="font-mono">https://script.google.com/macros/s/AKfycbwwzevTieGpR7Ozh4L8S_I41Wt_HtdK22WRbQdWWYkep8L6R3oHuBf5X_x6MG4X989y/exec</code>
+          </p>
+        </div>
+
         <div>
           <Label htmlFor="knowledgeBase">ฐานความรู้ / Context (ไม่บังคับ)</Label>
           <p className="text-sm text-foreground/60 mt-1 mb-3">

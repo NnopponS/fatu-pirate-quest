@@ -3,6 +3,7 @@ import { firebaseDb } from "@/integrations/firebase/database";
 interface AISettings {
   geminiApiKeys?: string[]; // Array of Google Gemini API Keys (fallback)
   knowledgeBase?: string; // Context/knowledge for the chatbot
+  googleAppsScriptUrl?: string; // Optional Google Apps Script webhook URL
 }
 
 // Simple in-memory cache to reduce API calls
