@@ -7,6 +7,7 @@ import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { PirateCharacter } from "@/components/PirateCharacter";
 import { PirateChatbot } from "@/components/PirateChatbot";
 import { BottleQuestModal } from "@/components/BottleQuestModal";
+import { QRScannerModal } from "@/components/QRScannerModal";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
@@ -58,6 +59,7 @@ const Dashboard = () => {
   const [subEventCheckins, setSubEventCheckins] = useState<SubEventCheckin[]>([]);
   const [participantName, setParticipantName] = useState("");
   const [chatbotOpen, setChatbotOpen] = useState(false);
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
   const [prizeInfo, setPrizeInfo] = useState<{prize: string; claimCode: string; claimed: boolean} | null>(null);
   const [questModalOpen, setQuestModalOpen] = useState(false);
   const [questLocation, setQuestLocation] = useState<any>(null);
@@ -207,6 +209,12 @@ const Dashboard = () => {
         isOpen={chatbotOpen}
         onClose={() => setChatbotOpen(false)}
       />
+
+      {/* QR Scanner */}
+      <QRScannerModal
+        isOpen={qrScannerOpen}
+        onClose={() => setQrScannerOpen(false)}
+      />
       
       <div className="container mx-auto px-4 py-8 space-y-6">
         {/* Header */}
@@ -316,7 +324,7 @@ const Dashboard = () => {
 
           <Button
             size="lg"
-            onClick={() => navigate("/map")}
+            onClick={() => setQrScannerOpen(true)}
             variant="secondary"
             className="gap-2 h-20"
           >
