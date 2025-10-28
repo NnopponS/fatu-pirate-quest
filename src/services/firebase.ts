@@ -10,7 +10,7 @@ const DEFAULT_POINTS_REQUIRED = 300; // ✅ เปลี่ยนจาก 400 �
 
 // 🚀 Simple Cache Layer - เก็บข้อมูลไว้ชั่วคราวเพื่อลดการเรียก Firebase
 const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 10000; // 10 seconds - reduced for more dynamic updates
+const CACHE_TTL = 3000; // 3 seconds - for more dynamic updates
 
 function getCached<T>(key: string): T | null {
   const cached = cache.get(key);
@@ -1134,13 +1134,19 @@ export const spinWheel = async (participantId: string): Promise<{ prize: string;
 };
 
 export const getMapData = async (participantId: string) => {
-  // 🚀 Check cache first
+  // 🚀 Check cache first - but reduce cache time for more dynamic updates
   const cacheKey = `mapData:${participantId}`;
   const cached = getCached(cacheKey);
-  if (cached) return cached;
+  
+  // Use cache only for very short duration (3 seconds instead of 10)
+  if (cached) {
+    console.log("Using cached map data");
+    return cached;
+  }
 
   await ensureDefaults();
 
+  console.log("Fetching fresh map data from Firebase");
   const [locationsRecord, checkinsRecord, subEventCheckinsRecord, participant, pointsRequired] = await Promise.all([
     firebaseDb.get<Record<string, LocationRecord>>("locations"),
     firebaseDb.get<Record<string, CheckinRecord>>(`checkins/${participantId}`),
@@ -1162,6 +1168,13 @@ export const getMapData = async (participantId: string) => {
   // Get participant name
   const participantName = participant ? `${participant.first_name} ${participant.last_name}` : "ลูกเรือ";
 
+  console.log("Locations from Firebase:", locations.map(loc => ({ 
+    id: loc.id, 
+    name: loc.name, 
+    subEventsCount: loc.sub_events?.length || 0,
+    subEvents: loc.sub_events 
+  })));
+
   const result = { 
     locations, 
     checkins, 
@@ -1172,7 +1185,7 @@ export const getMapData = async (participantId: string) => {
     participantName
   };
 
-  // 🚀 Cache the result
+  // 🚀 Cache for only 3 seconds for more dynamic updates
   setCache(cacheKey, result);
   return result;
 };

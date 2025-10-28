@@ -91,18 +91,21 @@ const Map = () => {
         const data: any = await getMapData(participantId);
         
         // Transform and set locations
-        const transformedLocations = data.locations.map((location: any) => ({
-          id: location.id,
-          name: location.name,
-          lat: location.lat,
-          lng: location.lng,
-          points: location.points,
-          mapUrl: location.mapUrl || location.map_url,
-          imageUrl: location.imageUrl || location.image_url,
-          description: location.description,
-          // Ensure sub_events is always an array
-          sub_events: location.sub_events && Array.isArray(location.sub_events) ? location.sub_events : [],
-        }));
+        const transformedLocations = data.locations.map((location: any) => {
+          console.log("Processing location:", location.id, location.name, "sub_events:", location.sub_events);
+          return {
+            id: location.id,
+            name: location.name,
+            lat: location.lat,
+            lng: location.lng,
+            points: location.points,
+            mapUrl: location.mapUrl || location.map_url,
+            imageUrl: location.imageUrl || location.image_url,
+            description: location.description,
+            // Ensure sub_events is always an array
+            sub_events: location.sub_events && Array.isArray(location.sub_events) ? location.sub_events : [],
+          };
+        });
         
         setLocations(transformedLocations);
         setCheckins(data.checkins);
@@ -118,22 +121,26 @@ const Map = () => {
         console.log("Map data loaded:", {
           locationsCount: transformedLocations.length,
           totalSubEvents: transformedLocations.reduce((sum, loc) => sum + (loc.sub_events?.length || 0), 0),
-          checkinsCount: data.checkins.length
+          checkinsCount: data.checkins.length,
+          locationsWithSubEvents: transformedLocations.filter(loc => loc.sub_events && loc.sub_events.length > 0).map(loc => ({ id: loc.id, name: loc.name, subEventsCount: loc.sub_events.length }))
         });
       } else {
         // Load locations from getMapData for anonymous users
         const data: any = await getMapData('');
-        const transformedLocations = data.locations.map((location: any) => ({
-          id: location.id,
-          name: location.name,
-          lat: location.lat,
-          lng: location.lng,
-          points: location.points,
-          mapUrl: location.mapUrl || location.map_url,
-          imageUrl: location.imageUrl || location.image_url,
-          description: location.description,
-          sub_events: location.sub_events && Array.isArray(location.sub_events) ? location.sub_events : [],
-        }));
+        const transformedLocations = data.locations.map((location: any) => {
+          console.log("Processing location (anonymous):", location.id, location.name, "sub_events:", location.sub_events);
+          return {
+            id: location.id,
+            name: location.name,
+            lat: location.lat,
+            lng: location.lng,
+            points: location.points,
+            mapUrl: location.mapUrl || location.map_url,
+            imageUrl: location.imageUrl || location.image_url,
+            description: location.description,
+            sub_events: location.sub_events && Array.isArray(location.sub_events) ? location.sub_events : [],
+          };
+        });
         
         setLocations(transformedLocations);
         setPointsRequired(data.pointsRequired);
@@ -141,6 +148,7 @@ const Map = () => {
         console.log("Map data loaded (anonymous):", {
           locationsCount: transformedLocations.length,
           totalSubEvents: transformedLocations.reduce((sum, loc) => sum + (loc.sub_events?.length || 0), 0),
+          locationsWithSubEvents: transformedLocations.filter(loc => loc.sub_events && loc.sub_events.length > 0).map(loc => ({ id: loc.id, name: loc.name, subEventsCount: loc.sub_events.length }))
         });
       }
     } catch (error: unknown) {
@@ -473,6 +481,7 @@ const Map = () => {
               }
               
               // Show preview dialog
+              console.log("Setting scanned QR data:", parsedData);
               setScannedQrData(parsedData);
               setQrPreviewOpen(true);
             }}
@@ -524,18 +533,25 @@ const Map = () => {
 
                         <div className="flex gap-2">
                           <Button 
-                            onClick={() => {
+                            onClick={async () => {
                               setQrPreviewOpen(false);
                               if (scannedQrData.loc && scannedQrData.sig) {
                                 // Find the location
                                 const locationId = parseInt(scannedQrData.loc);
-                                const location = locations.find(loc => loc.id === locationId);
+                                console.log("Looking for location ID:", locationId);
+                                console.log("Available locations:", locations);
                                 
-                                if (location && location.sub_events && location.sub_events.length > 0) {
+                                const location = locations.find(loc => loc.id === locationId);
+                                console.log("Found location:", location);
+                                console.log("Location sub_events:", location?.sub_events);
+                                
+                                if (location && location.sub_events && Array.isArray(location.sub_events) && location.sub_events.length > 0) {
+                                  console.log("Location has sub-events, opening quest modal");
                                   // Show quest modal if location has sub-events
                                   setQuestLocation(location);
                                   setQuestModalOpen(true);
                                 } else {
+                                  console.log("No sub-events, navigating directly to checkin");
                                   // Navigate directly if no sub-events
                                   navigate(`/checkin?loc=${scannedQrData.loc}&sig=${scannedQrData.sig}&v=${scannedQrData.version || '1'}`);
                                 }
