@@ -324,14 +324,14 @@ export const PirateHero = () => {
                   step: "2", 
                   icon: "🗺️",
                   title: "สำรวจแผนที่",
-                  description: "ดูจุดเช็กอิน 4 จุด ตามแผนที่สมบัติ",
+                  description: "ไปยัง 4 สถานที่ (ไม่ต้องเช็กอิน)",
                   color: "from-green-500 to-green-600",
                 },
                 {
                   step: "3",
                   icon: "📱",
                   title: "สแกน QR Code",
-                  description: "เช็กอินที่จุดต่างๆ เพื่อสะสมคะแนน (100 คะแนน/จุด)",
+                  description: "ทำกิจกรรมย่อย 1 กิจกรรม/สถานที่ (+100 คะแนน)",
                   color: "from-yellow-500 to-yellow-600",
                 },
                 {
@@ -411,7 +411,7 @@ export const PirateHero = () => {
           <div className="space-y-4 md:space-y-6">
             <div className="text-center space-y-1 md:space-y-2">
               <h3 className="text-xl md:text-3xl font-bold text-primary">🚀 เริ่มต้นการผจญภัย</h3>
-              <p className="text-sm md:text-base text-foreground/70">ลงทะเบียนเพื่อเข้าร่วมกิจกรรม</p>
+              <p className="text-sm md:text-base text-foreground/70">เรียนรู้ขั้นตอนการผจญภัย</p>
             </div>
             
             {/* ⭐ ปุ่มลงทะเบียนใหญ่เด่นที่สุด (สี่เหลี่ยมยาว) */}
@@ -421,13 +421,13 @@ export const PirateHero = () => {
                 <Button
                   size="lg"
                   className="relative w-full h-auto py-8 md:py-12 px-6 md:px-10 text-xl md:text-3xl font-black shadow-2xl shadow-primary/60 hover:shadow-primary/80 hover:scale-105 transition-all duration-300 bg-gradient-to-br from-primary via-blue-600 to-secondary rounded-2xl md:rounded-3xl border-4 border-white/30"
-                  onClick={() => navigate("/signup")}
+                  onClick={() => navigate("/onboarding")}
                 >
                   <div className="flex items-center justify-center gap-4 md:gap-6">
                     <span className="text-5xl md:text-7xl animate-bounce">🏴‍☠️</span>
                     <div className="text-left">
-                      <div className="text-2xl md:text-4xl font-black mb-1">ลงทะเบียนลูกเรือ</div>
-                      <div className="text-sm md:text-lg text-white/90 font-normal">สมัครสมาชิกเพื่อเริ่มผจญภัย →</div>
+                      <div className="text-2xl md:text-4xl font-black mb-1">เริ่มต้นการผจญภัย</div>
+                      <div className="text-sm md:text-lg text-white/90 font-normal">เรียนรู้วิธีเล่น →</div>
                     </div>
                   </div>
                 </Button>

@@ -9,6 +9,7 @@ import { lazy, Suspense } from "react";
 
 // Eager load: Homepage & Auth (needed immediately)
 import Index from "./pages/Index";
+import Onboarding from "./pages/Onboarding";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 
@@ -50,6 +51,7 @@ const App = () => (
             <Routes>
               {/* Eager loaded routes - Homepage & Auth */}
               <Route path="/" element={<Index />} />
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/login" element={<Login />} />
               
