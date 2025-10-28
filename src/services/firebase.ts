@@ -1353,12 +1353,16 @@ export const deleteParticipant = async (token: string, participantId: string) =>
 
   const normalized = normalizeUsername(participant.username);
   
+  // ลบข้อมูลทั้งหมดที่เกี่ยวข้องกับ participant
   await Promise.all([
     firebaseDb.remove(`participants/${participantId}`),
     firebaseDb.remove(`participants_by_username/${normalized}`),
     firebaseDb.remove(`checkins/${participantId}`),
+    firebaseDb.remove(`sub_event_checkins/${participantId}`), // ✅ เพิ่มการลบ sub_event_checkins
     firebaseDb.remove(`spins/${participantId}`),
   ]);
+  
+  console.log(`[Admin] Deleted participant ${participantId} and all related data`);
 };
 
 export const updateParticipant = async (
