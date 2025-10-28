@@ -147,6 +147,11 @@ ${userContextText}
 
   const fullPrompt = `${systemPrompt}\n\n---\n\nคำถามจาก User: ${userMessage}`;
   
+  // Detect iOS
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  
+  console.log('[OpenRouter AI] Platform:', isIOS ? 'iOS' : 'Other');
   console.log('[OpenRouter AI] Sending request with', apiKeys.length, 'fallback keys...');
   
   // Try each API key until one succeeds
@@ -158,9 +163,13 @@ ${userContextText}
     console.log(`[OpenRouter AI] Trying key ${i + 1}/${apiKeys.length} (${keyPreview})...`);
     
     try {
-      // Create timeout promise (30 seconds)
+      // iOS needs longer timeout (60s instead of 30s)
+      const timeoutDuration = isIOS ? 60000 : 30000;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
+      
+      console.log(`[OpenRouter AI] Timeout set to ${timeoutDuration}ms for ${isIOS ? 'iOS' : 'desktop'}`);
+      
       
       // Call OpenRouter API
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -189,11 +198,23 @@ ${userContextText}
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error(`[OpenRouter AI] ❌ Key ${i + 1} failed:`, {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData
-        });
+        
+        // Enhanced logging for iOS
+        if (isIOS) {
+          console.error(`[OpenRouter AI - iOS] ❌ Key ${i + 1} failed:`, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries()),
+            error: errorData,
+            keyPreview
+          });
+        } else {
+          console.error(`[OpenRouter AI] ❌ Key ${i + 1} failed:`, {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData
+          });
+        }
         
         // If rate limit or quota, try next key
         if (response.status === 429 || response.status === 402) {
@@ -211,7 +232,7 @@ ${userContextText}
         
         // For other errors, try next key too
         console.warn(`[OpenRouter AI] ⚠️ Key ${i + 1} (${keyPreview}): Error ${response.status}`);
-        lastError = new Error(`Key ${i + 1}: HTTP ${response.status}`);
+        lastError = new Error(`Key ${i + 1}: HTTP ${response.status} - ${errorData?.error?.message || response.statusText}`);
         continue;
       }
 
@@ -245,18 +266,33 @@ ${userContextText}
   }
   
   // All keys failed
-  console.error('[OpenRouter AI] ❌ ALL KEYS FAILED! Last error:', lastError);
+  console.error('[OpenRouter AI] ❌ ALL KEYS FAILED!');
+  console.error('[OpenRouter AI] Platform:', isIOS ? 'iOS' : 'Other');
+  console.error('[OpenRouter AI] Last error:', lastError);
+  console.error('[OpenRouter AI] Total keys tried:', apiKeys.length);
   
   // Better error messages based on last error
   if (lastError?.name === 'AbortError') {
+    if (isIOS) {
+      throw new Error("⏱️ ข้าคิดนานเกินไป! (iOS มีข้อจำกัดบางอย่าง)\n\n💡 วิธีแก้:\n- ลองถามใหม่อีกครั้ง\n- หรือใช้ Chrome แทน Safari\n- หรือลองบนคอม/Android");
+    }
     throw new Error("⏱️ ข้าคิดนานเกินไป! ลองถามใหม่อีกครั้งนะ");
   } else if (lastError?.message?.includes('Failed to fetch') || lastError?.message?.includes('network')) {
+    if (isIOS) {
+      throw new Error("🌐 ข้าติดต่อเซิร์ฟเวอร์ไม่ได้!\n\n💡 iOS Tips:\n- ตรวจสอบอินเทอร์เน็ต\n- ปิด Low Power Mode\n- ลอง Chrome แทน Safari\n- หรือใช้บนคอม/Android");
+    }
     throw new Error("🌐 ข้าติดต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบอินเทอร์เน็ตของเจ้าสิ!");
-  } else if (lastError?.message?.includes('Quota exceeded') || lastError?.message?.includes('quota')) {
+  } else if (lastError?.message?.includes('Quota exceeded') || lastError?.message?.includes('quota') || lastError?.message?.includes('429')) {
+    if (isIOS) {
+      throw new Error(`🚫 API Keys หมด quota!\n\n⚠️ iOS มักมีปัญหานี้บ่อย:\n- ลองใช้ Chrome แทน Safari\n- หรือใช้บนคอม/Android\n- หรือรอ 1-2 นาทีแล้วลองใหม่\n\n🔧 Admin สามารถเพิ่ม API keys ได้`);
+    }
     throw new Error(`🚫 API Keys ทั้งหมด (${apiKeys.length} keys) หมด quota แล้ว!\n\n💡 วิธีแก้:\n- รอสักครู่แล้วลองใหม่\n- หรือเพิ่ม API key ใหม่ใน Admin Dashboard\n\n(ดู Console สำหรับรายละเอียด)`);
   } else if (lastError?.message?.includes('Invalid')) {
     throw new Error(`🔑 API Keys ทั้งหมดไม่ถูกต้อง! กรุณาตรวจสอบการตั้งค่าใน Admin Dashboard\n\n(ดู Console สำหรับรายละเอียด)`);
   } else {
+    if (isIOS) {
+      throw new Error(`❌ ข้าไม่สามารถตอบได้!\n\n📱 iOS มีข้อจำกัด:\n- ลองใช้ Chrome แทน Safari\n- หรือใช้บนคอม/Android\n- ดู Console (ปุ่ม Share > Add to Home Screen > Settings) สำหรับรายละเอียด`);
+    }
     throw new Error(`❌ ข้าไม่สามารถตอบได้! (ลอง ${apiKeys.length} keys แล้ว)\n\nดู Console (F12) สำหรับรายละเอียดข้อผิดพลาด`);
   }
 };
