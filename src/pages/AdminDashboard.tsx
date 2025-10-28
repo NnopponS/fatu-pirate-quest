@@ -161,6 +161,7 @@ const AdminDashboard = () => {
     range: "A1",
   });
   const [syncingToGoogleSheets, setSyncingToGoogleSheets] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("participants");
 
   const adminUsername = useMemo(() => localStorage.getItem("adminUsername") ?? "admin", []);
   const { logout: authLogout } = useAuth();
@@ -1067,7 +1068,7 @@ const AdminDashboard = () => {
             </Button>
           </div>
         ) : (
-          <Tabs defaultValue="participants" className="space-y-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
             <TabsList className="grid w-full grid-cols-4 md:grid-cols-5 lg:grid-cols-9 bg-white/80">
               <TabsTrigger value="participants" className="gap-2">
                 <Users className="h-4 w-4" />
