@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, Camera } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import jsQR from "jsqr";
 
 interface SubEvent {
   id: string;
@@ -18,8 +20,17 @@ interface BottleQuestModalProps {
   alreadyCheckedIn: boolean;
   completedSubEvents: string[];
   locationId?: number;
-  onCheckIn?: (locationId: number) => void;
+  qrSignature?: string;
+  qrVersion?: string;
+  onCheckIn?: (locationId: number, signature?: string, version?: string) => void;
+  onScanQR?: (data: string) => void;
 }
+
+type BarcodeDetectorInstance = {
+  detect: (source: CanvasImageSource) => Promise<Array<{ rawValue?: string }>>;
+};
+
+type BarcodeDetectorConstructor = new (options?: { formats?: string[] }) => BarcodeDetectorInstance;
 
 export const BottleQuestModal = ({
   isOpen,
@@ -29,10 +40,158 @@ export const BottleQuestModal = ({
   alreadyCheckedIn,
   completedSubEvents,
   locationId,
-  onCheckIn
+  qrSignature,
+  qrVersion,
+  onCheckIn,
+  onScanQR
 }: BottleQuestModalProps) => {
   const [phase, setPhase] = useState<"water" | "bottle" | "opening" | "scroll">("water");
   const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const { toast } = useToast();
+  
+  // QR Scanner refs
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [hasDetected, setHasDetected] = useState(false);
+  
+  const hasBarcodeDetector = typeof window !== "undefined" && "BarcodeDetector" in window;
+  
+  const stopScanning = useCallback(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setScanning(false);
+    setHasDetected(false);
+  }, []);
+
+  const startScanning = useCallback(async () => {
+    try {
+      setScanError(null);
+      setScanning(true);
+      setHasDetected(false);
+      
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+      });
+      
+      streamRef.current = stream;
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('autoplay', 'true');
+        videoRef.current.setAttribute('muted', 'true');
+        await videoRef.current.play();
+      }
+      
+      await new Promise<void>((resolve) => {
+        if (videoRef.current && videoRef.current.readyState >= 2) {
+          resolve();
+        } else {
+          videoRef.current!.onloadeddata = () => resolve();
+        }
+      });
+      
+      const scan = async () => {
+        if (hasDetected || !videoRef.current || !videoRef.current.srcObject) return;
+        
+        try {
+          if (hasBarcodeDetector) {
+            const Detector = (window as typeof window & { BarcodeDetector: BarcodeDetectorConstructor }).BarcodeDetector;
+            const detector = new Detector({ formats: ['qr_code'] });
+            const detections = await detector.detect(videoRef.current);
+            const value = detections.find((item) => item.rawValue)?.rawValue;
+            
+            if (value) {
+              console.log('✅ QR detected:', value);
+              setHasDetected(true);
+              stopScanning();
+              onScanQR?.(value);
+              setShowScanner(false);
+              return;
+            }
+          } else {
+            const canvas = canvasRef.current;
+            if (!canvas) return;
+            const context = canvas.getContext('2d', { willReadFrequently: true });
+            if (!context) return;
+            const video = videoRef.current;
+            
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+              canvas.height = video.videoHeight;
+              canvas.width = video.videoWidth;
+              context.drawImage(video, 0, 0, canvas.width, canvas.height);
+              const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+              
+              const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: "dontInvert",
+              });
+              
+              if (code && code.data) {
+                console.log('✅ QR detected:', code.data);
+                setHasDetected(true);
+                stopScanning();
+                onScanQR?.(code.data);
+                setShowScanner(false);
+                return;
+              }
+            }
+          }
+          
+          animationFrameRef.current = requestAnimationFrame(scan);
+        } catch (scanError) {
+          console.error('Scan error:', scanError);
+          animationFrameRef.current = requestAnimationFrame(scan);
+        }
+      };
+      
+      scan();
+    } catch (cameraError) {
+      console.error('Camera error:', cameraError);
+      const errorName = (cameraError as Error).name;
+      
+      if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
+        setScanError('ไม่ได้รับอนุญาตให้เข้าถึงกล้อง กรุณาอนุญาตในเบราว์เซอร์');
+      } else if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError') {
+        setScanError('ไม่พบกล้อง');
+      } else if (errorName === 'NotReadableError' || errorName === 'TrackStartError') {
+        setScanError('กล้องถูกใช้งานโดยแอปอื่น');
+      } else {
+        setScanError('ไม่สามารถเข้าถึงกล้องได้');
+      }
+      
+      setScanning(false);
+    }
+  }, [hasBarcodeDetector, onScanQR, hasDetected, stopScanning]);
+
+  useEffect(() => {
+    if (showScanner) {
+      startScanning();
+    } else {
+      stopScanning();
+      setScanError(null);
+    }
+    return () => {
+      stopScanning();
+    };
+  }, [showScanner, startScanning, stopScanning]);
 
   useEffect(() => {
     if (isOpen) {
@@ -311,9 +470,21 @@ export const BottleQuestModal = ({
                     onClick={async () => {
                       setIsCheckingIn(true);
                       try {
-                        onCheckIn(locationId);
+                        await onCheckIn(locationId, qrSignature, qrVersion);
+                        toast({
+                          title: "เช็กอินสำเร็จ! 🎉",
+                          description: "ได้รับคะแนนแล้ว ตอนนี้สามารถร่วมกิจกรรมพิเศษได้",
+                        });
+                        setTimeout(() => {
+                          onClose();
+                        }, 1500);
                       } catch (error) {
                         console.error('Check-in error:', error);
+                        toast({
+                          title: "เช็กอินไม่สำเร็จ",
+                          description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
+                          variant: "destructive",
+                        });
                       } finally {
                         setIsCheckingIn(false);
                       }
