@@ -196,41 +196,63 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md space-y-4">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Camera className="h-5 w-5 text-amber-600" />
-            🏴‍☠️ สแกน QR Code เพื่อเช็กอิน
+      <DialogContent 
+        className="max-w-md space-y-6 border-8 border-amber-800 bg-[#f4e4c1] p-0 overflow-hidden"
+        style={{
+          fontFamily: 'Georgia, serif',
+        }}
+      >
+        {/* Parchment texture */}
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `
+              linear-gradient(0deg, transparent 24%, rgba(139, 115, 85, .05) 25%, rgba(139, 115, 85, .05) 26%, transparent 27%, transparent 74%, rgba(139, 115, 85, .05) 75%, rgba(139, 115, 85, .05) 76%, transparent 77%, transparent),
+              linear-gradient(90deg, transparent 24%, rgba(139, 115, 85, .05) 25%, rgba(139, 115, 85, .05) 26%, transparent 27%, transparent 74%, rgba(139, 115, 85, .05) 75%, rgba(139, 115, 85, .05) 76%, transparent 77%, transparent)
+            `,
+            backgroundSize: '50px 50px'
+          }}
+        />
+        
+        <DialogHeader className="relative z-10 p-6 pb-4 border-b-2 border-amber-700/30">
+          <DialogTitle className="flex items-center gap-2 text-amber-900 text-xl" style={{ fontFamily: 'Pirata One, serif' }}>
+            <span className="text-2xl">⚓</span>
+            สแกน QR Code เพื่อเช็กอิน
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-amber-800 italic mt-2">
             ชี้กล้องไปยัง QR Code เพื่อทำการเช็กอิน
           </DialogDescription>
         </DialogHeader>
 
+        <div className="relative z-10 px-6 pb-6">
         {error ? (
           <div className="space-y-4">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="whitespace-pre-line">{error}</AlertDescription>
-            </Alert>
+            <div className="rounded-xl border-4 border-red-600 bg-red-50 p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-6 w-6 text-red-700 flex-shrink-0" />
+                <AlertDescription className="text-red-900 whitespace-pre-line">{error}</AlertDescription>
+              </div>
+            </div>
             <div className="flex gap-2">
               <Button 
                 onClick={() => {
                   setError(null);
                   startScanning();
                 }} 
-                className="flex-1"
+                className="flex-1 bg-amber-700 hover:bg-amber-800 text-white"
               >
                 ลองอีกครั้ง
               </Button>
-              <Button variant="outline" onClick={onClose}>
+              <Button variant="outline" onClick={onClose} className="border-amber-600 text-amber-900">
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="relative aspect-square w-full overflow-hidden rounded-xl border-2 border-amber-400 bg-black shadow-xl">
+          <div className="space-y-4">
+            <div className="relative aspect-square w-full">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl border-4 border-amber-700 shadow-2xl p-3">
+                <div className="relative aspect-square w-full overflow-hidden rounded-lg border-2 border-amber-800/30 bg-black">
               <video 
                 ref={videoRef} 
                 className="h-full w-full object-cover" 
@@ -260,35 +282,37 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
                   </div>
                 </div>
               )}
+                </div>
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <p className="text-center text-sm font-medium text-amber-900">
+            <div className="space-y-2 text-center bg-amber-50 rounded-lg border-2 border-amber-300 p-3">
+              <p className="text-base font-semibold text-amber-900">
                 🔍 กำลังสแกน QR Code...
               </p>
-              <p className="text-center text-xs text-amber-700">
+              <p className="text-sm text-amber-800 italic">
                 💡 วาง QR Code ให้อยู่ในกรอบสี่เหลี่ยม
               </p>
               {scanMethod && (
-                <p className="text-center text-xs text-amber-600">
+                <p className="text-xs text-amber-700">
                   {scanMethod === 'barcode' 
                     ? '⚡ ใช้ BarcodeDetector API' 
-                    : '🍎 ใช้ jsQR (รองรับทุกเบราว์เซอร์)'}
+                    : '🍎 ใช้ jsQR'}
                 </p>
               )}
             </div>
           </div>
         )}
 
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={onClose}
-            className="flex-1"
-          >
-            <X className="h-4 w-4 mr-2" />
-            ปิด
-          </Button>
+          <div className="flex gap-2 pt-2">
+            <Button 
+              onClick={onClose}
+              className="flex-1 bg-amber-700 hover:bg-amber-800 text-white font-bold"
+            >
+              <X className="h-4 w-4 mr-2" />
+              ปิด
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
