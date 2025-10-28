@@ -23,6 +23,7 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const scanCompletedRef = useRef(false);
+  const isScanningRef = useRef(false); // Track if we're currently scanning
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [hasDetected, setHasDetected] = useState(false);
@@ -32,6 +33,8 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
   const [scanMethod, setScanMethod] = useState<'barcode' | 'jsqr' | null>(null);
 
   const stopScanning = useCallback(() => {
+    isScanningRef.current = false;
+    
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
@@ -57,6 +60,7 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
       setScanning(true);
       setHasDetected(false);
       scanCompletedRef.current = false; // Reset when starting new scan
+      isScanningRef.current = true; // Mark that we're scanning
 
       // Check which method to use
       if (hasBarcodeDetector) {
@@ -103,7 +107,7 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
 
       // Start scanning based on method
       const scan = async () => {
-        if (hasDetected || !videoRef.current || !videoRef.current.srcObject || scanCompletedRef.current) {
+        if (!isScanningRef.current || !videoRef.current || !videoRef.current.srcObject || scanCompletedRef.current) {
           return;
         }
 
@@ -116,7 +120,7 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
             const detections = await detector.detect(videoRef.current);
             const value = detections.find((item) => item.rawValue)?.rawValue;
             
-            if (value && !scanCompletedRef.current) {
+            if (value && !scanCompletedRef.current && isScanningRef.current) {
               scanCompletedRef.current = true; // Prevent multiple scans
               console.log('✅ QR detected (BarcodeDetector):', value);
               setHasDetected(true);
@@ -127,14 +131,26 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
           } else {
             // Use jsQR fallback
             const canvas = canvasRef.current;
-            if (!canvas) return;
+            if (!canvas) {
+              // Continue scanning even if canvas is not available
+              if (isScanningRef.current) {
+                animationFrameRef.current = requestAnimationFrame(scan);
+              }
+              return;
+            }
 
             const context = canvas.getContext('2d', { willReadFrequently: true });
-            if (!context) return;
+            if (!context) {
+              // Continue scanning even if context is not available
+              if (isScanningRef.current) {
+                animationFrameRef.current = requestAnimationFrame(scan);
+              }
+              return;
+            }
 
             const video = videoRef.current;
             
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
               canvas.height = video.videoHeight;
               canvas.width = video.videoWidth;
               
@@ -145,7 +161,7 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
                 inversionAttempts: "dontInvert",
               });
 
-              if (code && code.data && !scanCompletedRef.current) {
+              if (code && code.data && !scanCompletedRef.current && isScanningRef.current) {
                 scanCompletedRef.current = true; // Prevent multiple scans
                 console.log('✅ QR detected (jsQR):', code.data);
                 setHasDetected(true);
@@ -157,10 +173,14 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
           }
 
           // Continue scanning
-          animationFrameRef.current = requestAnimationFrame(scan);
+          if (isScanningRef.current) {
+            animationFrameRef.current = requestAnimationFrame(scan);
+          }
         } catch (scanError) {
           console.error('Scan error:', scanError);
-          animationFrameRef.current = requestAnimationFrame(scan);
+          if (isScanningRef.current) {
+            animationFrameRef.current = requestAnimationFrame(scan);
+          }
         }
       };
 
@@ -181,8 +201,9 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
       }
       
       setScanning(false);
+      isScanningRef.current = false;
     }
-  }, [hasBarcodeDetector, onScan, hasDetected, stopScanning]);
+  }, [hasBarcodeDetector, onScan, stopScanning]);
 
   useEffect(() => {
     if (isOpen) {
