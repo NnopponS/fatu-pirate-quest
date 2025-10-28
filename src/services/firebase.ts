@@ -208,6 +208,13 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     display_order: 1,
     sub_events: [
       { 
+        id: "1-arts-admin", 
+        name: "Arts Admin workshop", 
+        location_id: 1, 
+        description: "Workshop การบริหารจัดการศิลปะสำหรับผู้สนใจด้านการจัดการงานศิลปะและวัฒนธรรม",
+        qr_code_version: 1 
+      },
+      { 
         id: "2-management", 
         name: "Workshop การบริหารจัดการศิลปะ", 
         location_id: 1, 
