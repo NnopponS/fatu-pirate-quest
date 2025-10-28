@@ -407,80 +407,86 @@ export const PirateHero = () => {
 
           <div className="pirate-divider" />
 
-          {/* Action Buttons - Enhanced & Compact */}
-          <div className="space-y-4 md:space-y-8">
+          {/* Action Buttons - Enhanced with Prominent Signup */}
+          <div className="space-y-4 md:space-y-6">
             <div className="text-center space-y-1 md:space-y-2">
-              <h3 className="text-xl md:text-2xl font-bold text-primary">🚀 เริ่มต้นการผจญภัย</h3>
-              <p className="text-sm md:text-base text-foreground/70 hidden md:block">เลือกด้านล่างเพื่อเข้าร่วมกิจกรรม</p>
+              <h3 className="text-xl md:text-3xl font-bold text-primary">🚀 เริ่มต้นการผจญภัย</h3>
+              <p className="text-sm md:text-base text-foreground/70">ลงทะเบียนเพื่อเข้าร่วมกิจกรรม</p>
             </div>
             
-            <div className="grid gap-3 md:gap-6 grid-cols-2 md:grid-cols-4 max-w-6xl mx-auto">
-              {/* ลงทะเบียน */}
+            {/* ⭐ ปุ่มลงทะเบียนใหญ่เด่นที่สุด (สี่เหลี่ยมยาว) */}
+            <div className="max-w-3xl mx-auto">
               <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/40 rounded-2xl md:rounded-3xl blur-lg md:blur-xl group-hover:blur-2xl transition-all duration-500 opacity-70 group-hover:opacity-100" />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-secondary/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-500 opacity-80 group-hover:opacity-100 animate-pulse-slow" />
                 <Button
                   size="lg"
-                  className="relative w-full h-auto flex-col gap-2 md:gap-4 py-4 px-3 md:py-8 md:px-6 text-base md:text-lg shadow-2xl shadow-primary/50 hover:shadow-primary/70 hover:scale-105 transition-all duration-300 bg-gradient-to-br from-primary to-primary/90 rounded-xl md:rounded-2xl"
+                  className="relative w-full h-auto py-8 md:py-12 px-6 md:px-10 text-xl md:text-3xl font-black shadow-2xl shadow-primary/60 hover:shadow-primary/80 hover:scale-105 transition-all duration-300 bg-gradient-to-br from-primary via-blue-600 to-secondary rounded-2xl md:rounded-3xl border-4 border-white/30"
                   onClick={() => navigate("/signup")}
                 >
-                  <span className="text-4xl md:text-6xl animate-bounce">🏴‍☠️</span>
-                  <div className="space-y-0.5 md:space-y-1">
-                    <div className="font-bold text-sm md:text-xl">ลงทะเบียน</div>
-                    <div className="text-xs text-white/80 font-normal hidden md:block">สมัครสมาชิกลูกเรือ</div>
-                  </div>
-                </Button>
-              </div>
-
-              {/* ดูแผนที่ */}
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 to-secondary/40 rounded-2xl md:rounded-3xl blur-lg md:blur-xl group-hover:blur-2xl transition-all duration-500 opacity-70 group-hover:opacity-100" />
-                <Button
-                  size="lg"
-                  variant="secondary"
-                  className="relative w-full h-auto flex-col gap-2 md:gap-4 py-4 px-3 md:py-8 md:px-6 text-base md:text-lg shadow-2xl shadow-secondary/50 hover:shadow-secondary/70 hover:scale-105 transition-all duration-300 bg-gradient-to-br from-secondary to-secondary/90 rounded-xl md:rounded-2xl"
-                  onClick={() => navigate("/map")}
-                >
-                  <span className="text-4xl md:text-6xl animate-bounce" style={{ animationDelay: '0.1s' }}>🗺️</span>
-                  <div className="space-y-0.5 md:space-y-1">
-                    <div className="font-bold text-sm md:text-xl">แผนที่</div>
-                    <div className="text-xs text-white/80 font-normal hidden md:block">สำรวจจุดเช็กอิน</div>
-                  </div>
-                </Button>
-              </div>
-
-              {/* เข้าสู่ระบบ */}
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-accent/40 rounded-2xl md:rounded-3xl blur-lg md:blur-xl group-hover:blur-2xl transition-all duration-500 opacity-70 group-hover:opacity-100" />
-                <Button
-                  size="lg"
-                  className="relative w-full h-auto flex-col gap-2 md:gap-4 py-4 px-3 md:py-8 md:px-6 text-base md:text-lg shadow-2xl shadow-accent/50 hover:shadow-accent/70 hover:scale-105 transition-all duration-300 bg-gradient-to-br from-accent to-accent/90 rounded-xl md:rounded-2xl"
-                  onClick={() => navigate("/login")}
-                >
-                  <span className="text-4xl md:text-6xl animate-bounce" style={{ animationDelay: '0.2s' }}>⚓</span>
-                  <div className="space-y-0.5 md:space-y-1">
-                    <div className="font-bold text-sm md:text-xl flex items-center justify-center gap-1 md:gap-2">
-                      <LogIn className="h-4 w-4 md:h-5 md:w-5" />
-                      เข้าสู่ระบบ
+                  <div className="flex items-center justify-center gap-4 md:gap-6">
+                    <span className="text-5xl md:text-7xl animate-bounce">🏴‍☠️</span>
+                    <div className="text-left">
+                      <div className="text-2xl md:text-4xl font-black mb-1">ลงทะเบียนลูกเรือ</div>
+                      <div className="text-sm md:text-lg text-white/90 font-normal">สมัครสมาชิกเพื่อเริ่มผจญภัย →</div>
                     </div>
-                    <div className="text-xs text-white/80 font-normal hidden md:block">สำหรับลูกเรือ</div>
                   </div>
                 </Button>
               </div>
+            </div>
 
-              {/* เกมมินิ */}
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-pink-400/40 rounded-2xl md:rounded-3xl blur-lg md:blur-xl group-hover:blur-2xl transition-all duration-500 opacity-70 group-hover:opacity-100" />
-                <Button
-                  size="lg"
-                  className="relative w-full h-auto flex-col gap-2 md:gap-4 py-4 px-3 md:py-8 md:px-6 text-base md:text-lg shadow-2xl shadow-purple-500/50 hover:shadow-purple-500/70 hover:scale-105 transition-all duration-300 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl md:rounded-2xl"
-                  onClick={() => navigate("/game")}
-                >
-                  <span className="text-4xl md:text-6xl animate-bounce" style={{ animationDelay: '0.3s' }}>🎮</span>
-                  <div className="space-y-0.5 md:space-y-1">
-                    <div className="font-bold text-sm md:text-xl">เกมส์มินิ</div>
-                    <div className="text-xs text-white/80 font-normal hidden md:block">Pirate Flyer</div>
-                  </div>
-                </Button>
+            {/* 📱 ปุ่มย่อย 3 ปุ่ม (แนวนอน) */}
+            <div className="max-w-3xl mx-auto">
+              <div className="grid gap-3 md:gap-4 grid-cols-3">
+                {/* แผนที่ */}
+                <div className="group relative">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="relative w-full h-auto flex-col gap-2 md:gap-3 py-5 md:py-8 px-3 md:px-4 text-base md:text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 bg-white/90 hover:bg-gradient-to-br hover:from-green-50 hover:to-blue-50 rounded-xl md:rounded-2xl border-2 hover:border-green-500"
+                    onClick={() => navigate("/map")}
+                  >
+                    <span className="text-4xl md:text-5xl animate-bounce-slow">🗺️</span>
+                    <div className="space-y-0.5 text-center">
+                      <div className="font-bold text-sm md:text-lg text-gray-900">แผนที่</div>
+                      <div className="text-xs text-gray-600 hidden md:block">สำรวจจุดเช็กอิน</div>
+                    </div>
+                  </Button>
+                </div>
+
+                {/* เข้าสู่ระบบ */}
+                <div className="group relative">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="relative w-full h-auto flex-col gap-2 md:gap-3 py-5 md:py-8 px-3 md:px-4 text-base md:text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 bg-white/90 hover:bg-gradient-to-br hover:from-amber-50 hover:to-orange-50 rounded-xl md:rounded-2xl border-2 hover:border-amber-500"
+                    onClick={() => navigate("/login")}
+                  >
+                    <span className="text-4xl md:text-5xl animate-bounce-slow" style={{ animationDelay: '0.2s' }}>⚓</span>
+                    <div className="space-y-0.5 text-center">
+                      <div className="font-bold text-sm md:text-lg text-gray-900 flex items-center justify-center gap-1">
+                        <LogIn className="h-3 w-3 md:h-4 md:w-4" />
+                        เข้าสู่ระบบ
+                      </div>
+                      <div className="text-xs text-gray-600 hidden md:block">สำหรับลูกเรือ</div>
+                    </div>
+                  </Button>
+                </div>
+
+                {/* เกมส์มินิ */}
+                <div className="group relative">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="relative w-full h-auto flex-col gap-2 md:gap-3 py-5 md:py-8 px-3 md:px-4 text-base md:text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 bg-white/90 hover:bg-gradient-to-br hover:from-purple-50 hover:to-pink-50 rounded-xl md:rounded-2xl border-2 hover:border-purple-500"
+                    onClick={() => navigate("/game")}
+                  >
+                    <span className="text-4xl md:text-5xl animate-bounce-slow" style={{ animationDelay: '0.4s' }}>🎮</span>
+                    <div className="space-y-0.5 text-center">
+                      <div className="font-bold text-sm md:text-lg text-gray-900">เกมส์มินิ</div>
+                      <div className="text-xs text-gray-600 hidden md:block">Pirate Flyer</div>
+                    </div>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

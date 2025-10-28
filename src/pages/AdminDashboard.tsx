@@ -136,6 +136,8 @@ const AdminDashboard = () => {
   const [savingPrizeId, setSavingPrizeId] = useState<string | null>(null);
   const [newPrize, setNewPrize] = useState({ name: "", weight: "10", stock: "10", image_url: "", description: "" });
   const [updatingThreshold, setUpdatingThreshold] = useState(false);
+  const [uploadingPrizeImage, setUploadingPrizeImage] = useState<string | null>(null); // For existing prizes
+  const [uploadingNewPrizeImage, setUploadingNewPrizeImage] = useState(false); // For new prize
   const [heroCards, setHeroCards] = useState<HeroCardRecord[]>([]);
   const [heroCardDrafts, setHeroCardDrafts] = useState<HeroCardRecord[]>([]);
   const [newHeroCard, setNewHeroCard] = useState({ 
@@ -406,6 +408,108 @@ const AdminDashboard = () => {
         description: errorMessage(error),
         variant: "destructive",
       });
+    }
+  };
+
+  const handlePrizeImageUpload = async (prizeId: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "ไฟล์ใหญ่เกินไป",
+        description: "กรุณาเลือกไฟล์ที่มีขนาดไม่เกิน 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingPrizeImage(prizeId);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `prize-${prizeId}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("location-images")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from("location-images")
+        .getPublicUrl(filePath);
+
+      // Update the prize draft
+      setPrizeDrafts((prev) => {
+        const updated = [...prev];
+        const index = updated.findIndex((p) => p.id === prizeId);
+        if (index >= 0) {
+          updated[index] = { ...updated[index], image_url: data.publicUrl };
+        }
+        return updated;
+      });
+
+      toast({
+        title: "อัปโหลดรูปภาพสำเร็จ",
+        description: "กรุณากดบันทึกเพื่อบันทึกการเปลี่ยนแปลง",
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        title: "อัปโหลดไม่สำเร็จ",
+        description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingPrizeImage(null);
+    }
+  };
+
+  const handleNewPrizeImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "ไฟล์ใหญ่เกินไป",
+        description: "กรุณาเลือกไฟล์ที่มีขนาดไม่เกิน 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingNewPrizeImage(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `prize-new-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("location-images")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from("location-images")
+        .getPublicUrl(filePath);
+
+      setNewPrize((prev) => ({ ...prev, image_url: data.publicUrl }));
+
+      toast({
+        title: "อัปโหลดรูปภาพสำเร็จ",
+        description: "รูปภาพจะถูกบันทึกเมื่อเพิ่มรางวัล",
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        title: "อัปโหลดไม่สำเร็จ",
+        description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingNewPrizeImage(false);
     }
   };
 
@@ -1132,9 +1236,31 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor={`prize-image-${prize.id}`}>URL รูปภาพ (ไม่บังคับ)</Label>
+                          <Label htmlFor={`prize-image-${prize.id}`}>รูปภาพรางวัล</Label>
+                          {prize.image_url && (
+                            <div className="mb-2">
+                              <img 
+                                src={prize.image_url} 
+                                alt={prize.name}
+                                className="h-32 w-full object-cover rounded-lg border-2 border-amber-300"
+                              />
+                            </div>
+                          )}
+                          <div className="flex gap-2">
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handlePrizeImageUpload(prize.id, e)}
+                              disabled={uploadingPrizeImage === prize.id}
+                              className="flex-1"
+                            />
+                            {uploadingPrizeImage === prize.id && (
+                              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                            )}
+                          </div>
+                          <p className="text-xs text-foreground/60">หรือใส่ URL รูปภาพ:</p>
                           <Input
-                            id={`prize-image-${prize.id}`}
+                            id={`prize-image-url-${prize.id}`}
                             type="url"
                             placeholder="https://..."
                             value={prize.image_url || ""}
@@ -1227,7 +1353,29 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label>URL รูปภาพ</Label>
+                      <Label>รูปภาพรางวัล</Label>
+                      {newPrize.image_url && (
+                        <div className="mb-2">
+                          <img 
+                            src={newPrize.image_url} 
+                            alt="Preview"
+                            className="h-32 w-full object-cover rounded-lg border-2 border-amber-300"
+                          />
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleNewPrizeImageUpload}
+                          disabled={uploadingNewPrizeImage}
+                          className="flex-1"
+                        />
+                        {uploadingNewPrizeImage && (
+                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                        )}
+                      </div>
+                      <p className="text-xs text-foreground/60">หรือใส่ URL รูปภาพ:</p>
                       <Input
                         type="url"
                         placeholder="https://example.com/image.jpg"
