@@ -51,6 +51,7 @@ import {
   XCircle,
   Trophy,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { AdminLocationManager } from "@/components/AdminLocationManager";
@@ -318,7 +319,33 @@ const AdminDashboard = () => {
     } catch (error) {
       toast({
         title: "ลบลูกเรือไม่สำเร็จ",
-        description: errorMessage(error),
+      });
+    }
+  };
+
+  const handleResetAllData = async () => {
+    if (!token) return;
+    
+    if (!confirm("⚠️ คุณแน่ใจหรือไม่ที่จะลบข้อมูลทั้งหมด?\n\nข้อมูลที่จะถูกลบ:\n- การเช็กอินทั้งหมด\n- การเช็กอินกิจกรรมย่อยทั้งหมด\n- ข้อมูลคะแนนของผู้เข้าร่วม\n\nข้อมูลผู้เข้าร่วมจะยังคงอยู่ แต่คะแนนและการเช็กอินจะถูกลบ")) {
+      return;
+    }
+
+    if (!confirm("⚠️ การกระทำนี้ไม่สามารถยกเลิกได้!\n\nกรุณาตรวจสอบอีกครั้งว่าคุณต้องการลบข้อมูลทั้งหมดจริงๆ")) {
+      return;
+    }
+    
+    try {
+      const { resetAllData } = await import("@/services/firebase");
+      await resetAllData(token);
+      toast({ 
+        title: "รีเซ็ตข้อมูลสำเร็จ",
+        description: "ข้อมูลการเช็กอินทั้งหมดถูกลบเรียบร้อยแล้ว"
+      });
+      fetchDashboard(token);
+    } catch (error) {
+      toast({
+        title: "รีเซ็ตข้อมูลไม่สำเร็จ",
+        description: error instanceof Error ? error.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ",
         variant: "destructive",
       });
     }
@@ -622,7 +649,7 @@ const AdminDashboard = () => {
       "อายุ",
       "ระดับชั้น",
       "สถานศึกษา",
-      "โปรแกรม",
+      "แผนการศึกษา",
       "เบอร์โทร",
       "สถานะรางวัล",
       "รางวัลที่ได้",
@@ -797,7 +824,7 @@ const AdminDashboard = () => {
 
     // Sheet 1: ข้อมูลผู้ลงทะเบียน (Participants)
     const participantsData = [
-      ["ID", "Username", "ชื่อ", "นามสกุล", "คะแนน", "อายุ", "ระดับชั้น", "สถานศึกษา", "โปรแกรม", "เบอร์โทร", "สถานะรางวัล", "รางวัลที่ได้", "รหัสรับรางวัล", "มอบรางวัลแล้ว", "วันที่มอบรางวัล", "ลงทะเบียนเมื่อ"],
+      ["ID", "Username", "ชื่อ", "นามสกุล", "คะแนน", "อายุ", "ระดับชั้น", "สถานศึกษา", "แผนการศึกษา", "เบอร์โทร", "สถานะรางวัล", "รางวัลที่ได้", "รหัสรับรางวัล", "มอบรางวัลแล้ว", "วันที่มอบรางวัล", "ลงทะเบียนเมื่อ"],
       ...dashboard.participants.map((p) => {
         const spin = dashboard.spins.find((s) => s.participant_id === p.id);
         return [
@@ -948,7 +975,7 @@ const AdminDashboard = () => {
 
     setSyncingToGoogleSheets(true);
     try {
-      await exportAllDataToGoogleSheets(dashboard, googleSheetsSettings);
+      await exportAllDataToGoogleSheets(dashboard as any, googleSheetsSettings);
       toast({
         title: "✅ ส่งข้อมูลไป Google Sheets สำเร็จ",
         description: "ข้อมูลถูกส่งไปยัง Google Sheets เรียบร้อยแล้ว",
@@ -1215,7 +1242,9 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="grid gap-6">
-                  {prizeDrafts.map((prize, index) => (
+                  {prizeDrafts.map((prize) => {
+                    const prizeIndex = prizeDrafts.findIndex(p => p.id === prize.id);
+                    return (
                     <div
                       key={prize.id}
                       className="rounded-2xl border border-rope/40 bg-white/70 px-6 py-6 shadow-sm"
@@ -1229,7 +1258,10 @@ const AdminDashboard = () => {
                             onChange={(event) =>
                               setPrizeDrafts((prev) => {
                                 const updated = [...prev];
-                                updated[index] = { ...updated[index], name: event.target.value };
+                                const idx = updated.findIndex(p => p.id === prize.id);
+                                if (idx >= 0) {
+                                  updated[idx] = { ...updated[idx], name: event.target.value };
+                                }
                                 return updated;
                               })
                             }
@@ -1244,10 +1276,13 @@ const AdminDashboard = () => {
                             onChange={(event) =>
                               setPrizeDrafts((prev) => {
                                 const updated = [...prev];
-                                updated[index] = {
-                                  ...updated[index],
-                                  weight: Number(event.target.value),
-                                };
+                                const idx = updated.findIndex(p => p.id === prize.id);
+                                if (idx >= 0) {
+                                  updated[idx] = {
+                                    ...updated[idx],
+                                    weight: Number(event.target.value),
+                                  };
+                                }
                                 return updated;
                               })
                             }
@@ -1263,10 +1298,13 @@ const AdminDashboard = () => {
                             onChange={(event) =>
                               setPrizeDrafts((prev) => {
                                 const updated = [...prev];
-                                updated[index] = {
-                                  ...updated[index],
-                                  stock: Number(event.target.value),
-                                };
+                                const idx = updated.findIndex(p => p.id === prize.id);
+                                if (idx >= 0) {
+                                  updated[idx] = {
+                                    ...updated[idx],
+                                    stock: Number(event.target.value),
+                                  };
+                                }
                                 return updated;
                               })
                             }
@@ -1288,10 +1326,13 @@ const AdminDashboard = () => {
                                 onClick={() => {
                                   setPrizeDrafts((prev) => {
                                     const updated = [...prev];
-                                    updated[index] = {
-                                      ...updated[index],
-                                      image_url: undefined,
-                                    };
+                                    const idx = updated.findIndex(p => p.id === prize.id);
+                                    if (idx >= 0) {
+                                      updated[idx] = {
+                                        ...updated[idx],
+                                        image_url: undefined,
+                                      };
+                                    }
                                     return updated;
                                   });
                                   toast({ title: "ลบรูปภาพสำเร็จ", description: "อย่าลืมบันทึกเพื่อยืนยันการเปลี่ยนแปลง" });
@@ -1323,10 +1364,13 @@ const AdminDashboard = () => {
                             onChange={(event) =>
                               setPrizeDrafts((prev) => {
                                 const updated = [...prev];
-                                updated[index] = {
-                                  ...updated[index],
-                                  image_url: event.target.value || undefined,
-                                };
+                                const idx = updated.findIndex(p => p.id === prize.id);
+                                if (idx >= 0) {
+                                  updated[idx] = {
+                                    ...updated[idx],
+                                    image_url: event.target.value || undefined,
+                                  };
+                                }
                                 return updated;
                               })
                             }
@@ -1341,10 +1385,13 @@ const AdminDashboard = () => {
                             onChange={(event) =>
                               setPrizeDrafts((prev) => {
                                 const updated = [...prev];
-                                updated[index] = {
-                                  ...updated[index],
-                                  description: event.target.value || undefined,
-                                };
+                                const idx = updated.findIndex(p => p.id === prize.id);
+                                if (idx >= 0) {
+                                  updated[idx] = {
+                                    ...updated[idx],
+                                    description: event.target.value || undefined,
+                                  };
+                                }
                                 return updated;
                               })
                             }
@@ -1366,7 +1413,8 @@ const AdminDashboard = () => {
                         </Button>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className="rounded-2xl border border-dashed border-rope/40 bg-white/60 px-6 py-6 shadow-inner">
@@ -1685,7 +1733,7 @@ const AdminDashboard = () => {
                     <ul className="mb-6 space-y-2 text-sm">
                       <li className="flex items-start gap-2">
                         <span className="mt-0.5 text-primary">✓</span>
-                        <span>ข้อมูลผู้ลงทะเบียนทั้งหมด (ชื่อ, อายุ, ระดับชั้น, สถานศึกษา, โปรแกรม, เบอร์โทร, รางวัล)</span>
+                        <span>ข้อมูลผู้ลงทะเบียนทั้งหมด (ชื่อ, อายุ, ระดับชั้น, สถานศึกษา, แผนการศึกษา, เบอร์โทร, รางวัล)</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="mt-0.5 text-primary">✓</span>
@@ -1700,14 +1748,25 @@ const AdminDashboard = () => {
                         <span>กิจกรรมย่อยทั้งหมด</span>
                       </li>
                     </ul>
-                    <Button 
-                      onClick={exportAllDataToExcel}
-                      className="w-full gap-2 shadow-lg"
-                      size="lg"
-                    >
-                      <Download className="h-5 w-5" />
-                      ดาวน์โหลด Excel ทั้งหมด
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={exportAllDataToExcel}
+                        className="flex-1 gap-2 shadow-lg"
+                        size="lg"
+                      >
+                        <Download className="h-5 w-5" />
+                        ดาวน์โหลด Excel ทั้งหมด
+                      </Button>
+                      <Button 
+                        onClick={handleResetAllData}
+                        variant="destructive"
+                        className="gap-2 shadow-lg"
+                        size="lg"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                        Reset ข้อมูลทั้งหมด
+                      </Button>
+                    </div>
                     <p className="mt-3 text-center text-xs text-foreground/60">
                       ภาษาไทยจะแสดงผลถูกต้องใน Excel
                     </p>
@@ -1862,6 +1921,69 @@ const AdminDashboard = () => {
                       <p className="text-xs text-foreground/70">ได้รับรางวัล</p>
                     </div>
                   </div>
+                </div>
+
+                {/* Reset All Data */}
+                <div className="rounded-2xl border-2 border-red-300 bg-red-50 px-6 py-6 shadow-lg">
+                  <h3 className="text-lg font-semibold text-red-900 mb-2 flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5" />
+                    ⚠️ Reset ข้อมูลทั้งหมด
+                  </h3>
+                  <p className="text-sm text-red-800 mb-4">
+                    การดำเนินการนี้จะลบข้อมูลทั้งหมดออกจากระบบ เช่น:
+                  </p>
+                  <ul className="text-sm text-red-800 space-y-1 mb-4">
+                    <li>• ข้อมูลผู้เข้าร่วมทั้งหมด</li>
+                    <li>• ข้อมูลเช็กอินทั้งหมด</li>
+                    <li>• ข้อมูลกิจกรรมย่อยทั้งหมด</li>
+                    <li>• ข้อมูลการหมุนวงล้อและรางวัล</li>
+                    <li>• ข้อมูล Hero Cards</li>
+                  </ul>
+                  <p className="text-xs text-red-700 font-semibold mb-3">
+                    ⚠️ คำเตือน: การดำเนินการนี้ไม่สามารถย้อนกลับได้!
+                  </p>
+                  <Button 
+                    variant="destructive"
+                    size="lg"
+                    className="w-full gap-2"
+                    onClick={async () => {
+                      if (!confirm(
+                        "⚠️ ยืนยันการ Reset ข้อมูลทั้งหมด?\n\n" +
+                        "การดำเนินการนี้จะลบ:\n" +
+                        "• ข้อมูลผู้เข้าร่วมทั้งหมด\n" +
+                        "• ข้อมูลเช็กอินทั้งหมด\n" +
+                        "• ข้อมูลกิจกรรมย่อยทั้งหมด\n" +
+                        "• ข้อมูลการหมุนวงล้อและรางวัล\n" +
+                        "• ข้อมูล Hero Cards\n\n" +
+                        "ไม่สามารถย้อนกลับได้!"
+                      )) {
+                        return;
+                      }
+                      
+                      if (!confirm("⚠️ ยืนยันอีกครั้ง! คุณแน่ใจว่าต้องการ Reset ข้อมูลทั้งหมด?")) {
+                        return;
+                      }
+
+                      try {
+                        const { resetAllData } = await import("@/services/firebase");
+                        await resetAllData(token!);
+                        toast({ 
+                          title: "Reset ข้อมูลสำเร็จ",
+                          description: "ข้อมูลทั้งหมดถูกลบเรียบร้อยแล้ว"
+                        });
+                        fetchDashboard(token!);
+                      } catch (error) {
+                        toast({
+                          title: "Reset ข้อมูลไม่สำเร็จ",
+                          description: errorMessage(error),
+                          variant: "destructive"
+                        });
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-5 w-5" />
+                    Reset ข้อมูลทั้งหมด
+                  </Button>
                 </div>
               </div>
             </TabsContent>

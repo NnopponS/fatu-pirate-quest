@@ -34,11 +34,11 @@ const Onboarding = () => {
             </div>
             <div className="flex items-center gap-3 p-4 bg-primary/10 rounded-xl">
               <span className="text-2xl">2️⃣</span>
-              <span className="text-left">ไปยัง 4 สถานที่ (ไม่ต้องเช็กอิน)</span>
+              <span className="text-left">ไปยัง 4 สถานที่</span>
             </div>
             <div className="flex items-center gap-3 p-4 bg-primary/10 rounded-xl">
               <span className="text-2xl">3️⃣</span>
-              <span className="text-left">ทำกิจกรรมย่อย 1 กิจกรรมต่อสถานที่</span>
+              <span className="text-left">ทำกิจกรรมย่อยอย่างน้อย 3 ใน 4 สถานที่</span>
             </div>
             <div className="flex items-center gap-3 p-4 bg-primary/10 rounded-xl">
               <span className="text-2xl">4️⃣</span>
@@ -102,7 +102,7 @@ const Onboarding = () => {
                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="font-semibold text-blue-900 mb-2">💡 ทริค!</p>
                   <p className="text-sm text-blue-800">
-                    แต่ละสถานที่มีกิจกรรมย่อยหลายกิจกรรม ทำกิจกรรม <strong>1 กิจกรรมต่อสถานที่</strong> ก็ได้รับคะแนนแล้ว
+                    แต่ละสถานที่มีกิจกรรมย่อยหลายกิจกรรม ทำกิจกรรม <strong>อย่างน้อย 3 ใน 4 สถานที่</strong> เพื่อรับรางวัล
                   </p>
                 </div>
               </div>

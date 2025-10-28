@@ -78,7 +78,7 @@ export const exportAllDataToGoogleSheets = async (
 
   // 1. Push Participants Data
   const participantsData = [
-    ["ID", "Username", "ชื่อ", "นามสกุล", "คะแนน", "อายุ", "ระดับชั้น", "สถานศึกษา", "โปรแกรม", "เบอร์โทร", "สถานะรางวัล", "รางวัลที่ได้", "รหัสรับรางวัล", "มอบรางวัลแล้ว", "วันที่มอบรางวัล", "ลงทะเบียนเมื่อ"],
+    ["ID", "Username", "ชื่อ", "นามสกุล", "คะแนน", "อายุ", "ระดับชั้น", "สถานศึกษา", "แผนการศึกษา", "เบอร์โทร", "สถานะรางวัล", "รางวัลที่ได้", "รหัสรับรางวัล", "มอบรางวัลแล้ว", "วันที่มอบรางวัล", "ลงทะเบียนเมื่อ"],
     ...dashboard.participants.map((p) => {
       const spin = dashboard.spins.find((s) => s.participant_id === p.id);
       return [

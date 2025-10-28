@@ -1028,11 +1028,23 @@ export const checkinSubEvent = async (
 
   const updatedPoints = participant.points + pointsToAward;
 
+  // Auto check-in location if not already checked in (no points, just record)
+  const existingLocationCheckin = await firebaseDb.get<CheckinRecord>(
+    `checkins/${participantId}/${parentLocation.id}`
+  );
+
   await Promise.all([
     firebaseDb.set(`sub_event_checkins/${participantId}/${subEventId}`, subEventCheckin),
     pointsToAward > 0 
       ? firebaseDb.update(`participants/${participantId}`, { points: updatedPoints })
       : Promise.resolve(),
+    // Auto check-in location without points
+    existingLocationCheckin ? Promise.resolve() : firebaseDb.set(`checkins/${participantId}/${parentLocation.id}`, {
+      participant_id: participantId,
+      location_id: parentLocation.id,
+      method: "subevent_auto",
+      created_at: new Date().toISOString(),
+    } as CheckinRecord),
   ]);
 
   return { ok: true, pointsAdded: pointsToAward };
@@ -1163,6 +1175,11 @@ export const getMapData = async (participantId: string) => {
 export const getRewardsData = async (participantId: string) => {
   await ensureDefaults();
 
+  // 🚀 Check cache first but don't cache rewards data as it changes often
+  const cacheKey = `rewardsData:${participantId}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
   const [participant, spinRecord, prizesRecord, pointsRequired] = await Promise.all([
     getParticipantById(participantId),
     firebaseDb.get<SpinRecord>(`spins/${participantId}`),
@@ -1179,12 +1196,17 @@ export const getRewardsData = async (participantId: string) => {
       stock: prize.stock,
     }));
 
-  return {
+  const result = {
     points: participant?.points ?? 0,
     hasSpun: Boolean(spinRecord),
     prizes,
     pointsRequired,
   };
+
+  // Cache for 5 seconds only to reduce load but keep data fresh
+  setCache(cacheKey, result);
+  clearCache(`mapData:${participantId}`); // Clear map cache to refresh points
+  return result;
 };
 
 export const getDashboardData = async (token: string): Promise<DashboardResponse> => {
@@ -1583,4 +1605,32 @@ export const setSpinThreshold = async (token: string, pointsRequired: number) =>
 export const invalidateAdminSession = async (token: string) => {
   if (!token) return;
   await firebaseDb.remove(`admin_sessions/${token}`);
+};
+
+export const resetAllData = async (token: string) => {
+  const session = await validateAdminSession(token);
+  if (!session) {
+    throw new Error("Invalid session");
+  }
+
+  await ensureDefaults();
+
+  // Get all participants to reset their points
+  const participantsRecord = await firebaseDb.get<Record<string, ParticipantRecord>>("participants");
+  const participants = objectValues(participantsRecord);
+
+  // Reset all participants points to 0
+  const resetPromises = participants.map(participant =>
+    firebaseDb.update(`participants/${participant.id}`, { points: 0 })
+  );
+
+  // Delete all checkins and sub-event checkins
+  await Promise.all([
+    ...resetPromises,
+    firebaseDb.remove("checkins"),
+    firebaseDb.remove("sub_event_checkins"),
+    firebaseDb.remove("spins"), // Also reset all spin records
+  ]);
+
+  console.log("[Admin] Reset all data - cleared checkins, sub-event checkins, spins, and reset all points to 0");
 };
