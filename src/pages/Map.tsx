@@ -50,7 +50,7 @@ const Map = () => {
   const [locations, setLocations] = useState<LocationEntry[]>([]);
   const [checkins, setCheckins] = useState<number[]>([]);
   const [points, setPoints] = useState(0);
-  const [pointsRequired, setPointsRequired] = useState(400);
+  const [pointsRequired, setPointsRequired] = useState(300); // ✅ Default 300 คะแนน
   const [loading, setLoading] = useState(true);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [qrPreviewOpen, setQrPreviewOpen] = useState(false);

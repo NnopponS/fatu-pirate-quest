@@ -21,7 +21,7 @@ const Rewards = () => {
   const { logout } = useAuth();
 
   const [points, setPoints] = useState(0);
-  const [pointsRequired, setPointsRequired] = useState(400);
+  const [pointsRequired, setPointsRequired] = useState(300); // ✅ Default 300 คะแนน
   const [prizes, setPrizes] = useState<PrizeOption[]>([]);
   const [hasSpun, setHasSpun] = useState(false);
   const [loading, setLoading] = useState(true);
