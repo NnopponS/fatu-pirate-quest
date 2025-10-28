@@ -389,21 +389,35 @@ const Map = () => {
                   parsedData.errorMessage = `รูปแบบไม่ถูกต้อง (พบ ${parts.length} ส่วน, ต้องการ 4 ส่วน)`;
                 }
               }
-              // Parse Sub-Event QR code format: SUBEVENT|subEventId|version
+              // Parse Sub-Event QR code format: SUBEVENT|subEventId|sig|version (4 parts)
               else if (value.startsWith("SUBEVENT|")) {
                 const parts = value.split("|");
                 console.log("SUBEVENT QR Code parsed:", { parts, length: parts.length });
                 
                 if (parts.length >= 3) {
-                  parsedData = {
-                    raw: value,
-                    type: 'subevent',
-                    subEventId: parts[1],
-                    version: parts[2],
-                    isValid: true,
-                  };
+                  // Support both old (3 parts) and new (4 parts) format
+                  if (parts.length === 3) {
+                    // Old format: SUBEVENT|subEventId|version
+                    parsedData = {
+                      raw: value,
+                      type: 'subevent',
+                      subEventId: parts[1],
+                      version: parts[2],
+                      isValid: true,
+                    };
+                  } else {
+                    // New format: SUBEVENT|subEventId|sig|version
+                    parsedData = {
+                      raw: value,
+                      type: 'subevent',
+                      subEventId: parts[1],
+                      sig: parts[2],
+                      version: parts[3],
+                      isValid: true,
+                    };
+                  }
                 } else {
-                  parsedData.errorMessage = `รูปแบบไม่ถูกต้อง (พบ ${parts.length} ส่วน, ต้องการ 3 ส่วน)`;
+                  parsedData.errorMessage = `รูปแบบไม่ถูกต้อง (พบ ${parts.length} ส่วน, ต้องการ 3 หรือ 4 ส่วน)`;
                 }
               }
               // Backward compatibility: support old URL format
@@ -555,7 +569,11 @@ const Map = () => {
                             onClick={() => {
                               setQrPreviewOpen(false);
                               if (scannedQrData.subEventId) {
-                                navigate(`/checkin?subevent=${scannedQrData.subEventId}&v=${scannedQrData.version || '1'}`);
+                                let url = `/checkin?subevent=${scannedQrData.subEventId}&v=${scannedQrData.version || '1'}`;
+                                if (scannedQrData.sig) {
+                                  url += `&sig=${scannedQrData.sig}`;
+                                }
+                                navigate(url);
                               }
                             }}
                             className="flex-1 gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"

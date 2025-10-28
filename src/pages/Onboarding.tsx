@@ -94,9 +94,9 @@ const Onboarding = () => {
               </div>
               <div className="space-y-3">
                 <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <p className="font-semibold text-yellow-900 mb-2">⚠️ คำเตือน!</p>
+                  <p className="font-semibold text-yellow-900 mb-2">💡 ทริค!</p>
                   <p className="text-sm text-yellow-800">
-                    ท่านไม่ต้องเช็กอินที่สถานที่แล้ว แต่ต้องสแกน QR เพื่อทำ <strong>กิจกรรมย่อย</strong> ครับ
+                    สแกน QR Code เพื่อเข้าร่วม <strong>กิจกรรมย่อย</strong> และรับคะแนนพิเศษ!
                   </p>
                 </div>
                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">

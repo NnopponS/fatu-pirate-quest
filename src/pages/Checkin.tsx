@@ -170,9 +170,10 @@ const Checkin = () => {
       if (isSubEvent && subEventInfo) {
         // Sub-event checkin
         const version = searchParams.get("v");
+        const sigFromQR = searchParams.get("sig");
         
-        // Generate signature for sub-event
-        const sig = await signSubEventCheckin(
+        // Use signature from QR or generate new one
+        const sig = sigFromQR || await signSubEventCheckin(
           subEventInfo.id,
           todayStr(0),
           CHECKIN_SECRET,

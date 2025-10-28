@@ -1275,12 +1275,31 @@ const AdminDashboard = () => {
                         <div className="space-y-2">
                           <Label htmlFor={`prize-image-${prize.id}`}>รูปภาพรางวัล</Label>
                           {prize.image_url && (
-                            <div className="mb-2">
+                            <div className="relative mb-2">
                               <img 
                                 src={prize.image_url} 
                                 alt={prize.name}
                                 className="h-32 w-full object-cover rounded-lg border-2 border-amber-300"
                               />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  setPrizeDrafts((prev) => {
+                                    const updated = [...prev];
+                                    updated[index] = {
+                                      ...updated[index],
+                                      image_url: undefined,
+                                    };
+                                    return updated;
+                                  });
+                                  toast({ title: "ลบรูปภาพสำเร็จ", description: "อย่าลืมบันทึกเพื่อยืนยันการเปลี่ยนแปลง" });
+                                }}
+                                className="absolute top-2 right-2"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           )}
                           <div className="flex gap-2">
@@ -1392,12 +1411,24 @@ const AdminDashboard = () => {
                     <div className="space-y-2">
                       <Label>รูปภาพรางวัล</Label>
                       {newPrize.image_url && (
-                        <div className="mb-2">
+                        <div className="relative mb-2">
                           <img 
                             src={newPrize.image_url} 
                             alt="Preview"
                             className="h-32 w-full object-cover rounded-lg border-2 border-amber-300"
                           />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              setNewPrize((prev) => ({ ...prev, image_url: "" }));
+                              toast({ title: "ลบรูปภาพสำเร็จ" });
+                            }}
+                            className="absolute top-2 right-2"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       )}
                       <div className="flex gap-2">

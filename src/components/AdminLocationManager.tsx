@@ -315,6 +315,11 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
     toast({ title: "ดาวน์โหลด QR Code สำเร็จ" });
   };
 
+  const handleRemoveSubEventImage = (subEventId: string) => {
+    handleSubEventFieldChange(subEventId, "image_url", "");
+    toast({ title: "ลบรูปภาพสำเร็จ", description: "อย่าลืมบันทึกเพื่อยืนยันการเปลี่ยนแปลง" });
+  };
+
   return (
     <div className="space-y-4 rounded-lg border border-primary/20 bg-card p-6">
       <div className="flex items-center justify-between">
@@ -528,7 +533,18 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
                         <div>
                           <Label>รูปภาพ</Label>
                           {draft.image_url && (
-                            <img src={draft.image_url} alt={draft.name} className="h-32 w-full object-cover rounded-lg border-2 mb-2" />
+                            <div className="relative mb-2">
+                              <img src={draft.image_url} alt={draft.name} className="h-32 w-full object-cover rounded-lg border-2" />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleRemoveSubEventImage(subEvent.id)}
+                                className="absolute top-2 right-2"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           )}
                           <div className="flex gap-2">
                             <Input
