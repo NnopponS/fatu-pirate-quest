@@ -52,10 +52,13 @@ export const chatWithPirate = async (
     apiKeys = settings.openRouterKeys.filter(key => key.trim());
   }
   
-  // Add default fallback key if no keys provided
+  // If no valid keys found, throw error (don't use placeholder)
   if (apiKeys.length === 0) {
-    apiKeys = ['sk-or-v1-b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3b5b3c0e5c3']; // Default key
+    console.error('[OpenRouter AI] No API keys configured!');
+    throw new Error("ยังไม่มีการตั้งค่า API Key กรุณาติดต่อผู้ดูแลระบบให้ตั้งค่าใน Admin Dashboard");
   }
+  
+  console.log(`[OpenRouter AI] Found ${apiKeys.length} API key(s) to try`);
 
   // Build user-specific context
   let userContextText = "";
@@ -136,7 +139,8 @@ ${userContextText}
   
   for (let i = 0; i < apiKeys.length; i++) {
     const apiKey = apiKeys[i];
-    console.log(`[OpenRouter AI] Trying API key ${i + 1}/${apiKeys.length}...`);
+    const keyPreview = `${apiKey.substring(0, 10)}...${apiKey.substring(apiKey.length - 4)}`;
+    console.log(`[OpenRouter AI] Trying key ${i + 1}/${apiKeys.length} (${keyPreview})...`);
     
     try {
       // Create timeout promise (30 seconds)
@@ -170,26 +174,34 @@ ${userContextText}
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error(`[OpenRouter AI] API Error with key ${i + 1}:`, errorData);
+        console.error(`[OpenRouter AI] ❌ Key ${i + 1} failed:`, {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
         
         // If rate limit or quota, try next key
         if (response.status === 429 || response.status === 402) {
-          console.warn(`[OpenRouter AI] Key ${i + 1} rate limited/quota exceeded, trying next key...`);
-          lastError = new Error(`Key ${i + 1}: Rate limit/quota exceeded`);
+          console.warn(`[OpenRouter AI] 🚫 Key ${i + 1} (${keyPreview}): Rate limit/quota exceeded`);
+          const errorMsg = errorData?.error?.message || 'Quota exceeded';
+          lastError = new Error(`Key ${i + 1}: ${errorMsg}`);
           continue; // Try next key
         }
         
         if (response.status === 401) {
-          console.warn(`[OpenRouter AI] Key ${i + 1} invalid, trying next key...`);
+          console.warn(`[OpenRouter AI] 🔑 Key ${i + 1} (${keyPreview}): Invalid/unauthorized`);
           lastError = new Error(`Key ${i + 1}: Invalid API key`);
           continue; // Try next key
         }
         
-        throw new Error(`API Error: ${response.status}`);
+        // For other errors, try next key too
+        console.warn(`[OpenRouter AI] ⚠️ Key ${i + 1} (${keyPreview}): Error ${response.status}`);
+        lastError = new Error(`Key ${i + 1}: HTTP ${response.status}`);
+        continue;
       }
 
       const data = await response.json();
-      console.log(`[OpenRouter AI] Response received successfully with key ${i + 1}`);
+      console.log(`[OpenRouter AI] ✅ Success with key ${i + 1}!`);
 
       const aiResponse = data.choices?.[0]?.message?.content;
       if (!aiResponse) {
@@ -218,19 +230,19 @@ ${userContextText}
   }
   
   // All keys failed
-  console.error('[OpenRouter AI] All API keys failed:', lastError);
+  console.error('[OpenRouter AI] ❌ ALL KEYS FAILED! Last error:', lastError);
   
   // Better error messages based on last error
   if (lastError?.name === 'AbortError') {
-    throw new Error("ข้าคิดนานเกินไป! ลองถามใหม่อีกครั้งนะ");
+    throw new Error("⏱️ ข้าคิดนานเกินไป! ลองถามใหม่อีกครั้งนะ");
   } else if (lastError?.message?.includes('Failed to fetch') || lastError?.message?.includes('network')) {
-    throw new Error("ข้าติดต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบอินเทอร์เน็ตของเจ้าสิ!");
-  } else if (lastError?.message?.includes('Rate limit') || lastError?.message?.includes('quota')) {
-    throw new Error("API Keys ทั้งหมดเกิน quota แล้ว กรุณาเพิ่ม API key ใหม่หรือลองใหม่ในภายหลัง");
+    throw new Error("🌐 ข้าติดต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบอินเทอร์เน็ตของเจ้าสิ!");
+  } else if (lastError?.message?.includes('Quota exceeded') || lastError?.message?.includes('quota')) {
+    throw new Error(`🚫 API Keys ทั้งหมด (${apiKeys.length} keys) หมด quota แล้ว!\n\n💡 วิธีแก้:\n- รอสักครู่แล้วลองใหม่\n- หรือเพิ่ม API key ใหม่ใน Admin Dashboard\n\n(ดู Console สำหรับรายละเอียด)`);
   } else if (lastError?.message?.includes('Invalid')) {
-    throw new Error("API Keys ทั้งหมดไม่ถูกต้อง กรุณาตรวจสอบการตั้งค่า");
+    throw new Error(`🔑 API Keys ทั้งหมดไม่ถูกต้อง! กรุณาตรวจสอบการตั้งค่าใน Admin Dashboard\n\n(ดู Console สำหรับรายละเอียด)`);
   } else {
-    throw new Error("ข้าไม่สามารถตอบได้ในตอนนี้ ลองใหม่อีกครั้งนะ!");
+    throw new Error(`❌ ข้าไม่สามารถตอบได้! (ลอง ${apiKeys.length} keys แล้ว)\n\nดู Console (F12) สำหรับรายละเอียดข้อผิดพลาด`);
   }
 };
 
