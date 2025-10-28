@@ -35,6 +35,11 @@ function clearCache(pattern?: string) {
   }
 }
 
+// Export clearCache for external use
+export function clearAppCache(pattern?: string) {
+  clearCache(pattern);
+}
+
 type Nullable<T> = T | null | undefined;
 
 export interface ParticipantRecord {

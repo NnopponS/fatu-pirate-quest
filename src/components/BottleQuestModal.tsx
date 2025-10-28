@@ -234,6 +234,32 @@ export const BottleQuestModal = ({
                 </div>
               )}
 
+              {/* Progress Summary */}
+              {subEvents.length > 0 && (
+                <div className="p-3 sm:p-4 md:p-5 bg-gradient-to-br from-green-50 to-amber-50 rounded-lg border-2 border-green-600/30 shadow-lg">
+                  <h3 className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3">📊 สรุปความคืบหน้า</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm sm:text-base">
+                      <span className="text-[#3d2817]">กิจกรรมทั้งหมด:</span>
+                      <span className="font-bold text-[#8b4513]">{subEvents.length} กิจกรรม</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm sm:text-base">
+                      <span className="text-green-700 font-semibold">✓ ทำแล้ว:</span>
+                      <span className="font-bold text-green-700">{completedSubEvents.length} กิจกรรม</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm sm:text-base">
+                      <span className="text-amber-700 font-semibold">○ ยังไม่ทำ:</span>
+                      <span className="font-bold text-amber-700">{subEvents.length - completedSubEvents.length} กิจกรรม</span>
+                    </div>
+                  </div>
+                  {subEvents.length - completedSubEvents.length === 0 && (
+                    <div className="mt-3 p-2 sm:p-3 bg-green-100 border-2 border-green-600 rounded-lg text-center">
+                      <p className="text-green-800 font-bold">🎉 ยินดีด้วย! ทำครบทุกกิจกรรมในสถานที่นี้แล้ว</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Footer message */}
               <div className="pt-3 sm:pt-4 md:pt-6 border-t-2 border-[#8b7355]/30">
                 <p className="text-center text-sm sm:text-base leading-relaxed italic">

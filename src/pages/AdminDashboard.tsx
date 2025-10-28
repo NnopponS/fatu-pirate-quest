@@ -297,6 +297,11 @@ const AdminDashboard = () => {
         id: locationId,
         sub_events: subEvents,
       });
+      
+      // Clear map cache to refresh data on Map page
+      const { clearAppCache } = await import("@/services/firebase");
+      clearAppCache("mapData");
+      
       toast({ title: "อัปเดตกิจกรรมย่อยแล้ว" });
       fetchDashboard(token);
     } catch (error) {
