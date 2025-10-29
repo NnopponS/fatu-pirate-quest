@@ -37,7 +37,7 @@ const AnimatedRoutes = () => {
   const location = useLocation();
   
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="sync" initial={false}>
       <Routes location={location} key={location.pathname}>
         {/* Eager loaded routes - Homepage & Auth */}
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />
@@ -49,41 +49,51 @@ const AnimatedRoutes = () => {
         <Route 
           path="/dashboard" 
           element={
-            <ProtectedRoute requireParticipant>
-              <PageTransition><Dashboard /></PageTransition>
-            </ProtectedRoute>
+            <PageTransition>
+              <ProtectedRoute requireParticipant>
+                <Dashboard />
+              </ProtectedRoute>
+            </PageTransition>
           } 
         />
         <Route 
           path="/map" 
           element={
-            <ProtectedRoute requireParticipant>
-              <PageTransition><Map /></PageTransition>
-            </ProtectedRoute>
+            <PageTransition>
+              <ProtectedRoute requireParticipant>
+                <Map />
+              </ProtectedRoute>
+            </PageTransition>
           } 
         />
         <Route 
           path="/checkin" 
           element={
-            <ProtectedRoute requireParticipant>
-              <PageTransition><Checkin /></PageTransition>
-            </ProtectedRoute>
+            <PageTransition>
+              <ProtectedRoute requireParticipant>
+                <Checkin />
+              </ProtectedRoute>
+            </PageTransition>
           } 
         />
         <Route 
           path="/rewards" 
           element={
-            <ProtectedRoute requireParticipant>
-              <PageTransition><Rewards /></PageTransition>
-            </ProtectedRoute>
+            <PageTransition>
+              <ProtectedRoute requireParticipant>
+                <Rewards />
+              </ProtectedRoute>
+            </PageTransition>
           } 
         />
         <Route 
           path="/profile" 
           element={
-            <ProtectedRoute requireParticipant>
-              <PageTransition><Profile /></PageTransition>
-            </ProtectedRoute>
+            <PageTransition>
+              <ProtectedRoute requireParticipant>
+                <Profile />
+              </ProtectedRoute>
+            </PageTransition>
           } 
         />
         <Route 
@@ -95,17 +105,21 @@ const AnimatedRoutes = () => {
         <Route 
           path="/admin" 
           element={
-            <ProtectedRoute requireAdmin>
-              <PageTransition><AdminDashboard /></PageTransition>
-            </ProtectedRoute>
+            <PageTransition>
+              <ProtectedRoute requireAdmin>
+                <AdminDashboard />
+              </ProtectedRoute>
+            </PageTransition>
           } 
         />
         <Route 
           path="/prize-verification" 
           element={
-            <ProtectedRoute requireAdmin>
-              <PageTransition><PrizeVerification /></PageTransition>
-            </ProtectedRoute>
+            <PageTransition>
+              <ProtectedRoute requireAdmin>
+                <PrizeVerification />
+              </ProtectedRoute>
+            </PageTransition>
           } 
         />
         
