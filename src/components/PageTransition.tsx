@@ -1,11 +1,16 @@
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 
 interface PageTransitionProps {
   children: ReactNode;
 }
 
 export const PageTransition = ({ children }: PageTransitionProps) => {
+  // Scroll to top เมื่อเปลี่ยนหน้า
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -15,7 +20,7 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
         duration: 0.2,
         ease: "easeInOut"
       }}
-      style={{ width: '100%', height: '100%' }}
+      style={{ width: '100%', minHeight: '100vh' }}
     >
       {children}
     </motion.div>

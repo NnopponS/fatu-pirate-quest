@@ -708,9 +708,9 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
         </AnimatePresence>
       </div>
 
-      {/* Progress Indicator */}
+      {/* Progress Indicator - Responsive */}
       <motion.div 
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3"
+        className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 px-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
@@ -721,10 +721,10 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
           return (
             <motion.div
               key={p}
-              className={`h-3 rounded-full transition-all duration-500 ${
+              className={`h-2 md:h-3 rounded-full transition-all duration-500 ${
                 isActive 
-                  ? "w-16 bg-amber-700 shadow-lg" 
-                  : "w-8 bg-amber-300"
+                  ? "w-10 md:w-16 bg-amber-700 shadow-lg" 
+                  : "w-6 md:w-8 bg-amber-300"
               }`}
               animate={{
                 scale: isActive ? [1, 1.1, 1] : 1
