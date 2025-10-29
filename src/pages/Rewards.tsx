@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getRewardsData, spinWheel } from "@/services/firebase";
-import { SpinWheel } from "@/components/SpinWheel";
+import { BottleShaker } from "@/components/BottleShaker";
 import { Button } from "@/components/ui/button";
 import { Anchor, Gift, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -71,7 +71,7 @@ const Rewards = () => {
     loadData();
   }, [participantId, toast, navigate, loadData]);
 
-  const handleSpin = async (): Promise<{ prize: string; claimCode: string }> => {
+  const handleShake = async (): Promise<{ prize: string; claimCode: string }> => {
     try {
       if (!participantId) {
         throw new Error("Missing participant identifier");
@@ -80,14 +80,14 @@ const Rewards = () => {
       const { prize, claimCode } = await spinWheel(participantId);
       setHasSpun(true);
       toast({
-        title: "ยินดีด้วย ท่านได้รางวัล!",
-        description: `ท่านได้รับ ${prize}`,
+        title: "ยินดีด้วย! 🎉",
+        description: `คุณได้รับ ${prize}`,
       });
       return { prize, claimCode };
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Unknown error";
       toast({
-        title: "หมุนวงล้อไม่สำเร็จ",
+        title: "เขย่าขวดไม่สำเร็จ",
         description: message,
         variant: "destructive",
       });
@@ -102,11 +102,11 @@ const Rewards = () => {
 
   return (
     <PirateBackdrop>
-      <PirateCharacter 
+          <PirateCharacter 
         messages={[
-          "ฮาฮอย! คะแนนเจ้าครบแล้วหรือยัง? 🎰",
-          "หมุนวงล้อเพื่อรับสมบัติ! 💎",
-          "แต่ละคนหมุนได้ครั้งเดียวนะ! ⚓",
+          "ฮาฮอย! คะแนนเจ้าครบแล้วหรือยัง? 🍾",
+          "เขย่าขวด 5 ครั้งเพื่อรับสมบัติ! 💎",
+          "แต่ละคนเขย่าได้ครั้งเดียวนะ! ⚓",
           "โชคดีกับการลุ้นรางวัล! 🏴‍☠️",
           "สมบัติรออยู่ข้างหน้า! 🎁",
         ]}
@@ -115,11 +115,11 @@ const Rewards = () => {
         <div className="flex flex-col items-center gap-4 text-center">
           <span className="pirate-highlight">
             <Gift className="h-4 w-4 text-accent" />
-            วงล้อขุมทรัพย์
+            ขวดล่าสมบัติ
           </span>
-          <h1 className="pirate-heading md:text-5xl">หมุนวงล้อแห่งโชค</h1>
+          <h1 className="pirate-heading md:text-5xl">เขย่าขวดแห่งโชค</h1>
           <p className="pirate-subheading">
-            สะสมคะแนนให้ครบแล้วปล่อยให้วงล้อพาไปสู่รางวัลล้ำค่า ประกายสมบัติโจรสลัดรออยู่ตรงหน้า!
+            สะสมคะแนนให้ครบแล้วเขย่าขวด 5 ครั้งเพื่อค้นพบสมบัติที่รอคุณอยู่!
           </p>
         </div>
 
@@ -136,7 +136,7 @@ const Rewards = () => {
                 <h2 className="text-3xl font-semibold text-primary">คะแนนยังไม่เพียงพอ</h2>
                 <p className="text-lg text-foreground/70">
                   คุณมี {points} คะแนน
-                  ต้องสะสมเพิ่มอีก {pointsRequired - points} คะแนนเพื่อปลดล็อกวงล้อสมบัติ
+                  ต้องสะสมเพิ่มอีก {pointsRequired - points} คะแนนเพื่อปลดล็อกขวดสมบัติ
                 </p>
                 <Button size="lg" onClick={() => navigate("/map")}>
                   กลับไปสะสมคะแนนต่อ
@@ -146,16 +146,16 @@ const Rewards = () => {
               <div className="pirate-card px-6 py-10 space-y-8">
                 <div className="text-center space-y-2">
                   <h2 className="text-3xl font-semibold text-primary">
-                    พร้อมหมุนวงล้อสมบัติแล้ว!
+                    พร้อมเขย่าขวดสมบัติแล้ว!
                   </h2>
                   <p className="text-sm text-foreground/70">
-                    คุณสะสมทั้งหมด {points} คะแนน หมุนได้เพียง 1 ครั้งต่อคน
+                    คุณสะสมทั้งหมด {points} คะแนน เขย่าขวดได้เพียง 1 ครั้งต่อคน
                   </p>
                 </div>
-                <SpinWheel onSpin={handleSpin} disabled={hasSpun || prizes.length === 0} prizes={prizes} />
+                <BottleShaker onShake={handleShake} disabled={hasSpun || prizes.length === 0} prizes={prizes} />
                 {hasSpun && (
                   <p className="text-center text-sm text-foreground/70">
-                    คุณหมุนวงล้อแล้ว หากต้องการรับชมผลอีกครั้ง ให้สอบถามทีมงานได้เลย
+                    คุณเขย่าขวดแล้ว หากต้องการรับชมผลอีกครั้ง ให้สอบถามทีมงานได้เลย
                   </p>
                 )}
                 {prizes.length === 0 && (
