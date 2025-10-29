@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
@@ -7,19 +8,16 @@ interface OpeningAnimationProps {
 }
 
 export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
-  const [phase, setPhase] = useState<"waves" | "ship" | "ship-out" | "pirate" | "pirate-out" | "welcome" | "complete">("waves");
+  const [phase, setPhase] = useState<"map" | "bottle" | "treasure" | "complete">("map");
   const [skipped, setSkipped] = useState(false);
 
   useEffect(() => {
     if (skipped) return;
 
     const timers = [
-      setTimeout(() => setPhase("ship"), 1500),        // 1.5s: Show ship
-      setTimeout(() => setPhase("ship-out"), 3500),    // 3.5s: Ship fades out
-      setTimeout(() => setPhase("pirate"), 4000),      // 4s: Show pirate
-      setTimeout(() => setPhase("pirate-out"), 6000),  // 6s: Pirate fades out  
-      setTimeout(() => setPhase("welcome"), 6500),     // 6.5s: Show welcome
-      setTimeout(() => setPhase("complete"), 11000),   // 11s: Complete
+      setTimeout(() => setPhase("bottle"), 2000),     // 2s: แผนที่ -> ขวด
+      setTimeout(() => setPhase("treasure"), 4000),   // 4s: ขวด -> สมบัติ
+      setTimeout(() => setPhase("complete"), 7000),   // 7s: จบ
     ];
 
     return () => timers.forEach(clearTimeout);
@@ -42,689 +40,484 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-gradient-to-b from-amber-900 via-amber-800 to-amber-700">
+    <motion.div 
+      className="fixed inset-0 z-50 overflow-hidden bg-[#f4e4c1] relative"
+      style={{
+        backgroundImage: `
+          linear-gradient(0deg, transparent 24%, rgba(139, 115, 85, .05) 25%, rgba(139, 115, 85, .05) 26%, transparent 27%, transparent 74%, rgba(139, 115, 85, .05) 75%, rgba(139, 115, 85, .05) 76%, transparent 77%, transparent),
+          linear-gradient(90deg, transparent 24%, rgba(139, 115, 85, .05) 25%, rgba(139, 115, 85, .05) 26%, transparent 27%, transparent 74%, rgba(139, 115, 85, .05) 75%, rgba(139, 115, 85, .05) 76%, transparent 77%, transparent)
+        `,
+        backgroundSize: '50px 50px'
+      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
       {/* Skip Button */}
-      <Button
-        onClick={handleSkip}
-        variant="ghost"
-        size="sm"
-        className="absolute top-4 right-4 z-50 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white gap-2 animate-in fade-in"
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
       >
-        <X className="h-4 w-4" />
-        ข้ามแอนิเมชัน
-      </Button>
-
-      {/* Sun with rays */}
-      <div className="absolute top-10 right-10 w-20 h-20 bg-yellow-300 rounded-full shadow-2xl animate-pulse-slow">
-        <div className="absolute inset-0 rounded-full bg-yellow-200 animate-ping opacity-20" />
-        {/* Sun rays rotating */}
-        <div className="absolute inset-0 animate-spin-slow">
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-8 bg-yellow-400 rounded-full"
-              style={{
-                left: '50%',
-                top: '50%',
-                transformOrigin: 'center',
-                transform: `rotate(${i * 45}deg) translate(-50%, -140%)`,
-              }}
-            />
-          ))}
-        </div>
-      </div>
-      
-      {/* Stars twinkling */}
-      <div className="absolute top-5 left-5 text-2xl animate-twinkle-1">⭐</div>
-      <div className="absolute top-20 left-[30%] text-xl animate-twinkle-2">✨</div>
-      <div className="absolute top-10 right-[20%] text-2xl animate-twinkle-3">💫</div>
-
-      {/* Clouds - More dynamic */}
-      <div className="absolute top-20 left-10 w-32 h-12 bg-white/80 rounded-full blur-sm animate-float-cloud-1 shadow-lg" />
-      <div className="absolute top-32 right-1/4 w-40 h-16 bg-white/70 rounded-full blur-sm animate-float-cloud-2 shadow-lg" />
-      <div className="absolute top-16 left-1/3 w-24 h-10 bg-white/60 rounded-full blur-sm animate-float-cloud-3 shadow-lg" />
-      <div className="absolute top-28 right-1/3 w-36 h-14 bg-white/75 rounded-full blur-sm animate-float-cloud-4 shadow-lg" />
-      <div className="absolute top-40 left-1/4 w-28 h-10 bg-white/65 rounded-full blur-sm animate-float-cloud-5 shadow-lg" />
-
-      {/* Ocean Waves - Always Visible */}
-      <div className="absolute bottom-0 left-0 right-0">
-        {/* Wave 1 - Front */}
-        <div
-          className="absolute bottom-0 w-[200%] h-40 bg-gradient-to-t from-blue-700 to-blue-500 opacity-90"
-          style={{
-            clipPath: "polygon(0 50%, 5% 45%, 10% 50%, 15% 45%, 20% 50%, 25% 40%, 30% 50%, 35% 45%, 40% 50%, 45% 40%, 50% 50%, 55% 45%, 60% 50%, 65% 45%, 70% 50%, 75% 40%, 80% 50%, 85% 45%, 90% 50%, 95% 45%, 100% 50%, 100% 100%, 0 100%)",
-            animation: "wave1 12s linear infinite",
-          }}
-        />
-        
-        {/* Wave 2 - Middle */}
-        <div
-          className="absolute bottom-0 w-[200%] h-32 bg-gradient-to-t from-blue-600 to-blue-400 opacity-70"
-          style={{
-            clipPath: "polygon(0 60%, 5% 55%, 10% 60%, 15% 58%, 20% 60%, 25% 50%, 30% 60%, 35% 55%, 40% 60%, 45% 52%, 50% 60%, 55% 55%, 60% 60%, 65% 58%, 70% 60%, 75% 50%, 80% 60%, 85% 55%, 90% 60%, 95% 58%, 100% 60%, 100% 100%, 0 100%)",
-            animation: "wave2 8s linear infinite",
-          }}
-        />
-        
-        {/* Wave 3 - Back */}
-        <div
-          className="absolute bottom-0 w-[200%] h-24 bg-gradient-to-t from-blue-500 to-blue-300 opacity-50"
-          style={{
-            clipPath: "polygon(0 70%, 5% 68%, 10% 70%, 15% 69%, 20% 70%, 25% 65%, 30% 70%, 35% 68%, 40% 70%, 45% 67%, 50% 70%, 55% 68%, 60% 70%, 65% 69%, 70% 70%, 75% 65%, 80% 70%, 85% 68%, 90% 70%, 95% 69%, 100% 70%, 100% 100%, 0 100%)",
-            animation: "wave3 15s linear infinite",
-          }}
-        />
-      </div>
-
-      {/* Seagulls - More birds flying */}
-      <div className="absolute top-40 left-1/4 text-2xl animate-fly-bird-1">🦅</div>
-      <div className="absolute top-60 right-1/3 text-xl animate-fly-bird-2">🦅</div>
-      <div className="absolute top-32 right-1/2 text-2xl animate-fly-bird-3">🦅</div>
-      
-      {/* Dolphins jumping */}
-      <div className="absolute bottom-32 left-[10%] text-4xl animate-dolphin-jump-1">🐬</div>
-      <div className="absolute bottom-28 right-[15%] text-4xl animate-dolphin-jump-2">🐬</div>
-      
-      {/* Floating fish */}
-      <div className="absolute bottom-40 left-[30%] text-2xl animate-fish-swim-1">🐟</div>
-      <div className="absolute bottom-48 right-[40%] text-2xl animate-fish-swim-2">🐠</div>
-      
-      {/* Treasure coins falling during ship phase */}
-      {(phase === "ship" || phase === "ship-out") && (
-        <>
-          <div className="absolute top-0 left-[20%] text-3xl animate-coin-fall-1">🪙</div>
-          <div className="absolute top-0 left-[40%] text-3xl animate-coin-fall-2">💰</div>
-          <div className="absolute top-0 right-[30%] text-3xl animate-coin-fall-3">🪙</div>
-          <div className="absolute top-0 right-[10%] text-3xl animate-coin-fall-4">💎</div>
-        </>
-      )}
-
-      {/* Ship Animation - Only show in ship phase */}
-      {(phase === "ship" || phase === "ship-out") && (
-        <div
-          className={`absolute transition-all duration-1000 ${
-            phase === "ship" 
-              ? "left-[10%] opacity-100 animate-in slide-in-from-left-full duration-2000" 
-              : "left-[120%] opacity-0"
-          }`}
-          style={{
-            top: "calc(50% - 100px)",
-          }}
+        <Button
+          onClick={handleSkip}
+          variant="ghost"
+          size="sm"
+          className="absolute top-6 right-6 z-50 bg-amber-800/80 backdrop-blur-sm hover:bg-amber-900 text-white gap-2 border-2 border-amber-600 shadow-xl"
         >
-          <div className="relative scale-150">
-            {/* Ship Body */}
-            <div className="w-40 h-24 bg-gradient-to-b from-amber-800 to-amber-900 rounded-b-[50px] border-4 border-amber-950 shadow-2xl relative overflow-hidden animate-ship-rock">
-              {/* Wood Texture */}
-              <div className="absolute inset-0 opacity-20">
-                <div className="absolute top-2 left-0 right-0 h-0.5 bg-amber-950" />
-                <div className="absolute top-6 left-0 right-0 h-0.5 bg-amber-950" />
-                <div className="absolute top-10 left-0 right-0 h-0.5 bg-amber-950" />
-              </div>
-              
-              {/* Ship Deck */}
-              <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-amber-700 to-amber-800 rounded-t-lg border-b-2 border-amber-950" />
-              
-              {/* Cannons */}
-              <div className="absolute top-8 left-2 w-3 h-8 bg-gray-800 rounded-full rotate-45" />
-              <div className="absolute top-8 right-2 w-3 h-8 bg-gray-800 rounded-full rotate-45" />
-              
-              {/* Windows */}
-              <div className="absolute top-10 left-6 w-8 h-8 bg-yellow-300 rounded-full border-2 border-amber-950 opacity-80 animate-pulse" />
-              <div className="absolute top-10 right-6 w-8 h-8 bg-yellow-300 rounded-full border-2 border-amber-950 opacity-80 animate-pulse" />
-              
-              {/* Anchor */}
-              <div className="absolute bottom-2 right-4 text-xs">⚓</div>
-              
-              {/* Ship Bottom Wave Effect */}
-              <div className="absolute -bottom-3 left-0 right-0 h-6 bg-white/40 rounded-full blur-md animate-pulse" />
-            </div>
+          <X className="h-4 w-4" />
+          ข้าม
+        </Button>
+      </motion.div>
 
-            {/* Mast */}
-            <div className="absolute left-1/2 -translate-x-1/2 -top-32 w-3 h-36 bg-gradient-to-b from-amber-950 to-amber-900 shadow-lg" />
+      {/* Decorative Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Floating coins */}
+        {[...Array(8)].map((_, i) => (
+          <motion.div
+            key={`coin-${i}`}
+            className="absolute text-4xl"
+            initial={{ 
+              x: Math.random() * window.innerWidth, 
+              y: -50,
+              rotate: 0 
+            }}
+            animate={{ 
+              y: window.innerHeight + 50,
+              rotate: 360 * (Math.random() > 0.5 ? 1 : -1)
+            }}
+            transition={{
+              duration: 8 + Math.random() * 4,
+              repeat: Infinity,
+              delay: Math.random() * 5,
+              ease: "linear"
+            }}
+          >
+            {i % 2 === 0 ? '🪙' : '💰'}
+          </motion.div>
+        ))}
 
-            {/* Main Sail */}
-            <div className="absolute left-1/2 -translate-x-1/2 -top-28 w-24 h-20 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 border-2 border-gray-400 shadow-2xl animate-sail-billow"
-              style={{
-                clipPath: "polygon(0 0, 100% 5%, 95% 100%, 5% 100%)",
-              }}
+        {/* Stars */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={`star-${i}`}
+            className="absolute text-3xl"
+            style={{
+              left: `${10 + Math.random() * 80}%`,
+              top: `${10 + Math.random() * 30}%`
+            }}
+            animate={{
+              scale: [1, 1.5, 1],
+              rotate: [0, 180, 360],
+              opacity: [0.3, 1, 0.3]
+            }}
+            transition={{
+              duration: 2 + Math.random() * 2,
+              repeat: Infinity,
+              delay: Math.random() * 2
+            }}
+          >
+            ✨
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex items-center justify-center min-h-screen relative z-10">
+        <AnimatePresence mode="wait">
+          {/* Phase 1: Treasure Map Unfolding */}
+          {phase === "map" && (
+            <motion.div
+              key="map"
+              className="text-center"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              exit={{ scale: 0, rotate: 180, opacity: 0 }}
+              transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
             >
-              {/* Skull and Crossbones - Larger */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl animate-pulse">
-                ☠️
-              </div>
-            </div>
+              <motion.div
+                className="relative inline-block"
+                animate={{ 
+                  rotateY: [0, 10, -10, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                {/* Map Paper */}
+                <div className="relative">
+                  <motion.div
+                    className="text-[200px] drop-shadow-2xl"
+                    animate={{
+                      scale: [1, 1.05, 1]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity
+                    }}
+                  >
+                    🗺️
+                  </motion.div>
+                  
+                  {/* Sparkles around map */}
+                  {[0, 1, 2, 3].map((i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute text-5xl"
+                      style={{
+                        left: i % 2 === 0 ? '-20%' : '110%',
+                        top: i < 2 ? '-10%' : '90%'
+                      }}
+                      animate={{
+                        scale: [0, 1.5, 0],
+                        rotate: [0, 180, 360]
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        delay: i * 0.5
+                      }}
+                    >
+                      ⭐
+                    </motion.div>
+                  ))}
+                </div>
 
-            {/* Secondary Sail */}
-            <div className="absolute left-1/2 translate-x-4 -top-24 w-16 h-14 bg-gradient-to-br from-gray-200 to-gray-400 border-2 border-gray-500 shadow-xl opacity-80"
-              style={{
-                clipPath: "polygon(0 0, 100% 10%, 90% 100%, 10% 100%)",
-              }}
-            />
+                <motion.h1 
+                  className="mt-8 text-5xl font-black text-amber-900"
+                  style={{ fontFamily: 'Pirata One, serif' }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  การผจญภัยกำลังเริ่มต้น...
+                </motion.h1>
+              </motion.div>
+            </motion.div>
+          )}
 
-            {/* Pirate Flag */}
-            <div className="absolute left-1/2 -translate-x-1/2 -top-32 w-12 h-10 bg-black animate-wave-flag shadow-lg"
-              style={{
-                transformOrigin: "left center",
-              }}
+          {/* Phase 2: Message in Bottle */}
+          {phase === "bottle" && (
+            <motion.div
+              key="bottle"
+              className="text-center"
+              initial={{ x: -window.innerWidth, rotate: -720 }}
+              animate={{ x: 0, rotate: 0 }}
+              exit={{ x: window.innerWidth, rotate: 720, opacity: 0 }}
+              transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
             >
-              <span className="absolute top-1 left-2 text-white text-lg">🏴‍☠️</span>
-            </div>
-
-            {/* Rope Details */}
-            <div className="absolute left-1/2 -top-28 w-0.5 h-24 bg-amber-900 rotate-45" />
-            <div className="absolute left-1/2 -top-28 w-0.5 h-24 bg-amber-900 -rotate-45" />
-          </div>
-
-          {/* Water Splash Effect */}
-          <div className="absolute -bottom-8 left-0 right-0 flex justify-center gap-2">
-            <div className="w-4 h-4 bg-white/60 rounded-full animate-splash-1" />
-            <div className="w-6 h-6 bg-white/40 rounded-full animate-splash-2" />
-            <div className="w-4 h-4 bg-white/60 rounded-full animate-splash-3" />
-          </div>
-        </div>
-      )}
-
-      {/* Pirate Character - Only show in pirate phase */}
-      {(phase === "pirate" || phase === "pirate-out") && (
-        <div className={`absolute transition-all duration-1000 ${
-          phase === "pirate"
-            ? "right-[10%] top-[30%] opacity-100 scale-100 animate-in slide-in-from-right-full duration-1500"
-            : "right-[-20%] opacity-0 scale-50"
-        }`}>
-          <div className="relative">
-            {/* Pirate Character - Larger */}
-            <div className="text-[200px] animate-wave-hand drop-shadow-2xl">🏴‍☠️</div>
-            
-            {/* Sparkles around pirate */}
-            <div className="absolute -top-10 -left-10 text-5xl animate-sparkle-1">✨</div>
-            <div className="absolute -top-5 -right-10 text-4xl animate-sparkle-2">⭐</div>
-            <div className="absolute -bottom-5 left-10 text-5xl animate-sparkle-3">💫</div>
-            
-            {/* Speech Bubble - Larger and more prominent */}
-            <div className="absolute -top-32 -left-48 bg-white rounded-3xl px-8 py-4 shadow-2xl border-4 border-primary animate-in zoom-in duration-500">
-              <p className="text-3xl font-bold text-primary whitespace-nowrap animate-text-glow">
-                อาฮอย! ลูกเรือ! ⚓
-              </p>
-              {/* Bubble Tail */}
-              <div className="absolute bottom-0 right-16 translate-y-1/2 w-0 h-0 border-l-12 border-l-transparent border-r-12 border-r-transparent border-t-16 border-t-white" 
-                style={{
-                  borderWidth: "16px 12px 0 12px"
+              <motion.div
+                className="relative inline-block"
+                animate={{
+                  y: [0, -20, 0],
+                  rotate: [0, 5, -5, 0]
                 }}
-              />
-              <div className="absolute bottom-0 right-16 translate-y-1/2 w-0 h-0 border-l-10 border-l-transparent border-r-10 border-r-transparent border-t-14 border-t-primary -translate-y-1"
-                style={{
-                  borderWidth: "14px 10px 0 10px"
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
                 }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+              >
+                {/* Bottle with glow */}
+                <div className="relative">
+                  <motion.div
+                    className="text-[200px] drop-shadow-2xl"
+                    animate={{
+                      scale: [1, 1.1, 1]
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity
+                    }}
+                  >
+                    🍾
+                  </motion.div>
+                  
+                  {/* Glow effect */}
+                  <motion.div
+                    className="absolute inset-0 bg-amber-400 rounded-full blur-3xl"
+                    animate={{
+                      opacity: [0.3, 0.6, 0.3],
+                      scale: [0.8, 1.2, 0.8]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity
+                    }}
+                  />
 
-      {/* Welcome Message - Only show in welcome phase */}
-      {phase === "welcome" && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center space-y-8 animate-in zoom-in duration-1000">
-            <div className="relative">
-              {/* Treasure Chest with glow */}
-              <div className="relative inline-block">
-                <div className="text-9xl animate-treasure-bounce drop-shadow-2xl">💰</div>
-                <div className="absolute inset-0 bg-yellow-400 rounded-full blur-3xl opacity-50 animate-pulse" />
-              </div>
-              
-              {/* Main Title */}
-              <h1 className="text-6xl md:text-8xl font-bold text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] animate-in slide-in-from-bottom duration-500 mt-6">
-                ยินดีต้อนรับสู่
-              </h1>
-              
-              {/* FATU Title with gradient and effects */}
-              <div className="relative mt-4">
-                <h2 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 bg-clip-text text-transparent drop-shadow-2xl animate-in slide-in-from-bottom duration-700 animate-gradient-x">
-                  🏴‍☠️ FATU Treasure Quest ⚓
-                </h2>
-                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 blur-2xl opacity-30 animate-pulse" />
-              </div>
-              
-              {/* Subtitle */}
-              <p className="text-3xl md:text-4xl text-white font-semibold mt-6 drop-shadow-lg animate-in slide-in-from-bottom duration-1000 animate-text-shimmer">
-                Pirates of The FATUnian
-              </p>
+                  {/* Bubbles */}
+                  {[...Array(5)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute text-3xl"
+                      style={{
+                        left: `${20 + i * 15}%`,
+                        bottom: '10%'
+                      }}
+                      animate={{
+                        y: [-50, -150],
+                        x: [(i - 2) * 10, (i - 2) * -10],
+                        opacity: [0, 1, 0],
+                        scale: [0.5, 1, 0.5]
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        delay: i * 0.3
+                      }}
+                    >
+                      💧
+                    </motion.div>
+                  ))}
+                </div>
 
-              {/* Decorative Elements with better positioning */}
-              <div className="absolute top-0 left-[15%] text-5xl animate-spin-slow-reverse">⭐</div>
-              <div className="absolute top-0 right-[15%] text-6xl animate-ping-slow">✨</div>
-              <div className="absolute -bottom-8 left-[25%] text-4xl animate-bounce-slow">🎯</div>
-              <div className="absolute -bottom-10 right-[25%] text-5xl animate-pulse-slow">🎁</div>
-              <div className="absolute top-20 left-[5%] text-4xl animate-float-diagonal-1">💎</div>
-              <div className="absolute top-20 right-[5%] text-4xl animate-float-diagonal-2">🏆</div>
-            </div>
+                <motion.h1 
+                  className="mt-8 text-5xl font-black text-amber-900"
+                  style={{ fontFamily: 'Pirata One, serif' }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  เปิดขวดสมบัติ...
+                </motion.h1>
+              </motion.div>
+            </motion.div>
+          )}
 
-            {/* Particle Effects */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              {[...Array(20)].map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute w-2 h-2 bg-yellow-300 rounded-full animate-particle"
-                  style={{
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 100}%`,
-                    animationDelay: `${Math.random() * 2}s`,
-                    animationDuration: `${2 + Math.random() * 3}s`,
+          {/* Phase 3: Treasure Reveal + Welcome */}
+          {phase === "treasure" && (
+            <motion.div
+              key="treasure"
+              className="text-center space-y-8"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+            >
+              {/* Treasure Chest */}
+              <motion.div
+                className="relative inline-block"
+                animate={{
+                  y: [0, -15, 0],
+                  rotateY: [0, 360]
+                }}
+                transition={{
+                  y: {
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  },
+                  rotateY: {
+                    duration: 8,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }
+                }}
+              >
+                <div className="text-[180px] drop-shadow-2xl">
+                  💎
+                </div>
+
+                {/* Explosion of coins */}
+                {[...Array(12)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute text-4xl"
+                    style={{
+                      left: '50%',
+                      top: '50%'
+                    }}
+                    initial={{ x: 0, y: 0, scale: 0 }}
+                    animate={{
+                      x: Math.cos((i / 12) * Math.PI * 2) * 150,
+                      y: Math.sin((i / 12) * Math.PI * 2) * 150,
+                      scale: [0, 1.5, 1],
+                      rotate: [0, 360]
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      repeatDelay: 1,
+                      ease: "easeOut"
+                    }}
+                  >
+                    🪙
+                  </motion.div>
+                ))}
+
+                {/* Shine effect */}
+                <motion.div
+                  className="absolute inset-0 bg-yellow-400 rounded-full blur-3xl"
+                  animate={{
+                    opacity: [0.5, 0.8, 0.5],
+                    scale: [0.8, 1.5, 0.8]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity
                   }}
                 />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+              </motion.div>
+
+              {/* Welcome Text */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="space-y-4"
+              >
+                <motion.h1 
+                  className="text-6xl md:text-7xl font-black text-amber-900"
+                  style={{ fontFamily: 'Pirata One, serif' }}
+                  animate={{
+                    textShadow: [
+                      '0 0 20px rgba(217, 119, 6, 0.5)',
+                      '0 0 40px rgba(217, 119, 6, 0.8)',
+                      '0 0 20px rgba(217, 119, 6, 0.5)'
+                    ]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity
+                  }}
+                >
+                  ยินดีต้อนรับ!
+                </motion.h1>
+
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.8, type: "spring", stiffness: 200 }}
+                >
+                  <h2 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 bg-clip-text text-transparent">
+                    FATU Treasure Quest
+                  </h2>
+                </motion.div>
+
+                <motion.div
+                  className="flex items-center justify-center gap-3 text-5xl"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.2 }}
+                >
+                  <motion.span
+                    animate={{ rotate: [0, 20, -20, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    🏴‍☠️
+                  </motion.span>
+                  <motion.span
+                    animate={{ rotate: [0, -15, 15, 0] }}
+                    transition={{ duration: 2.5, repeat: Infinity }}
+                  >
+                    ⚓
+                  </motion.span>
+                  <motion.span
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    💰
+                  </motion.span>
+                </motion.div>
+
+                <motion.p
+                  className="text-2xl font-bold text-amber-800"
+                  style={{ fontFamily: 'Pirata One, serif' }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.5 }}
+                >
+                  Pirates of The FATUnian
+                </motion.p>
+              </motion.div>
+
+              {/* Particle effects */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                {[...Array(30)].map((_, i) => (
+                  <motion.div
+                    key={`particle-${i}`}
+                    className="absolute w-2 h-2 bg-yellow-400 rounded-full"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`
+                    }}
+                    animate={{
+                      y: [0, -100, -200],
+                      opacity: [0, 1, 0],
+                      scale: [0, 1.5, 0]
+                    }}
+                    transition={{
+                      duration: 2 + Math.random() * 2,
+                      repeat: Infinity,
+                      delay: Math.random() * 2
+                    }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Progress Indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3">
-        {["waves", "ship", "pirate", "welcome"].map((p, i) => {
-          const currentIndex = ["waves", "ship", "ship-out", "pirate", "pirate-out", "welcome"].indexOf(phase);
-          const isActive = i <= Math.floor(currentIndex / 2);
+      <motion.div 
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        {["map", "bottle", "treasure"].map((p, i) => {
+          const currentIndex = ["map", "bottle", "treasure"].indexOf(phase);
+          const isActive = i <= currentIndex;
           return (
-            <div
+            <motion.div
               key={p}
               className={`h-3 rounded-full transition-all duration-500 ${
-                isActive ? "w-20 bg-white shadow-lg" : "w-12 bg-white/30"
+                isActive 
+                  ? "w-16 bg-amber-700 shadow-lg" 
+                  : "w-8 bg-amber-300"
               }`}
+              animate={{
+                scale: isActive ? [1, 1.1, 1] : 1
+              }}
+              transition={{
+                duration: 0.5,
+                repeat: isActive ? Infinity : 0
+              }}
             />
           );
         })}
-      </div>
+      </motion.div>
 
-      {/* Enhanced CSS Animations */}
-      <style>{`
-        @keyframes wave1 {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        
-        @keyframes wave2 {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        
-        @keyframes wave3 {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        
-        @keyframes wave-flag {
-          0%, 100% { transform: rotate(-5deg); }
-          50% { transform: rotate(15deg); }
-        }
-        
-        @keyframes wave-hand {
-          0%, 100% { transform: rotate(-10deg) scale(1); }
-          50% { transform: rotate(10deg) scale(1.05); }
-        }
-        
-        @keyframes treasure-bounce {
-          0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
-          25% { transform: translateY(-20px) rotate(-5deg) scale(1.1); }
-          75% { transform: translateY(-10px) rotate(5deg) scale(1.05); }
-        }
-        
-        @keyframes splash-1 {
-          0% { transform: translateY(0) scale(0); opacity: 1; }
-          100% { transform: translateY(-40px) scale(2); opacity: 0; }
-        }
-        
-        @keyframes splash-2 {
-          0% { transform: translateY(0) scale(0); opacity: 1; }
-          100% { transform: translateY(-50px) scale(2.5); opacity: 0; }
-        }
-        
-        @keyframes splash-3 {
-          0% { transform: translateY(0) scale(0); opacity: 1; }
-          100% { transform: translateY(-35px) scale(1.8); opacity: 0; }
-        }
-        
-        @keyframes sparkle-1 {
-          0%, 100% { transform: scale(0) rotate(0deg); opacity: 0; }
-          50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
-        }
-        
-        @keyframes sparkle-2 {
-          0%, 100% { transform: scale(0) rotate(0deg); opacity: 0; }
-          50% { transform: scale(1.3) rotate(-180deg); opacity: 1; }
-        }
-        
-        @keyframes sparkle-3 {
-          0%, 100% { transform: scale(0) rotate(0deg); opacity: 0; }
-          50% { transform: scale(1.4) rotate(90deg); opacity: 1; }
-        }
-        
-        @keyframes float-cloud-1 {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(30px); }
-        }
-        
-        @keyframes float-cloud-2 {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(-40px); }
-        }
-        
-        @keyframes float-cloud-3 {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(20px); }
-        }
-        
-        @keyframes fly-bird-1 {
-          0% { transform: translateX(-100px) translateY(0); }
-          100% { transform: translateX(100vw) translateY(-50px); }
-        }
-        
-        @keyframes fly-bird-2 {
-          0% { transform: translateX(-150px) translateY(0); }
-          100% { transform: translateX(100vw) translateY(-30px); }
-        }
-        
-        @keyframes fly-bird-3 {
-          0% { transform: translateX(-200px) translateY(0) scale(1); }
-          50% { transform: translateX(50vw) translateY(-40px) scale(1.2); }
-          100% { transform: translateX(100vw) translateY(-20px) scale(1); }
-        }
-        
-        @keyframes dolphin-jump-1 {
-          0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0; }
-          10%, 90% { opacity: 1; }
-          50% { transform: translateY(-120px) rotate(360deg); }
-        }
-        
-        @keyframes dolphin-jump-2 {
-          0%, 100% { transform: translateY(0) rotate(0deg) scaleX(1); opacity: 0; }
-          10%, 90% { opacity: 1; }
-          50% { transform: translateY(-100px) rotate(-360deg) scaleX(-1); }
-        }
-        
-        @keyframes fish-swim-1 {
-          0%, 100% { transform: translateX(0) translateY(0) scaleX(1); }
-          50% { transform: translateX(100px) translateY(-20px) scaleX(-1); }
-        }
-        
-        @keyframes fish-swim-2 {
-          0%, 100% { transform: translateX(0) translateY(0) scaleX(-1); }
-          50% { transform: translateX(-80px) translateY(20px) scaleX(1); }
-        }
-        
-        @keyframes coin-fall-1 {
-          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-        }
-        
-        @keyframes coin-fall-2 {
-          0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-          100% { transform: translateY(100vh) rotate(-720deg) scale(1.5); opacity: 0; }
-        }
-        
-        @keyframes coin-fall-3 {
-          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
-        }
-        
-        @keyframes coin-fall-4 {
-          0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-          100% { transform: translateY(100vh) rotate(-540deg) scale(0.8); opacity: 0; }
-        }
-        
-        @keyframes twinkle-1 {
-          0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
-          50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
-        }
-        
-        @keyframes twinkle-2 {
-          0%, 100% { transform: scale(0.8) rotate(0deg); opacity: 0.3; }
-          50% { transform: scale(1.3) rotate(-180deg); opacity: 1; }
-        }
-        
-        @keyframes twinkle-3 {
-          0%, 100% { transform: scale(1.2) rotate(0deg); opacity: 0.6; }
-          50% { transform: scale(1.8) rotate(360deg); opacity: 1; }
-        }
-        
-        @keyframes float-cloud-4 {
-          0%, 100% { transform: translateX(0) translateY(0); }
-          50% { transform: translateX(-50px) translateY(10px); }
-        }
-        
-        @keyframes float-cloud-5 {
-          0%, 100% { transform: translateX(0) translateY(0); }
-          50% { transform: translateX(40px) translateY(-10px); }
-        }
-        
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        
-        @keyframes ship-rock {
-          0%, 100% { transform: rotate(-2deg) translateY(0); }
-          50% { transform: rotate(2deg) translateY(-5px); }
-        }
-        
-        @keyframes sail-billow {
-          0%, 100% { transform: translateX(-50%) scaleX(1); }
-          50% { transform: translateX(-50%) scaleX(1.05); }
-        }
-        
-        @keyframes float-diagonal-1 {
-          0%, 100% { transform: translate(0, 0) rotate(0deg); }
-          50% { transform: translate(20px, -20px) rotate(180deg); }
-        }
-        
-        @keyframes float-diagonal-2 {
-          0%, 100% { transform: translate(0, 0) rotate(0deg); }
-          50% { transform: translate(-20px, -20px) rotate(-180deg); }
-        }
-        
-        @keyframes particle {
-          0% { transform: translateY(0) scale(1); opacity: 1; }
-          100% { transform: translateY(-200px) scale(0); opacity: 0; }
-        }
-        
-        @keyframes gradient-x {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
-        
-        @keyframes text-glow {
-          0%, 100% { text-shadow: 0 0 10px rgba(var(--primary), 0.5); }
-          50% { text-shadow: 0 0 20px rgba(var(--primary), 1); }
-        }
-        
-        @keyframes text-shimmer {
-          0%, 100% { opacity: 0.8; }
-          50% { opacity: 1; }
-        }
-        
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.8; transform: scale(1.05); }
-        }
-        
-        @keyframes bounce-slow {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-15px); }
-        }
-        
-        @keyframes ping-slow {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.3); opacity: 0; }
-        }
-        
-        @keyframes spin-slow-reverse {
-          from { transform: rotate(360deg); }
-          to { transform: rotate(0deg); }
-        }
-        
-        .animate-wave-flag {
-          animation: wave-flag 1.5s ease-in-out infinite;
-        }
-        
-        .animate-wave-hand {
-          animation: wave-hand 2s ease-in-out infinite;
-        }
-        
-        .animate-treasure-bounce {
-          animation: treasure-bounce 2s ease-in-out infinite;
-        }
-        
-        .animate-splash-1 {
-          animation: splash-1 1s ease-out infinite;
-        }
-        
-        .animate-splash-2 {
-          animation: splash-2 1.2s ease-out infinite 0.2s;
-        }
-        
-        .animate-splash-3 {
-          animation: splash-3 1s ease-out infinite 0.4s;
-        }
-        
-        .animate-sparkle-1 {
-          animation: sparkle-1 2s ease-in-out infinite;
-        }
-        
-        .animate-sparkle-2 {
-          animation: sparkle-2 2s ease-in-out infinite 0.3s;
-        }
-        
-        .animate-sparkle-3 {
-          animation: sparkle-3 2s ease-in-out infinite 0.6s;
-        }
-        
-        .animate-float-cloud-1 {
-          animation: float-cloud-1 8s ease-in-out infinite;
-        }
-        
-        .animate-float-cloud-2 {
-          animation: float-cloud-2 10s ease-in-out infinite;
-        }
-        
-        .animate-float-cloud-3 {
-          animation: float-cloud-3 7s ease-in-out infinite;
-        }
-        
-        .animate-fly-bird-1 {
-          animation: fly-bird-1 20s linear infinite;
-        }
-        
-        .animate-fly-bird-2 {
-          animation: fly-bird-2 25s linear infinite 5s;
-        }
-        
-        .animate-float-diagonal-1 {
-          animation: float-diagonal-1 4s ease-in-out infinite;
-        }
-        
-        .animate-float-diagonal-2 {
-          animation: float-diagonal-2 4s ease-in-out infinite 0.5s;
-        }
-        
-        .animate-particle {
-          animation: particle linear infinite;
-        }
-        
-        .animate-gradient-x {
-          background-size: 200% auto;
-          animation: gradient-x 3s ease infinite;
-        }
-        
-        .animate-text-glow {
-          animation: text-glow 2s ease-in-out infinite;
-        }
-        
-        .animate-text-shimmer {
-          animation: text-shimmer 2s ease-in-out infinite;
-        }
-        
-        .animate-pulse-slow {
-          animation: pulse-slow 3s ease-in-out infinite;
-        }
-        
-        .animate-bounce-slow {
-          animation: bounce-slow 2s ease-in-out infinite;
-        }
-        
-        .animate-ping-slow {
-          animation: ping-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite;
-        }
-        
-        .animate-spin-slow-reverse {
-          animation: spin-slow-reverse 8s linear infinite;
-        }
-        
-        .animate-spin-slow {
-          animation: spin-slow 10s linear infinite;
-        }
-        
-        .animate-fly-bird-3 {
-          animation: fly-bird-3 18s linear infinite 2s;
-        }
-        
-        .animate-dolphin-jump-1 {
-          animation: dolphin-jump-1 4s ease-in-out infinite;
-        }
-        
-        .animate-dolphin-jump-2 {
-          animation: dolphin-jump-2 5s ease-in-out infinite 1s;
-        }
-        
-        .animate-fish-swim-1 {
-          animation: fish-swim-1 6s ease-in-out infinite;
-        }
-        
-        .animate-fish-swim-2 {
-          animation: fish-swim-2 7s ease-in-out infinite 1s;
-        }
-        
-        .animate-coin-fall-1 {
-          animation: coin-fall-1 3s ease-in infinite;
-        }
-        
-        .animate-coin-fall-2 {
-          animation: coin-fall-2 3.5s ease-in infinite 0.5s;
-        }
-        
-        .animate-coin-fall-3 {
-          animation: coin-fall-3 4s ease-in infinite 1s;
-        }
-        
-        .animate-coin-fall-4 {
-          animation: coin-fall-4 3.2s ease-in infinite 1.5s;
-        }
-        
-        .animate-twinkle-1 {
-          animation: twinkle-1 2s ease-in-out infinite;
-        }
-        
-        .animate-twinkle-2 {
-          animation: twinkle-2 2.5s ease-in-out infinite 0.5s;
-        }
-        
-        .animate-twinkle-3 {
-          animation: twinkle-3 3s ease-in-out infinite 1s;
-        }
-        
-        .animate-float-cloud-4 {
-          animation: float-cloud-4 12s ease-in-out infinite;
-        }
-        
-        .animate-float-cloud-5 {
-          animation: float-cloud-5 9s ease-in-out infinite;
-        }
-        
-        .animate-ship-rock {
-          animation: ship-rock 3s ease-in-out infinite;
-        }
-        
-        .animate-sail-billow {
-          animation: sail-billow 2s ease-in-out infinite;
-        }
-      `}</style>
-    </div>
+      {/* Compass decoration */}
+      <motion.div
+        className="absolute top-10 left-10 text-6xl"
+        animate={{ rotate: 360 }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+      >
+        🧭
+      </motion.div>
+
+      {/* Anchor decoration */}
+      <motion.div
+        className="absolute bottom-20 right-10 text-5xl"
+        animate={{
+          y: [0, -10, 0],
+          rotate: [0, 10, -10, 0]
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity
+        }}
+      >
+        ⚓
+      </motion.div>
+    </motion.div>
   );
 };
