@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { X, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +46,7 @@ export const BottleQuestModal = ({
   onCheckIn,
   onScanQR
 }: BottleQuestModalProps) => {
+  const navigate = useNavigate();
   const [phase, setPhase] = useState<"water" | "bottle" | "opening" | "scroll">("water");
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
@@ -465,40 +467,32 @@ export const BottleQuestModal = ({
 
               {/* Action buttons */}
               <div className="flex justify-center gap-3 pt-3 sm:pt-4">
-                {!alreadyCheckedIn && locationId && onCheckIn && (
+                {!alreadyCheckedIn && locationId && (
                   <Button
-                    onClick={async () => {
-                      setIsCheckingIn(true);
-                      try {
-                        await onCheckIn(locationId, qrSignature, qrVersion);
-                        // Give user time to see the success animation
-                        setTimeout(() => {
-                          setIsCheckingIn(false);
-                          onClose();
-                        }, 2000);
-                      } catch (error) {
-                        console.error('Check-in error:', error);
-                        setIsCheckingIn(false);
-                        toast({
-                          title: "เช็กอินไม่สำเร็จ",
-                          description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
-                          variant: "destructive",
-                        });
+                    onClick={() => {
+                      // Navigate to checkin page with location info
+                      const params = new URLSearchParams();
+                      params.set('loc', locationId.toString());
+                      if (qrSignature) {
+                        params.set('sig', qrSignature);
                       }
+                      if (qrVersion) {
+                        params.set('v', qrVersion);
+                      }
+                      navigate(`/checkin?${params.toString()}`);
                     }}
                     size="lg"
-                    disabled={isCheckingIn}
                     className="pirate-button text-sm sm:text-base md:text-lg px-6 sm:px-8 border-4 border-amber-700 hover:scale-105 transition-transform"
                     style={{ fontFamily: 'Pirata One, serif' }}
                   >
-                    {isCheckingIn ? 'กำลังเช็กอิน...' : '✓ เช็กอินเลย! ⚓'}
+                    ✓ เช็กอินเลย! ⚓
                   </Button>
                 )}
                 <Button
                   onClick={onClose}
                   size="lg"
                   className="pirate-button text-sm sm:text-base md:text-lg px-6 sm:px-8"
-                  variant={alreadyCheckedIn || !onCheckIn ? "default" : "outline"}
+                  variant={alreadyCheckedIn ? "default" : "outline"}
                 >
                   {alreadyCheckedIn ? 'รับทราบแล้ว ⚓' : 'มองดูก่อน'}
                 </Button>
