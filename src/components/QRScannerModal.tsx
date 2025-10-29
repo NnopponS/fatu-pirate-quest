@@ -77,13 +77,19 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
             const code = jsQR(imageData.data, imageData.width, imageData.height);
 
             if (code?.data) {
+              console.log('✅ QR Code detected:', code.data);
               setHasDetected(true);
               isActiveRef.current = false;
               stopScanning();
               
+              // Call onScan immediately, then close modal
+              console.log('📤 Calling onScan callback...');
+              onScan(code.data);
+              
+              // Close modal after showing success animation
               setTimeout(() => {
-                onScan(code.data);
-              }, 500);
+                onClose();
+              }, 1500);
               return;
             }
           }

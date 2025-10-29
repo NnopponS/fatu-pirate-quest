@@ -233,13 +233,16 @@ const Map = () => {
 
   const handleQrScan = useCallback((value: string) => {
     console.log("📱 QR Code received in Map.tsx:", value);
-    setScannerOpen(false);
+    
     if (!value) {
       console.log("❌ Empty QR value, returning");
       return;
     }
       
     console.log("✅ Processing QR Code:", value);
+    
+    // Close scanner modal
+    setScannerOpen(false);
       
     let parsedData: typeof scannedQrData = {
       raw: value,
@@ -338,7 +341,7 @@ const Map = () => {
       setScannedQrData(parsedData);
       setQrPreviewOpen(true);
     }
-  }, [locations, participantId]);
+  }, [locations, participantId, setScannerOpen, setQuestModalOpen, setQuestLocation, setScannedQrData, setQrPreviewOpen]);
 
   return (
     <PirateBackdrop>
