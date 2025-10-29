@@ -324,8 +324,16 @@ const Checkin = () => {
         <div className="pirate-card px-8 py-12 text-center space-y-6">
           {status === "loading" && (
             <>
-              <div className="mx-auto h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <p className="text-lg text-foreground/70">กำลังโหลดข้อมูล...</p>
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-400/30 to-orange-600/30 rounded-full blur-3xl animate-pulse" />
+                <div className="relative flex items-center justify-center">
+                  <ShipWheel className="h-20 w-20 text-amber-600 animate-spin" style={{ animationDuration: '2s' }} />
+                </div>
+              </div>
+              <h2 className="text-3xl font-bold text-amber-900 mb-2" style={{ fontFamily: 'Pirata One, serif' }}>
+                ⚓ กำลังโหลดข้อมูล...
+              </h2>
+              <p className="text-lg text-amber-700">กรุณารอสักครู่ ลูกเรือ!</p>
             </>
           )}
 
@@ -515,8 +523,19 @@ const Checkin = () => {
 
           {status === "processing" && (
             <>
-              <div className="mx-auto h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <p className="text-lg text-foreground/70">กำลังทำการเช็กอิน...</p>
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-400/30 to-amber-600/30 rounded-full blur-3xl animate-pulse" />
+                <div className="relative flex items-center justify-center">
+                  <div className="relative">
+                    <CheckCircle2 className="h-24 w-24 text-green-600 animate-pulse" />
+                    <ShipWheel className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-12 w-12 text-amber-500 animate-spin" style={{ animationDuration: '1.5s' }} />
+                  </div>
+                </div>
+              </div>
+              <h2 className="text-4xl font-bold text-amber-900 mb-2" style={{ fontFamily: 'Pirata One, serif' }}>
+                ⚓ กำลังทำการเช็กอิน...
+              </h2>
+              <p className="text-lg text-amber-700">โปรดรอสักครู่ กำลังบันทึกข้อมูลของคุณ</p>
             </>
           )}
 
@@ -586,12 +605,27 @@ const Checkin = () => {
 
           {status === "error" && (
             <>
-              <XCircle className="mx-auto h-20 w-20 text-destructive animate-in fade-in zoom-in" />
-              <h2 className="text-3xl font-semibold text-destructive">เช็กอินไม่สำเร็จ</h2>
-              <p className="text-lg text-foreground/80">{message}</p>
-              <Button variant="outline" onClick={() => navigate("/map")}>
-                กลับไปยังแผนที่
-              </Button>
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-gradient-to-br from-red-400/30 to-orange-600/30 rounded-full blur-3xl animate-pulse" />
+                <div className="relative flex items-center justify-center">
+                  <XCircle className="h-24 w-24 text-red-600 animate-in fade-in zoom-in" />
+                </div>
+              </div>
+              <h2 className="text-4xl font-bold text-red-900 mb-4" style={{ fontFamily: 'Pirata One, serif' }}>
+                ⚠️ เช็กอินไม่สำเร็จ
+              </h2>
+              <div className="rounded-2xl border-4 border-red-600 bg-gradient-to-br from-red-50 to-orange-50 p-6 mb-6 shadow-xl relative overflow-hidden" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(139,69,19,0.15) 1px, transparent 0)', backgroundSize: '40px 40px' }}>
+                <p className="text-lg text-red-900 font-semibold leading-relaxed">{message}</p>
+              </div>
+              <div className="flex gap-3">
+                <Button 
+                  onClick={() => navigate("/map")}
+                  size="lg"
+                  className="flex-1 border-4 border-amber-600 text-amber-900 hover:bg-amber-100 font-bold"
+                >
+                  ⚓ กลับไปยังแผนที่
+                </Button>
+              </div>
             </>
           )}
 
