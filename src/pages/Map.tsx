@@ -99,10 +99,13 @@ const Map = () => {
         }));
         
         setLocations(transformedLocations);
+        console.log("📊 Map data checkins:", data.checkins);
+        console.log("📊 Map data checkins length:", data.checkins?.length);
         setCheckins(data.checkins);
         setPoints(data.points ?? 0);
         setPointsRequired(data.pointsRequired);
         setSubEventCheckins(data.subEventCheckins || []);
+        console.log("📊 Sub-event checkins:", data.subEventCheckins);
         
         // ไม่ต้องตั้งค่า completedSubEvents ที่นี่ เพราะเราจะ filter ใน BottleQuestModal
         setCompletedSubEvents([]);
@@ -609,7 +612,7 @@ const Map = () => {
                   </div>
                   <div className="flex items-center gap-3 sm:gap-4">
                     <div className="text-center bg-white border-2 border-amber-600 px-4 sm:px-6 py-3 rounded-xl shadow-lg">
-                      <p className="text-2xl sm:text-3xl md:text-4xl font-black text-amber-700">{checkins.length}</p>
+                      <p className="text-2xl sm:text-3xl md:text-4xl font-black text-amber-700">{checkins?.length || 0}</p>
                       <p className="text-xs sm:text-sm text-amber-800 font-bold">เช็กอิน</p>
                     </div>
                     <span className="text-xl sm:text-2xl text-amber-600 font-black">/</span>
