@@ -471,22 +471,19 @@ export const BottleQuestModal = ({
                       setIsCheckingIn(true);
                       try {
                         await onCheckIn(locationId, qrSignature, qrVersion);
-                        toast({
-                          title: "เช็กอินสำเร็จ! 🎉",
-                          description: "ได้รับคะแนนแล้ว ตอนนี้สามารถร่วมกิจกรรมพิเศษได้",
-                        });
+                        // Give user time to see the success animation
                         setTimeout(() => {
+                          setIsCheckingIn(false);
                           onClose();
-                        }, 1500);
+                        }, 2000);
                       } catch (error) {
                         console.error('Check-in error:', error);
+                        setIsCheckingIn(false);
                         toast({
                           title: "เช็กอินไม่สำเร็จ",
                           description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
                           variant: "destructive",
                         });
-                      } finally {
-                        setIsCheckingIn(false);
                       }
                     }}
                     size="lg"

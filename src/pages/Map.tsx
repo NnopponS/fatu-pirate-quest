@@ -301,6 +301,25 @@ const Map = () => {
       
     console.log("Setting scanned QR data:", parsedData);
     
+    // Handle SUBEVENT QR codes - navigate to checkin page
+    if (parsedData.isValid && parsedData.type === 'subevent' && parsedData.subEventId && participantId) {
+      console.log("Navigating to checkin page for sub-event:", parsedData.subEventId);
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.set('subevent', parsedData.subEventId);
+      if (parsedData.sig) {
+        params.set('sig', parsedData.sig);
+      }
+      if (parsedData.version) {
+        params.set('v', parsedData.version);
+      }
+      
+      // Navigate to checkin page
+      navigate(`/checkin?${params.toString()}`);
+      return;
+    }
+    
     // If it's a valid checkin QR and location has sub-events, show bottle animation
     if (parsedData.isValid && parsedData.type === 'checkin' && parsedData.loc && participantId) {
       const locationId = parseInt(parsedData.loc);
@@ -319,11 +338,18 @@ const Map = () => {
         return; // Don't show preview dialog
       }
       
-      // If location exists but no sub-events, show error that needs sub-events for bottle animation
+      // If location exists but no sub-events, navigate to checkin page
       if (location && (!location.sub_events || location.sub_events.length === 0)) {
-        parsedData.errorMessage = "สถานที่นี้ไม่มีกิจกรรมพิเศษ (ไม่มี Bottle Animation)";
-        setScannedQrData(parsedData);
-        setQrPreviewOpen(true);
+        // Navigate to checkin page for regular checkin
+        const params = new URLSearchParams();
+        params.set('loc', parsedData.loc);
+        if (parsedData.sig) {
+          params.set('sig', parsedData.sig);
+        }
+        if (parsedData.version) {
+          params.set('v', parsedData.version);
+        }
+        navigate(`/checkin?${params.toString()}`);
         return;
       }
       
@@ -341,7 +367,7 @@ const Map = () => {
       setScannedQrData(parsedData);
       setQrPreviewOpen(true);
     }
-  }, [locations, participantId, setScannerOpen, setQuestModalOpen, setQuestLocation, setScannedQrData, setQrPreviewOpen]);
+  }, [locations, participantId, navigate, setScannerOpen, setQuestModalOpen, setQuestLocation, setScannedQrData, setQrPreviewOpen]);
 
   return (
     <PirateBackdrop>
