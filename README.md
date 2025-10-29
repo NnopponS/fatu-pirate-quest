@@ -4,7 +4,7 @@
   <img src="public/compass-logo.svg" alt="FATU Treasure Quest Logo" width="200"/>
   
   <h3>การผจญภัยล่าสมบัติในงาน Open House 2025</h3>
-  <p>คณะศิลปกรรมศาสตร์ มหาวิทยาลัยธรรมศาสตร์ ท่าพระจันทร์</p>
+  <p>คณะศิลปกรรมศาสตร์ มหาวิทยาลัยธรรมศาสตร์ รังสิต</p>
   
   <p>
     <img src="https://img.shields.io/badge/React-18.3-blue?logo=react" alt="React"/>
