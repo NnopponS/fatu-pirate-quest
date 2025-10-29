@@ -250,32 +250,20 @@ const Map = () => {
       console.log("Parsing SUBEVENT QR parts:", parts);
       
       const subEventId = parts[1];
+      const version = parts.length >= 3 ? parts[2] : "1";
       
-      // Format: SUBEVENT|subEventId|sig|version (4 parts)
-      let sig: string | undefined;
-      let version: string | undefined;
+      // Format: SUBEVENT|subEventId|version (3 parts, fixed QR code, no signature validation)
+      // Generate a dummy signature since checkinSubEvent requires it but won't validate
+      const dummySig = await signSubEventCheckin(subEventId, todayStr(0), CHECKIN_SECRET, parseInt(version, 10));
+
+      console.log("Calling checkinSubEvent with:", { subEventId, version });
       
-      if (parts.length === 4) {
-        // Has signature: SUBEVENT|id|sig|version
-        sig = parts[2];
-        version = parts[3];
-      } else if (parts.length === 3) {
-        // No signature: SUBEVENT|id|version
-        version = parts[2];
-        // Generate signature
-        sig = await signSubEventCheckin(subEventId, todayStr(0), CHECKIN_SECRET, parseInt(version, 10) || 1);
-      }
-
-      if (!sig) {
-        throw new Error("ไม่สามารถสร้าง QR signature ได้");
-      }
-
       // Note: checkinSubEvent will be called, which already saves location_id
       const result = await checkinSubEvent(
         participantId,
         subEventId,
-        sig,
-        version ? parseInt(version, 10) : undefined
+        dummySig,
+        parseInt(version, 10)
       );
 
       toast({

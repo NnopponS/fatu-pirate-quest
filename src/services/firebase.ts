@@ -968,23 +968,14 @@ export const checkinSubEvent = async (
     throw new Error("Sub-event not found");
   }
 
-  // Validate signature
+  // Validate version only (no signature validation for fixed QR codes)
   const currentVersion = foundSubEvent.qr_code_version ?? 1;
   
   if (qrVersion !== undefined && qrVersion !== currentVersion) {
     throw new Error("QR code ไม่ถูกต้อง กรุณาใช้ QR code เวอร์ชันล่าสุด");
   }
 
-  const versionToValidate = qrVersion ?? currentVersion;
-  const signatures = await Promise.all([
-    signSubEventCheckin(subEventId, todayStr(-1), CHECKIN_SECRET, versionToValidate),
-    signSubEventCheckin(subEventId, todayStr(0), CHECKIN_SECRET, versionToValidate),
-    signSubEventCheckin(subEventId, todayStr(1), CHECKIN_SECRET, versionToValidate),
-  ]);
-
-  if (!signatures.includes(signature)) {
-    throw new Error("QR code ไม่ถูกต้องหรือหมดอายุแล้ว");
-  }
+  // No signature validation - QR code is fixed and doesn't expire
 
   // ตรวจสอบว่าเคย scan sub-event นี้แล้วหรือไม่
   const existingSubEventCheckin = await firebaseDb.get<SubEventCheckinRecord>(
