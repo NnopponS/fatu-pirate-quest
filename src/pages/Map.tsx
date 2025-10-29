@@ -592,37 +592,6 @@ const Map = () => {
             </div>
           ) : (
             <>
-              {/* Locations Header */}
-              <div 
-                className="relative overflow-hidden rounded-2xl border-4 border-amber-700 bg-[#f9f1df] px-4 sm:px-6 py-5 sm:py-6 shadow-2xl"
-                style={{
-                  backgroundImage: `radial-gradient(circle at 20px 20px, rgba(139, 115, 85, 0.1) 2px, transparent 2px)`,
-                  backgroundSize: '40px 40px'
-                }}
-              >
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl sm:text-4xl animate-bounce">🗺️</span>
-                    <div>
-                      <h2 className="text-2xl sm:text-3xl font-black text-amber-900" style={{ fontFamily: 'Pirata One, serif' }}>
-                        จุดล่าสมบัติ
-                      </h2>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="text-center bg-white border-2 border-amber-600 px-4 sm:px-6 py-3 rounded-xl shadow-lg">
-                      <p className="text-2xl sm:text-3xl md:text-4xl font-black text-amber-700">{checkins?.length || 0}</p>
-                      <p className="text-xs sm:text-sm text-amber-800 font-bold">เช็กอิน</p>
-                    </div>
-                    <span className="text-xl sm:text-2xl text-amber-600 font-black">/</span>
-                    <div className="text-center bg-white border-2 border-amber-600 px-4 sm:px-6 py-3 rounded-xl shadow-lg">
-                      <p className="text-2xl sm:text-3xl md:text-4xl font-black text-amber-700">{locations.length}</p>
-                      <p className="text-xs sm:text-sm text-amber-800 font-bold">ทั้งหมด</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
               {/* Locations Grid */}
               <div className="grid gap-8 md:grid-cols-2">
                 {locations.map((location, idx) => (
