@@ -96,22 +96,52 @@ const Login = () => {
           "ลงชื่อเข้าใช้แล้วออกเดินทาง! 💎",
         ]}
       />
-      <div className="container mx-auto max-w-3xl px-4 py-16 space-y-10 animate-fade-in">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <span className="pirate-highlight animate-scale-in">
-            <LogIn className="h-4 w-4 text-primary" />
-            ยินดีต้อนรับสู่ FATU Pirate Quest
-          </span>
-          <h1 className="pirate-heading md:text-5xl">เข้าสู่ระบบการผจญภัย</h1>
-          <p className="pirate-subheading">
-            ลงชื่อเข้าใช้เพื่อเริ่มต้นการล่าสมบัติ
-          </p>
+      <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8 animate-fade-in">
+        {/* Header Section - Treasure Map Style */}
+        <div className="relative">
+          <div 
+            className="relative overflow-hidden rounded-3xl border-8 border-amber-800 bg-[#f4e4c1] shadow-2xl"
+            style={{
+              backgroundImage: `
+                linear-gradient(0deg, transparent 24%, rgba(139, 115, 85, .05) 25%, rgba(139, 115, 85, .05) 26%, transparent 27%, transparent 74%, rgba(139, 115, 85, .05) 75%, rgba(139, 115, 85, .05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(139, 115, 85, .05) 25%, rgba(139, 115, 85, .05) 26%, transparent 27%, transparent 74%, rgba(139, 115, 85, .05) 75%, rgba(139, 115, 85, .05) 76%, transparent 77%, transparent)
+              `,
+              backgroundSize: '50px 50px'
+            }}
+          >
+            {/* Wax seal */}
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-10">
+              <div className="w-20 h-20 rounded-full bg-red-700 border-4 border-red-900 flex items-center justify-center shadow-xl">
+                <div className="text-amber-200 text-3xl">🔑</div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="pt-8 pb-6 px-6 text-center relative z-10">
+              <div className="mb-6">
+                <LogIn className="h-12 w-12 text-amber-700 mx-auto animate-pulse mb-4" />
+                <h1 className="text-4xl md:text-5xl font-black text-amber-900 mb-3" style={{ fontFamily: 'Pirata One, serif', textShadow: '2px 2px 4px rgba(0,0,0,0.2)' }}>
+                  เข้าสู่ระบบการผจญภัย
+                </h1>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-800/20 border-2 border-amber-700">
+                  <span className="text-sm md:text-base font-bold text-amber-900">ลงชื่อเข้าใช้เพื่อเริ่มต้นการล่าสมบัติ! ⚓🗺️</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
+        <div 
+          className="relative overflow-hidden rounded-2xl border-4 border-amber-700 bg-[#f9f1df] shadow-2xl p-8 space-y-6"
+          style={{
+            backgroundImage: `radial-gradient(circle at 20px 20px, rgba(139, 115, 85, 0.1) 2px, transparent 2px)`,
+            backgroundSize: '40px 40px'
+          }}
+        >
         <Tabs
           value={activeRole}
           onValueChange={(value) => setActiveRole(value as Role)}
-          className="pirate-card p-8 space-y-6 animate-slide-in"
+          className="space-y-6"
         >
           <TabsList className="grid grid-cols-2 bg-white/80">
             <TabsTrigger
@@ -218,6 +248,7 @@ const Login = () => {
             </form>
           </TabsContent>
         </Tabs>
+        </div>
 
         <div className="text-center text-sm text-foreground/70">
           ยังไม่มีบัญชี?

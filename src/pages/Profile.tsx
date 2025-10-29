@@ -196,14 +196,39 @@ const Profile = () => {
         onClose={() => setChatbotOpen(false)}
       />
       
-      <div className="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 border-2 border-primary/30 shadow-lg mb-4">
-            <User className="h-6 w-6 text-primary" />
-            <h1 className="text-3xl md:text-4xl font-bold text-primary">โปรไฟล์ลูกเรือ</h1>
+      <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8 animate-fade-in">
+        {/* Header Section - Treasure Map Style */}
+        <div className="relative">
+          <div 
+            className="relative overflow-hidden rounded-3xl border-8 border-amber-800 bg-[#f4e4c1] shadow-2xl"
+            style={{
+              backgroundImage: `
+                linear-gradient(0deg, transparent 24%, rgba(139, 115, 85, .05) 25%, rgba(139, 115, 85, .05) 26%, transparent 27%, transparent 74%, rgba(139, 115, 85, .05) 75%, rgba(139, 115, 85, .05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(139, 115, 85, .05) 25%, rgba(139, 115, 85, .05) 26%, transparent 27%, transparent 74%, rgba(139, 115, 85, .05) 75%, rgba(139, 115, 85, .05) 76%, transparent 77%, transparent)
+              `,
+              backgroundSize: '50px 50px'
+            }}
+          >
+            {/* Wax seal */}
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-10">
+              <div className="w-20 h-20 rounded-full bg-red-700 border-4 border-red-900 flex items-center justify-center shadow-xl">
+                <div className="text-amber-200 text-3xl">🆔</div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="pt-8 pb-6 px-6 text-center relative z-10">
+              <div className="mb-6">
+                <User className="h-12 w-12 text-amber-700 mx-auto animate-pulse mb-4" />
+                <h1 className="text-4xl md:text-5xl font-black text-amber-900 mb-3" style={{ fontFamily: 'Pirata One, serif', textShadow: '2px 2px 4px rgba(0,0,0,0.2)' }}>
+                  โปรไฟล์ลูกเรือ
+                </h1>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-800/20 border-2 border-amber-700">
+                  <span className="text-sm md:text-base font-bold text-amber-900">จัดการข้อมูลส่วนตัวและดูสถานะรางวัล! ⚓</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <p className="text-foreground/70">จัดการข้อมูลส่วนตัวและดูสถานะรางวัล</p>
         </div>
 
         {/* Navigation Buttons */}
