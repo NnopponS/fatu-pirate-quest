@@ -78,7 +78,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
         {[...Array(8)].map((_, i) => (
           <motion.div
             key={`coin-${i}`}
-            className="absolute text-4xl"
+            className="absolute text-2xl md:text-3xl lg:text-4xl"
             initial={{ 
               x: Math.random() * window.innerWidth, 
               y: -50,
@@ -103,7 +103,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
         {[...Array(6)].map((_, i) => (
           <motion.div
             key={`star-${i}`}
-            className="absolute text-3xl"
+            className="absolute text-xl md:text-2xl lg:text-3xl"
             style={{
               left: `${10 + Math.random() * 80}%`,
               top: `${10 + Math.random() * 30}%`
@@ -151,7 +151,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
                 {/* Map Paper */}
                 <div className="relative">
                   <motion.div
-                    className="text-[200px] drop-shadow-2xl"
+                    className="text-[100px] md:text-[150px] lg:text-[200px] drop-shadow-2xl"
                     animate={{
                       scale: [1, 1.05, 1]
                     }}
@@ -167,7 +167,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
                   {[0, 1, 2, 3].map((i) => (
                     <motion.div
                       key={i}
-                      className="absolute text-5xl"
+                      className="absolute text-2xl md:text-4xl lg:text-5xl"
                       style={{
                         left: i % 2 === 0 ? '-20%' : '110%',
                         top: i < 2 ? '-10%' : '90%'
@@ -188,7 +188,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
                 </div>
 
                 <motion.h1 
-                  className="mt-8 text-5xl font-black text-amber-900"
+                  className="mt-8 text-2xl md:text-4xl lg:text-5xl font-black text-amber-900 px-4"
                   style={{ fontFamily: 'Pirata One, serif' }}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -223,10 +223,10 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
                 }}
               >
                 {/* Ship with all details */}
-                <div className="relative scale-150">
+                <div className="relative scale-100 md:scale-125 lg:scale-150">
                   {/* Ship emoji as base */}
                   <motion.div
-                    className="text-[180px] drop-shadow-2xl"
+                    className="text-[90px] md:text-[130px] lg:text-[180px] drop-shadow-2xl"
                     animate={{
                       scale: [1, 1.02, 1]
                     }}
@@ -240,7 +240,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
 
                   {/* Pirate flag on top */}
                   <motion.div
-                    className="absolute -top-12 left-1/2 -translate-x-1/2 text-6xl"
+                    className="absolute -top-6 md:-top-10 lg:-top-12 left-1/2 -translate-x-1/2 text-3xl md:text-5xl lg:text-6xl"
                     animate={{
                       rotate: [-5, 5, -5]
                     }}
@@ -256,7 +256,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
                   {[...Array(5)].map((_, i) => (
                     <motion.div
                       key={i}
-                      className="absolute text-3xl"
+                      className="absolute text-xl md:text-2xl lg:text-3xl"
                       style={{
                         left: `${20 + i * 15}%`,
                         bottom: '-20%'
@@ -281,7 +281,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
                   {[0, 1].map((i) => (
                     <motion.div
                       key={`seagull-${i}`}
-                      className="absolute text-4xl"
+                      className="absolute text-2xl md:text-3xl lg:text-4xl"
                       style={{
                         left: i === 0 ? '-30%' : '120%',
                         top: '-40%'
@@ -302,7 +302,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
 
                   {/* Treasure chest on deck */}
                   <motion.div
-                    className="absolute top-1/3 left-1/2 -translate-x-1/2 text-3xl"
+                    className="absolute top-1/3 left-1/2 -translate-x-1/2 text-xl md:text-2xl lg:text-3xl"
                     animate={{
                       scale: [1, 1.1, 1]
                     }}
@@ -316,7 +316,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
                 </div>
 
                 <motion.h1 
-                  className="mt-12 text-5xl font-black text-amber-900"
+                  className="mt-12 text-2xl md:text-4xl lg:text-5xl font-black text-amber-900 px-4"
                   style={{ fontFamily: 'Pirata One, serif' }}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -341,7 +341,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
               <motion.div className="relative inline-block">
                 {/* Pirate Captain */}
                 <motion.div
-                  className="text-[200px] drop-shadow-2xl"
+                  className="text-[100px] md:text-[150px] lg:text-[200px] drop-shadow-2xl"
                   animate={{
                     rotate: [-5, 5, -5]
                   }}
@@ -356,13 +356,13 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
 
                 {/* Speech bubble with "อาฮอย!" */}
                 <motion.div
-                  className="absolute -top-20 -left-40 bg-white rounded-3xl px-8 py-4 shadow-2xl border-4 border-amber-700"
+                  className="absolute -top-12 md:-top-16 lg:-top-20 -left-20 md:-left-32 lg:-left-40 bg-white rounded-2xl md:rounded-3xl px-4 py-2 md:px-6 md:py-3 lg:px-8 lg:py-4 shadow-2xl border-2 md:border-3 lg:border-4 border-amber-700"
                   initial={{ scale: 0, x: -50 }}
                   animate={{ scale: 1, x: 0 }}
                   transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
                 >
                   <motion.p 
-                    className="text-5xl font-black text-amber-900 whitespace-nowrap"
+                    className="text-2xl md:text-4xl lg:text-5xl font-black text-amber-900 whitespace-nowrap"
                     style={{ fontFamily: 'Pirata One, serif' }}
                     animate={{
                       scale: [1, 1.1, 1]
@@ -389,7 +389,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
                 {[...Array(6)].map((_, i) => (
                   <motion.div
                     key={i}
-                    className="absolute text-5xl"
+                    className="absolute text-2xl md:text-4xl lg:text-5xl"
                     style={{
                       left: `${Math.cos((i / 6) * Math.PI * 2) * 120 + 50}%`,
                       top: `${Math.sin((i / 6) * Math.PI * 2) * 120 + 50}%`
@@ -412,7 +412,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
                 {[...Array(8)].map((_, i) => (
                   <motion.div
                     key={`coin-${i}`}
-                    className="absolute text-4xl"
+                    className="absolute text-2xl md:text-3xl lg:text-4xl"
                     style={{
                       left: `${10 + i * 10}%`,
                       top: '-10%'
@@ -434,7 +434,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
               </motion.div>
 
               <motion.h1 
-                className="mt-12 text-5xl font-black text-amber-900"
+                className="mt-12 text-2xl md:text-4xl lg:text-5xl font-black text-amber-900 px-4"
                 style={{ fontFamily: 'Pirata One, serif' }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -470,7 +470,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
                 {/* Bottle with glow */}
                 <div className="relative">
                   <motion.div
-                    className="text-[200px] drop-shadow-2xl"
+                    className="text-[100px] md:text-[150px] lg:text-[200px] drop-shadow-2xl"
                     animate={{
                       scale: [1, 1.1, 1]
                     }}
@@ -499,7 +499,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
                   {[...Array(5)].map((_, i) => (
                     <motion.div
                       key={i}
-                      className="absolute text-3xl"
+                      className="absolute text-xl md:text-2xl lg:text-3xl"
                       style={{
                         left: `${20 + i * 15}%`,
                         bottom: '10%'
@@ -522,7 +522,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
                 </div>
 
                 <motion.h1 
-                  className="mt-8 text-5xl font-black text-amber-900"
+                  className="mt-8 text-2xl md:text-4xl lg:text-5xl font-black text-amber-900 px-4"
                   style={{ fontFamily: 'Pirata One, serif' }}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -563,7 +563,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
                   }
                 }}
               >
-                <div className="text-[180px] drop-shadow-2xl">
+                <div className="text-[90px] md:text-[130px] lg:text-[180px] drop-shadow-2xl">
                   💎
                 </div>
 
@@ -571,15 +571,15 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
                 {[...Array(12)].map((_, i) => (
                   <motion.div
                     key={i}
-                    className="absolute text-4xl"
+                    className="absolute text-2xl md:text-3xl lg:text-4xl"
                     style={{
                       left: '50%',
                       top: '50%'
                     }}
                     initial={{ x: 0, y: 0, scale: 0 }}
                     animate={{
-                      x: Math.cos((i / 12) * Math.PI * 2) * 150,
-                      y: Math.sin((i / 12) * Math.PI * 2) * 150,
+                      x: Math.cos((i / 12) * Math.PI * 2) * (window.innerWidth < 768 ? 80 : 150),
+                      y: Math.sin((i / 12) * Math.PI * 2) * (window.innerWidth < 768 ? 80 : 150),
                       scale: [0, 1.5, 1],
                       rotate: [0, 360]
                     }}
@@ -740,7 +740,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
 
       {/* Compass decoration */}
       <motion.div
-        className="absolute top-10 left-10 text-6xl"
+        className="absolute top-6 md:top-10 left-4 md:left-10 text-3xl md:text-5xl lg:text-6xl"
         animate={{ rotate: 360 }}
         transition={{
           duration: 4,
@@ -753,7 +753,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
 
       {/* Anchor decoration */}
       <motion.div
-        className="absolute bottom-20 right-10 text-5xl"
+        className="absolute bottom-16 md:bottom-20 right-4 md:right-10 text-3xl md:text-4xl lg:text-5xl"
         animate={{
           y: [0, -10, 0],
           rotate: [0, 10, -10, 0]
