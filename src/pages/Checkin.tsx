@@ -83,12 +83,12 @@ const Checkin = () => {
           clearAppCache();
           
           // Try to get map data with retry
-          let mapData = await getMapData(participantId);
+          let mapData = await getMapData(participantId) as any;
           let foundSubEvent: any = null;
           let parentLocation: any = null;
 
           // Look for sub-event in all locations
-          for (const location of mapData.locations) {
+          for (const location of (mapData?.locations || [])) {
             if (location.sub_events && Array.isArray(location.sub_events)) {
               const subEvent = location.sub_events.find((se: any) => se.id === subEventId);
               if (subEvent) {
@@ -104,9 +104,9 @@ const Checkin = () => {
             console.log("Sub-event not found immediately, waiting and retrying...");
             await new Promise(resolve => setTimeout(resolve, 2000));
             clearAppCache();
-            mapData = await getMapData(participantId);
+            mapData = await getMapData(participantId) as any;
             
-            for (const location of mapData.locations) {
+            for (const location of (mapData?.locations || [])) {
               if (location.sub_events && Array.isArray(location.sub_events)) {
                 const subEvent = location.sub_events.find((se: any) => se.id === subEventId);
                 if (subEvent) {
@@ -121,8 +121,8 @@ const Checkin = () => {
           if (!foundSubEvent || !parentLocation) {
             console.error("Sub-event not found after retry:", {
               subEventId,
-              availableSubEvents: mapData.locations.flatMap((loc: any) => loc.sub_events || []).map((se: any) => se.id),
-              locationsCount: mapData.locations.length
+              availableSubEvents: (mapData?.locations || []).flatMap((loc: any) => loc.sub_events || []).map((se: any) => se.id),
+              locationsCount: (mapData?.locations || []).length
             });
             setStatus("error");
             setMessage("ไม่พบข้อมูลกิจกรรมนี้ กรุณารอสักครู่แล้วสแกน QR Code อีกครั้ง");
@@ -159,8 +159,8 @@ const Checkin = () => {
 
         try {
           // Load location info
-          const mapData = await getMapData(participantId);
-          const location = mapData.locations.find((l: any) => l.id === parseInt(loc, 10));
+          const mapData = await getMapData(participantId) as any;
+          const location = (mapData?.locations || []).find((l: any) => l.id === parseInt(loc, 10));
           
           if (!location) {
             setStatus("error");
@@ -197,31 +197,39 @@ const Checkin = () => {
 
     try {
       if (isSubEvent && subEventInfo) {
-        // Sub-event checkin
+        // Sub-event checkin (fixed QR codes - no signature needed)
         const version = searchParams.get("v");
-        const sigFromQR = searchParams.get("sig");
         
-        // Use signature from QR or generate new one
-        const sig = sigFromQR || await signSubEventCheckin(
+        // Generate a dummy signature since checkinSubEvent expects it but won't validate it
+        const dummySig = await signSubEventCheckin(
           subEventInfo.id,
           todayStr(0),
           CHECKIN_SECRET,
           version ? parseInt(version, 10) : 1
         );
 
+        console.log("Calling checkinSubEvent with:", { 
+          subEventId: subEventInfo.id, 
+          version: version ? parseInt(version, 10) : undefined 
+        });
+
         const result = await checkinSubEvent(
           participantId,
           subEventInfo.id,
-          sig,
+          dummySig,
           version ? parseInt(version, 10) : undefined
         );
         
+        console.log("checkinSubEvent result:", result);
+        
         setStatus("success");
         setPointsAdded(result.pointsAdded || 0);
+        
+        // Sub-event now auto-checks in location
         setMessage(
           result.pointsAdded > 0
-            ? `เข้าร่วมกิจกรรมสำเร็จ! ได้รับ +${result.pointsAdded} คะแนน`
-            : "คุณเคยเข้าร่วมกิจกรรมในสถานที่นี้แล้ว (ได้คะแนนแล้ว)"
+            ? `เช็กอินสถานที่และเข้าร่วมกิจกรรมสำเร็จ! ได้รับ +${result.pointsAdded} คะแนน`
+            : "คุณเคยเข้าร่วมกิจกรรมนี้แล้ว"
         );
 
         toast({
@@ -263,10 +271,10 @@ const Checkin = () => {
       // Navigate back to map and trigger bottle animation if location has sub-events
       setTimeout(async () => {
         try {
-          const mapData = await getMapData(participantId);
+          const mapData = await getMapData(participantId) as any;
           const location = isSubEvent 
-            ? mapData.locations.find((l: any) => l.sub_events?.some((se: any) => se.id === subEventInfo?.id))
-            : mapData.locations.find((l: any) => l.id === locationInfo?.id);
+            ? (mapData?.locations || []).find((l: any) => l.sub_events?.some((se: any) => se.id === subEventInfo?.id))
+            : (mapData?.locations || []).find((l: any) => l.id === locationInfo?.id);
           
           if (location && location.sub_events && location.sub_events.length > 0) {
             // Store location info for bottle animation
