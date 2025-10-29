@@ -953,10 +953,15 @@ export const checkinSubEvent = async (
   const locationsRecord = await firebaseDb.get<Record<string, LocationRecord>>("locations");
   const locations = objectValues(locationsRecord);
 
+  console.log("🔍 Searching for sub-event:", subEventId);
+  console.log("📋 Total locations:", locations.length);
+
   for (const location of locations) {
     if (location.sub_events) {
+      console.log(`  Checking location ${location.name} (${location.sub_events.length} sub-events)`);
       const subEvent = location.sub_events.find((se) => se.id === subEventId);
       if (subEvent) {
+        console.log("✅ Found sub-event:", subEvent);
         foundSubEvent = subEvent;
         parentLocation = location;
         break;
@@ -965,7 +970,8 @@ export const checkinSubEvent = async (
   }
 
   if (!foundSubEvent || !parentLocation) {
-    throw new Error("Sub-event not found");
+    console.error("❌ Sub-event not found:", subEventId);
+    throw new Error(`ไม่พบกิจกรรมที่มี ID: ${subEventId} กรุณาตรวจสอบ QR Code`);
   }
 
   // Fixed QR codes - no version or signature validation needed
