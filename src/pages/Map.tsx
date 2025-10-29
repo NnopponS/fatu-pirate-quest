@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getMapData, checkinParticipant } from "@/services/firebase";
+import { getMapData, checkinParticipant, checkinSubEvent } from "@/services/firebase";
 import { LocationCard } from "@/components/LocationCard";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,6 +12,8 @@ import { PirateCharacter } from "@/components/PirateCharacter";
 import { BottleQuestModal } from "@/components/BottleQuestModal";
 import { PirateChatbot } from "@/components/PirateChatbot";
 import { QRScannerModal } from "@/components/QRScannerModal";
+import { signSubEventCheckin, todayStr } from "@/lib/crypto";
+import { CHECKIN_SECRET } from "@/lib/constants";
 
 interface SubEventEntry {
   id: string;
@@ -231,6 +233,47 @@ const Map = () => {
     }
   }, [scannedQrData, participantId, toast, loadData]);
 
+  const handleSubEventQrScan = useCallback(async (value: string) => {
+    console.log("📱 Sub-event QR Code scanned from bottle modal:", value);
+    
+    if (!value || !value.startsWith("SUBEVENT|") || !participantId) {
+      toast({
+        title: "QR Code ไม่ถูกต้อง",
+        description: "กรุณาสแกน QR Code ของกิจกรรม",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const parts = value.split("|");
+      const subEventId = parts[1];
+      const sig = parts[2] || await signSubEventCheckin(subEventId, todayStr(0), CHECKIN_SECRET, 1);
+      const version = parts[3];
+
+      const result = await checkinSubEvent(
+        participantId,
+        subEventId,
+        sig,
+        version ? parseInt(version, 10) : undefined
+      );
+
+      toast({
+        title: result.pointsAdded > 0 ? "เข้าร่วมกิจกรรมสำเร็จ! 🎉" : "บันทึกการเข้าร่วมแล้ว",
+        description: result.pointsAdded > 0 ? `ได้รับ +${result.pointsAdded} คะแนน` : "คุณเคยเข้าร่วมกิจกรรมนี้แล้ว",
+      });
+
+      // Reload data to update UI
+      loadData();
+    } catch (error) {
+      toast({
+        title: "เช็กอินกิจกรรมไม่สำเร็จ",
+        description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
+        variant: "destructive",
+      });
+    }
+  }, [participantId, toast, loadData]);
+
   const handleQrScan = useCallback((value: string) => {
     console.log("📱 QR Code received in Map.tsx:", value);
     
@@ -301,23 +344,29 @@ const Map = () => {
       
     console.log("Setting scanned QR data:", parsedData);
     
-    // Handle SUBEVENT QR codes - navigate to checkin page
+    // Handle SUBEVENT QR codes - find location and show bottle modal
     if (parsedData.isValid && parsedData.type === 'subevent' && parsedData.subEventId && participantId) {
-      console.log("Navigating to checkin page for sub-event:", parsedData.subEventId);
+      console.log("Processing sub-event QR code:", parsedData.subEventId);
       
-      // Build query parameters
-      const params = new URLSearchParams();
-      params.set('subevent', parsedData.subEventId);
-      if (parsedData.sig) {
-        params.set('sig', parsedData.sig);
-      }
-      if (parsedData.version) {
-        params.set('v', parsedData.version);
-      }
+      // Find the location that contains this sub-event
+      const location = locations.find(loc => 
+        loc.sub_events && loc.sub_events.some(se => se.id === parsedData.subEventId)
+      );
       
-      // Navigate to checkin page
-      navigate(`/checkin?${params.toString()}`);
-      return;
+      if (location) {
+        console.log("Found location for sub-event:", location.name);
+        setScannedQrData(parsedData);
+        setQuestLocation(location);
+        setTimeout(() => {
+          setQuestModalOpen(true);
+        }, 100);
+        return;
+      } else {
+        parsedData.errorMessage = "ไม่พบข้อมูลกิจกรรมนี้ในระบบ";
+        setScannedQrData(parsedData);
+        setQrPreviewOpen(true);
+        return;
+      }
     }
     
     // If it's a valid checkin QR and location has sub-events, show bottle animation
@@ -338,18 +387,12 @@ const Map = () => {
         return; // Don't show preview dialog
       }
       
-      // If location exists but no sub-events, navigate to checkin page
+      // If location exists but no sub-events, just show success message
       if (location && (!location.sub_events || location.sub_events.length === 0)) {
-        // Navigate to checkin page for regular checkin
-        const params = new URLSearchParams();
-        params.set('loc', parsedData.loc);
-        if (parsedData.sig) {
-          params.set('sig', parsedData.sig);
-        }
-        if (parsedData.version) {
-          params.set('v', parsedData.version);
-        }
-        navigate(`/checkin?${params.toString()}`);
+        toast({
+          title: "✅ สแกน QR Code สำเร็จ",
+          description: `สถานที่: ${location.name} - กรุณาเช็กอินผ่านระบบหลัก`,
+        });
         return;
       }
       
@@ -760,6 +803,7 @@ const Map = () => {
         qrSignature={scannedQrData?.sig}
         qrVersion={scannedQrData?.version}
         onCheckIn={handleCheckInFromModal}
+        onScanQR={handleSubEventQrScan}
       />
     </PirateBackdrop>
   );
