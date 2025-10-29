@@ -123,7 +123,7 @@ const Onboarding = () => {
                 <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-semibold text-purple-900">ตัวอย่างกิจกรรม:</p>
-                  <p className="text-sm text-purple-800">Workshop, เกม, นิทรรศการ, การแสดง</p>
+                  <p className="text-sm text-purple-800">ทุก Workshop ทั้ง 4 สถานที่</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">

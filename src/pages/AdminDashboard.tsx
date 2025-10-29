@@ -59,12 +59,12 @@ import { AdminParticipantManager } from "@/components/AdminParticipantManager";
 import { HeroCardsTab } from "@/components/HeroCardsTabContent";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from 'xlsx';
-import {
-  getGoogleSheetsSettings,
-  saveGoogleSheetsSettings,
-  exportAllDataToGoogleSheets,
-  type GoogleSheetsSettings,
-} from "@/services/googleSheets";
+import { 
+  exportToExcel, 
+  exportParticipantsOnly, 
+  exportStatisticsOnly,
+  exportPrizesOnly
+} from "@/services/excelExport";
 import { Switch } from "@/components/ui/switch";
 
 interface ParticipantRow {
@@ -156,12 +156,7 @@ const AdminDashboard = () => {
     order: "1"
   });
   const [searchQuery, setSearchQuery] = useState(""); // ✅ เพิ่ม search state
-  const [googleSheetsSettings, setGoogleSheetsSettings] = useState<GoogleSheetsSettings>({
-    enabled: false,
-    spreadsheetId: "",
-    range: "A1",
-  });
-  const [syncingToGoogleSheets, setSyncingToGoogleSheets] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("participants");
 
   const adminUsername = useMemo(() => localStorage.getItem("adminUsername") ?? "admin", []);
@@ -219,21 +214,6 @@ const AdminDashboard = () => {
     setToken(sessionToken);
     fetchDashboard(sessionToken);
   }, [fetchDashboard, navigate]);
-
-  // Load Google Sheets settings
-  useEffect(() => {
-    const loadGoogleSheetsSettings = async () => {
-      try {
-        const settings = await getGoogleSheetsSettings();
-        if (settings) {
-          setGoogleSheetsSettings(settings);
-        }
-      } catch (error) {
-        console.error("Error loading Google Sheets settings:", error);
-      }
-    };
-    loadGoogleSheetsSettings();
-  }, []);
 
   const handleLocationChange = (index: number, field: keyof LocationRow, value: string) => {
     setLocationDrafts((prev) => {
@@ -947,59 +927,57 @@ const AdminDashboard = () => {
   };
 
   // Google Sheets functions
-  const handleGoogleSheetsSettingsChange = (field: keyof GoogleSheetsSettings, value: any) => {
-    setGoogleSheetsSettings((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const saveGoogleSheetsConfig = async () => {
-    if (!token) return;
-    
-    try {
-      await saveGoogleSheetsSettings(token, googleSheetsSettings);
+  // Excel Export Functions
+  const handleExportToExcel = async (type: 'all' | 'participants' | 'statistics' | 'prizes' = 'all') => {
+    if (!dashboard) {
       toast({
-        title: "บันทึกการตั้งค่าแล้ว",
-        description: "ตั้งค่า Google Sheets ถูกบันทึกเรียบร้อย",
-      });
-    } catch (error) {
-      toast({
-        title: "บันทึกไม่สำเร็จ",
-        description: errorMessage(error),
-        variant: "destructive",
-      });
-    }
-  };
-
-  const syncToGoogleSheets = async () => {
-    if (!dashboard || !token) return;
-    
-    if (!googleSheetsSettings.enabled || !googleSheetsSettings.spreadsheetId) {
-      toast({
-        title: "กรุณากำหนดค่า",
-        description: "กรุณาเปิดใช้งานและใส่ Spreadsheet ID",
+        title: "ไม่มีข้อมูล",
+        description: "กรุณารอโหลดข้อมูลเสร็จก่อน",
         variant: "destructive",
       });
       return;
     }
 
-    setSyncingToGoogleSheets(true);
+    setExportingExcel(true);
     try {
-      await exportAllDataToGoogleSheets(dashboard as any, googleSheetsSettings);
-      toast({
-        title: "✅ ส่งข้อมูลไป Google Sheets สำเร็จ",
-        description: "ข้อมูลถูกส่งไปยัง Google Sheets เรียบร้อยแล้ว",
-      });
+      switch (type) {
+        case 'participants':
+          exportParticipantsOnly(dashboard);
+          toast({
+            title: "✅ Export สำเร็จ",
+            description: "ดาวน์โหลดข้อมูลผู้เข้าร่วมเรียบร้อยแล้ว",
+          });
+          break;
+        case 'statistics':
+          exportStatisticsOnly(dashboard);
+          toast({
+            title: "✅ Export สำเร็จ",
+            description: "ดาวน์โหลดข้อมูลสถิติเรียบร้อยแล้ว",
+          });
+          break;
+        case 'prizes':
+          exportPrizesOnly(dashboard);
+          toast({
+            title: "✅ Export สำเร็จ",
+            description: "ดาวน์โหลดข้อมูลรางวัลเรียบร้อยแล้ว",
+          });
+          break;
+        default:
+          exportToExcel(dashboard);
+          toast({
+            title: "✅ Export สำเร็จ",
+            description: "ดาวน์โหลดข้อมูลทั้งหมดเรียบร้อยแล้ว",
+          });
+      }
     } catch (error) {
-      console.error("Error syncing to Google Sheets:", error);
+      console.error("Error exporting to Excel:", error);
       toast({
-        title: "❌ ส่งข้อมูลไม่สำเร็จ",
+        title: "❌ Export ไม่สำเร็จ",
         description: errorMessage(error),
         variant: "destructive",
       });
     } finally {
-      setSyncingToGoogleSheets(false);
+      setTimeout(() => setExportingExcel(false), 500);
     }
   };
 
@@ -1825,90 +1803,95 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Google Sheets Integration */}
-                <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 px-6 py-8 shadow-lg">
-                  <div className="mb-6 flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
-                      <FileSpreadsheet className="h-6 w-6" />
+                <div className="rounded-2xl border-4 border-amber-600 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 px-6 py-6 shadow-xl">
+                  <div className="mb-6">
+                    <div className="flex items-center gap-3 mb-2">
+                      <FileSpreadsheet className="h-7 w-7 text-amber-700" />
+                      <h3 className="text-2xl font-black text-amber-900">📊 Export ข้อมูล Excel</h3>
                     </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-primary">Google Sheets Integration</h3>
-                      <p className="text-sm text-foreground/70">
-                        ส่งข้อมูลไปยัง Google Sheets แบบเรียลไทม์
-                      </p>
-                    </div>
+                    <p className="text-sm text-amber-800 font-semibold">
+                      ดาวน์โหลดข้อมูลทั้งหมดในรูปแบบ Excel พร้อมจัดรูปแบบอัตโนมัติ
+                    </p>
                   </div>
 
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-white/50 px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <span className="font-medium">เปิดใช้งาน Google Sheets</span>
-                        <span className="text-xs text-foreground/60">(Real-time Sync)</span>
+                    <Button
+                      onClick={() => handleExportToExcel('all')}
+                      disabled={exportingExcel || !dashboard}
+                      className="w-full gap-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold shadow-lg h-14 text-base"
+                      size="lg"
+                    >
+                      {exportingExcel ? (
+                        <>
+                          <RefreshCw className="h-5 w-5 animate-spin" />
+                          กำลัง Export...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-6 w-6" />
+                          📥 Export ข้อมูลทั้งหมด
+                        </>
+                      )}
+                    </Button>
+
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t-2 border-amber-300" />
                       </div>
-                      <Switch
-                        checked={googleSheetsSettings.enabled}
-                        onCheckedChange={(checked) =>
-                          handleGoogleSheetsSettingsChange("enabled", checked)
-                        }
-                      />
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-gradient-to-r from-amber-50 to-orange-50 px-3 py-1 text-amber-700 font-bold rounded-full border-2 border-amber-300">
+                          หรือ Export เฉพาะส่วน
+                        </span>
+                      </div>
                     </div>
 
-                    {googleSheetsSettings.enabled && (
-                      <div className="space-y-3 rounded-lg border border-primary/20 bg-white/30 p-4">
-                        <div>
-                          <Label htmlFor="spreadsheet-id" className="text-sm font-medium">
-                            Spreadsheet ID
-                          </Label>
-                          <Input
-                            id="spreadsheet-id"
-                            placeholder="1ABcD...xyz (จาก Google Sheets URL)"
-                            value={googleSheetsSettings.spreadsheetId || ""}
-                            onChange={(e) =>
-                              handleGoogleSheetsSettingsChange("spreadsheetId", e.target.value)
-                            }
-                            className="mt-1"
-                          />
-                          <p className="mt-1 text-xs text-foreground/60">
-                            คัดลอกจาก URL เช่น: https://docs.google.com/spreadsheets/d/{"{"}SPREADSHEET_ID{"}"}/edit
-                          </p>
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <Button
+                        onClick={() => handleExportToExcel('participants')}
+                        disabled={exportingExcel || !dashboard}
+                        variant="outline"
+                        className="gap-2 border-2 border-amber-500 hover:bg-amber-100 font-bold"
+                        size="lg"
+                      >
+                        <Users className="h-5 w-5" />
+                        👥 ผู้เข้าร่วม
+                      </Button>
 
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={saveGoogleSheetsConfig}
-                            className="flex-1 gap-2"
-                            size="sm"
-                          >
-                            <Save className="h-4 w-4" />
-                            บันทึกการตั้งค่า
-                          </Button>
-                          <Button
-                            onClick={syncToGoogleSheets}
-                            disabled={syncingToGoogleSheets || !dashboard}
-                            className="flex-1 gap-2"
-                            size="sm"
-                          >
-                            {syncingToGoogleSheets ? (
-                              <>
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                                กำลังส่งข้อมูล...
-                              </>
-                            ) : (
-                              <>
-                                <Download className="h-4 w-4" />
-                                ส่งข้อมูลไปยัง Sheets
-                              </>
-                            )}
-                          </Button>
-                        </div>
+                      <Button
+                        onClick={() => handleExportToExcel('statistics')}
+                        disabled={exportingExcel || !dashboard}
+                        variant="outline"
+                        className="gap-2 border-2 border-amber-500 hover:bg-amber-100 font-bold"
+                        size="lg"
+                      >
+                        <Trophy className="h-5 w-5" />
+                        📊 สถิติรวม
+                      </Button>
 
-                        <div className="rounded-lg border border-amber-400/40 bg-amber-50/50 px-3 py-2">
-                          <p className="text-xs text-amber-900">
-                            <strong>⚠️ หมายเหตุ:</strong> ต้องสร้าง Google Apps Script Web App ก่อน{" "}
-                            (ดูคำแนะนำในไฟล์ <code className="text-xs">src/services/googleSheets.ts</code>)
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                      <Button
+                        onClick={() => handleExportToExcel('prizes')}
+                        disabled={exportingExcel || !dashboard}
+                        variant="outline"
+                        className="gap-2 border-2 border-amber-500 hover:bg-amber-100 font-bold"
+                        size="lg"
+                      >
+                        <Gift className="h-5 w-5" />
+                        🎁 รางวัล
+                      </Button>
+                    </div>
+
+                    <div className="rounded-xl border-2 border-amber-400 bg-amber-100 px-4 py-3">
+                      <p className="text-sm text-amber-900 font-bold mb-2">
+                        ✨ ความสามารถของระบบ Excel Export:
+                      </p>
+                      <ul className="text-xs text-amber-800 space-y-1.5">
+                        <li>• 📋 แยก Sheet ตามประเภทข้อมูล</li>
+                        <li>• 📊 สถิติรวมและการวิเคราะห์อัตโนมัติ</li>
+                        <li>• 🗓️ วันที่และเวลาภาษาไทย</li>
+                        <li>• 📐 จัดขนาดคอลัมน์อัตโนมัติ</li>
+                        <li>• ✅ ข้อมูลครบถ้วนและพร้อมใช้งาน</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
 
