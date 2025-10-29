@@ -1,0 +1,82 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer ring - dark brown -->
+  <circle cx="256" cy="256" r="240" fill="#3E2723" stroke="#5D4037" stroke-width="8"/>
+  
+  <!-- Second ring - medium brown -->
+  <circle cx="256" cy="256" r="220" fill="#5D4037" stroke="#6D4C41" stroke-width="6"/>
+  
+  <!-- Third ring - light brown -->
+  <circle cx="256" cy="256" r="200" fill="#8D6E63" stroke="#A1887F" stroke-width="4"/>
+  
+  <!-- Parchment background -->
+  <circle cx="256" cy="256" r="180" fill="#E8D4B0" stroke="#8D6E63" stroke-width="3"/>
+  
+  <!-- Compass markings circle -->
+  <circle cx="256" cy="256" r="160" fill="none" stroke="#6D4C41" stroke-width="2"/>
+  
+  <!-- Cardinal directions background -->
+  <circle cx="256" cy="256" r="140" fill="#B8986B" opacity="0.3"/>
+  
+  <!-- Main compass rose background -->
+  <circle cx="256" cy="256" r="120" fill="#4A90A4"/>
+  
+  <!-- Compass rose - North (dark) -->
+  <path d="M 256 136 L 276 256 L 256 246 L 236 256 Z" fill="#2C3E50"/>
+  
+  <!-- Compass rose - East (light) -->
+  <path d="M 376 256 L 256 276 L 266 256 L 256 236 Z" fill="#5DADE2"/>
+  
+  <!-- Compass rose - South (dark) -->
+  <path d="M 256 376 L 236 256 L 256 266 L 276 256 Z" fill="#2C3E50"/>
+  
+  <!-- Compass rose - West (light) -->
+  <path d="M 136 256 L 256 236 L 246 256 L 256 276 Z" fill="#5DADE2"/>
+  
+  <!-- NE diagonal (light) -->
+  <path d="M 341 171 L 276 236 L 271 246 L 256 256 L 246 241 L 236 276 Z" fill="#85C1E2"/>
+  
+  <!-- SE diagonal (light) -->
+  <path d="M 341 341 L 276 276 L 271 266 L 256 256 L 266 271 L 276 236 Z" fill="#85C1E2"/>
+  
+  <!-- SW diagonal (light) -->
+  <path d="M 171 341 L 236 276 L 241 266 L 256 256 L 246 271 L 236 236 Z" fill="#85C1E2"/>
+  
+  <!-- NW diagonal (light) -->
+  <path d="M 171 171 L 236 236 L 241 246 L 256 256 L 266 241 L 276 276 Z" fill="#85C1E2"/>
+  
+  <!-- Center circle -->
+  <circle cx="256" cy="256" r="40" fill="#C85A28" stroke="#922E13" stroke-width="4"/>
+  <circle cx="256" cy="256" r="30" fill="#E8D4B0" stroke="#8D6E63" stroke-width="2"/>
+  <circle cx="256" cy="256" r="12" fill="#3E2723"/>
+  <circle cx="256" cy="256" r="6" fill="#C0C0C0"/>
+  
+  <!-- Needle - pointing North -->
+  <path d="M 256 140 L 264 256 L 256 246 L 248 256 Z" fill="#C85A28" stroke="#922E13" stroke-width="2"/>
+  <path d="M 256 372 L 248 256 L 256 266 L 264 256 Z" fill="#E8D4B0" stroke="#8D6E63" stroke-width="2"/>
+  
+  <!-- Cardinal letters -->
+  <text x="256" y="110" font-family="Pirata One, serif" font-size="32" font-weight="bold" fill="#3E2723" text-anchor="middle">N</text>
+  <text x="402" y="266" font-family="Pirata One, serif" font-size="32" font-weight="bold" fill="#3E2723" text-anchor="middle">E</text>
+  <text x="256" y="412" font-family="Pirata One, serif" font-size="32" font-weight="bold" fill="#3E2723" text-anchor="middle">S</text>
+  <text x="110" y="266" font-family="Pirata One, serif" font-size="32" font-weight="bold" fill="#3E2723" text-anchor="middle">W</text>
+  
+  <!-- Degree markings -->
+  <g stroke="#6D4C41" stroke-width="2">
+    <!-- 12 major marks -->
+    <line x1="256" y1="76" x2="256" y2="96" />
+    <line x1="381" y1="131" x2="367" y2="145" />
+    <line x1="436" y1="256" x2="416" y2="256" />
+    <line x1="381" y1="381" x2="367" y2="367" />
+    <line x1="256" y1="436" x2="256" y2="416" />
+    <line x1="131" y1="381" x2="145" y2="367" />
+    <line x1="76" y1="256" x2="96" y2="256" />
+    <line x1="131" y1="131" x2="145" y2="145" />
+  </g>
+  
+  <!-- Decorative elements -->
+  <circle cx="256" cy="76" r="8" fill="#C85A28"/>
+  <circle cx="436" cy="256" r="8" fill="#C85A28"/>
+  <circle cx="256" cy="436" r="8" fill="#C85A28"/>
+  <circle cx="76" cy="256" r="8" fill="#C85A28"/>
+</svg>
+
