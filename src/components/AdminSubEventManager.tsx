@@ -42,6 +42,7 @@ export const AdminSubEventManager = ({ locations, onSave }: Props) => {
   const [editingSubEvent, setEditingSubEvent] = useState<{ [key: string]: SubEvent }>({});
   const [uploading, setUploading] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState<string | null>(null);
   const [qrDataUrls, setQrDataUrls] = useState<{ [key: string]: string }>({});
 
   // Generate QR codes for all sub-events
@@ -192,6 +193,60 @@ export const AdminSubEventManager = ({ locations, onSave }: Props) => {
       });
     } finally {
       setSaving(null);
+    }
+  };
+
+  const handleRegenerateQR = async (subEventId: string) => {
+    const location = getLocationBySubEventId(subEventId);
+    if (!location || !location.sub_events) return;
+
+    setRegenerating(subEventId);
+    try {
+      const subEvent = getSubEventById(subEventId);
+      if (!subEvent) return;
+
+      // Increment version
+      const newVersion = (subEvent.qr_code_version ?? 1) + 1;
+
+      // Update sub-event with new version
+      const updatedSubEvents = location.sub_events.map((se) =>
+        se.id === subEventId
+          ? { ...se, qr_code_version: newVersion }
+          : se
+      );
+
+      await onSave(location.id, updatedSubEvents);
+
+      // Regenerate QR code with new version
+      const checkinData = `SUBEVENT|${subEventId}|${newVersion}`;
+      const qrDataUrl = await QRCode.toDataURL(checkinData, {
+        width: 1000,
+        margin: 4,
+        errorCorrectionLevel: 'H',
+        color: {
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
+        type: 'image/png',
+      });
+
+      setQrDataUrls((prev) => ({
+        ...prev,
+        [subEventId]: qrDataUrl,
+      }));
+
+      toast({
+        title: "สร้าง QR Code ใหม่สำเร็จ",
+        description: `Version ใหม่: ${newVersion}`,
+      });
+    } catch (error) {
+      toast({
+        title: "สร้าง QR Code ไม่สำเร็จ",
+        description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
+        variant: "destructive",
+      });
+    } finally {
+      setRegenerating(null);
     }
   };
 
@@ -348,6 +403,7 @@ export const AdminSubEventManager = ({ locations, onSave }: Props) => {
                                   />
                                 </div>
                                 <div className="mt-3 space-y-2">
+
                                   <Button
                                     onClick={() => downloadQRCode(subEvent.id, subEvent.name)}
                                     variant="outline"
@@ -356,6 +412,25 @@ export const AdminSubEventManager = ({ locations, onSave }: Props) => {
                                   >
                                     <Download className="mr-2 h-4 w-4" />
                                     ดาวน์โหลด QR Code
+                                  </Button>
+                                  <Button
+                                    onClick={() => handleRegenerateQR(subEvent.id)}
+                                    variant="outline"
+                                    className="w-full border-green-300 text-green-700 hover:bg-green-50"
+                                    size="sm"
+                                    disabled={regenerating === subEvent.id}
+                                  >
+                                    {regenerating === subEvent.id ? (
+                                      <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        กำลังสร้าง...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <QrCode className="mr-2 h-4 w-4" />
+                                        สร้าง QR Code ใหม่
+                                      </>
+                                    )}
                                   </Button>
                                   <div className="text-xs text-amber-800 bg-yellow-50 rounded p-2 border border-yellow-300">
                                     <p className="font-semibold mb-1">ℹ️ ข้อมูล:</p>

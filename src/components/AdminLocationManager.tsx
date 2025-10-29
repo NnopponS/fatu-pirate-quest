@@ -56,6 +56,7 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
   const [editingSubEvents, setEditingSubEvents] = useState<{ [key: string]: Partial<SubEvent> }>({});
   const [uploadingSubEvent, setUploadingSubEvent] = useState<string | null>(null);
   const [savingSubEvent, setSavingSubEvent] = useState<string | null>(null);
+  const [regeneratingSubEvent, setRegeneratingSubEvent] = useState<string | null>(null);
   const [qrCodes, setQrCodes] = useState<{ [key: string]: string }>({});
   const [showAddSubEvent, setShowAddSubEvent] = useState(false);
   const [newSubEvent, setNewSubEvent] = useState({
@@ -274,6 +275,64 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
       });
     } finally {
       setSavingSubEvent(null);
+    }
+  };
+
+  const handleRegenerateSubEventQR = async (subEventId: string) => {
+    setRegeneratingSubEvent(subEventId);
+    try {
+      const subEvent = subEvents.find(se => se.id === subEventId);
+      if (!subEvent) return;
+
+      // Increment version
+      const newVersion = (subEvent.qr_code_version ?? 1) + 1;
+
+      // Update sub-event with new version
+      const updatedSubEvents = subEvents.map((se) =>
+        se.id === subEventId
+          ? { ...se, qr_code_version: newVersion }
+          : se
+      );
+      
+      setSubEvents(updatedSubEvents);
+
+      if (onSaveSubEvents) {
+        await onSaveSubEvents(location.id, updatedSubEvents);
+        
+        // Trigger force refresh event for immediate updates
+        window.dispatchEvent(new CustomEvent('force-map-refresh'));
+      }
+
+      // Regenerate QR code with new version
+      const checkinData = `SUBEVENT|${subEventId}|${newVersion}`;
+      const qrDataUrl = await QRCode.toDataURL(checkinData, {
+        width: 1000,
+        margin: 4,
+        errorCorrectionLevel: 'H',
+        color: { 
+          dark: "#000000", 
+          light: "#FFFFFF" 
+        },
+        type: 'image/png',
+      });
+
+      setQrCodes((prev) => ({
+        ...prev,
+        [subEventId]: qrDataUrl,
+      }));
+
+      toast({
+        title: "สร้าง QR Code ใหม่สำเร็จ",
+        description: `Version ใหม่: ${newVersion}`,
+      });
+    } catch (error) {
+      toast({
+        title: "สร้าง QR Code ไม่สำเร็จ",
+        description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
+        variant: "destructive",
+      });
+    } finally {
+      setRegeneratingSubEvent(null);
     }
   };
 
@@ -670,6 +729,25 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
                               >
                                 <Download className="h-4 w-4 mr-2" />
                                 ดาวน์โหลด QR Code
+                              </Button>
+                              <Button
+                                onClick={() => handleRegenerateSubEventQR(subEvent.id)}
+                                variant="outline"
+                                className="w-full mt-2 border-green-300 text-green-700 hover:bg-green-50"
+                                size="sm"
+                                disabled={regeneratingSubEvent === subEvent.id}
+                              >
+                                {regeneratingSubEvent === subEvent.id ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    กำลังสร้าง...
+                                  </>
+                                ) : (
+                                  <>
+                                    <QrCode className="h-4 w-4 mr-2" />
+                                    สร้าง QR Code ใหม่
+                                  </>
+                                )}
                               </Button>
                               <div className="text-xs bg-blue-50 rounded p-2 border border-blue-200 mt-2">
                                 <p className="font-semibold mb-1">ℹ️ ข้อมูล:</p>
