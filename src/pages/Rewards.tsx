@@ -111,16 +111,48 @@ const Rewards = () => {
           "สมบัติรออยู่ข้างหน้า! 🎁",
         ]}
       />
-      <div className="container mx-auto max-w-5xl px-4 py-16 space-y-10">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <span className="pirate-highlight">
-            <Gift className="h-4 w-4 text-accent" />
-            ขวดล่าสมบัติ
-          </span>
-          <h1 className="pirate-heading md:text-5xl">เขย่าขวดแห่งโชค</h1>
-          <p className="pirate-subheading">
-            สะสมคะแนนให้ครบแล้วเขย่าขวด 5 ครั้งเพื่อค้นพบสมบัติที่รอคุณอยู่!
-          </p>
+      <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8 animate-fade-in">
+        {/* Header Section - Treasure Map Style */}
+        <div className="relative">
+          <div 
+            className="relative overflow-hidden rounded-3xl border-8 border-amber-800 bg-[#f4e4c1] shadow-2xl"
+            style={{
+              backgroundImage: `
+                linear-gradient(0deg, transparent 24%, rgba(139, 115, 85, .05) 25%, rgba(139, 115, 85, .05) 26%, transparent 27%, transparent 74%, rgba(139, 115, 85, .05) 75%, rgba(139, 115, 85, .05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(139, 115, 85, .05) 25%, rgba(139, 115, 85, .05) 26%, transparent 27%, transparent 74%, rgba(139, 115, 85, .05) 75%, rgba(139, 115, 85, .05) 76%, transparent 77%, transparent)
+              `,
+              backgroundSize: '50px 50px'
+            }}
+          >
+            {/* Wax seal */}
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-10">
+              <div className="w-20 h-20 rounded-full bg-red-700 border-4 border-red-900 flex items-center justify-center shadow-xl">
+                <div className="text-amber-200 text-3xl">🍾</div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="pt-8 pb-6 px-6 text-center relative z-10">
+              <div className="mb-6">
+                <Gift className="h-12 w-12 text-amber-700 mx-auto mb-4" />
+                <h1 className="text-4xl md:text-5xl font-black text-amber-900 mb-3" style={{ fontFamily: 'Pirata One, serif', textShadow: '2px 2px 4px rgba(0,0,0,0.2)' }}>
+                  ขวดล่าสมบัติแห่งโชค
+                </h1>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-800/20 border-2 border-amber-700">
+                  <span className="text-sm md:text-base font-bold text-amber-900">เขย่า 5 ครั้งเพื่อรับรางวัล! 🍾💎</span>
+                </div>
+              </div>
+              
+              <div className="max-w-3xl mx-auto space-y-4">
+                <p className="text-base md:text-lg text-amber-800 leading-relaxed italic">
+                  สวัสดีท่านลูกเรือผู้กล้าหาญ,
+                </p>
+                <p className="text-sm md:text-base text-amber-900 leading-relaxed">
+                  เมื่อเจ้าสะสมคะแนนได้ครบแล้ว เจ้าสามารถเขย่าขวดสมบัติได้ <span className="font-bold text-amber-800">1 ครั้ง</span> เพื่อค้นหาสมบัติที่ซ่อนอยู่!
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {loading ? (

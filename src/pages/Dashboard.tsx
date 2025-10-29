@@ -224,59 +224,164 @@ const Dashboard = () => {
         onClose={() => setChatbotOpen(false)}
       />
 
-      <div className="container mx-auto px-4 py-8 space-y-6">
-        {/* Header */}
-        <div className="pirate-card px-6 py-6 space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <User className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-primary">
-                  ยินดีต้อนรับกลับ, {participantName}
-                </h1>
-                <p className="text-sm text-foreground/70">ท่าเรือโจรสลัด FATU</p>
+      <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8 animate-fade-in">
+        {/* Header Section - Treasure Map Style */}
+        <div className="relative">
+          {/* Parchment background */}
+          <div 
+            className="relative overflow-hidden rounded-3xl border-8 border-amber-800 bg-[#f4e4c1] shadow-2xl"
+            style={{
+              backgroundImage: `
+                linear-gradient(0deg, transparent 24%, rgba(139, 115, 85, .05) 25%, rgba(139, 115, 85, .05) 26%, transparent 27%, transparent 74%, rgba(139, 115, 85, .05) 75%, rgba(139, 115, 85, .05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(139, 115, 85, .05) 25%, rgba(139, 115, 85, .05) 26%, transparent 27%, transparent 74%, rgba(139, 115, 85, .05) 75%, rgba(139, 115, 85, .05) 76%, transparent 77%, transparent)
+              `,
+              backgroundSize: '50px 50px'
+            }}
+          >
+            {/* Burning edges effect */}
+            <div className="absolute inset-0 pointer-events-none">
+              {[...Array(12)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-16 h-16 bg-amber-400/20 rounded-full blur-xl animate-pulse"
+                  style={{
+                    left: i % 4 === 0 ? 0 : i % 4 === 1 ? '33%' : i % 4 === 2 ? '66%' : '100%',
+                    top: Math.floor(i / 4) === 0 ? 0 : Math.floor(i / 4) === 1 ? '50%' : '100%',
+                    transform: 'translate(-50%, -50%)',
+                    animationDelay: `${i * 0.3}s`
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Wax seal */}
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-10">
+              <div className="w-20 h-20 rounded-full bg-red-700 border-4 border-red-900 flex items-center justify-center shadow-xl animate-zoom-in">
+                <div className="text-amber-200 text-3xl">🏴‍☠️</div>
               </div>
             </div>
-            
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="gap-2 border-red-300 text-red-600 hover:bg-red-50"
-            >
-              <LogOut className="h-4 w-4" />
-              ออกจากระบบ
-            </Button>
-          </div>
 
-          {/* Claim Code Display - Only show if user has won a prize */}
-          {prizeInfo && (
-            <div className="p-4 rounded-xl bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-amber-300 shadow-lg">
+            {/* Content */}
+            <div className="pt-8 pb-6 px-6 text-center relative z-10">
+              <div className="mb-6">
+                <h1 className="text-4xl md:text-5xl font-black text-amber-900 mb-3" style={{ fontFamily: 'Pirata One, serif', textShadow: '2px 2px 4px rgba(0,0,0,0.2)' }}>
+                  ท่าเรือของเจ้า, {participantName}!
+                </h1>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-800/20 border-2 border-amber-700">
+                  <User className="h-5 w-5 text-amber-700 animate-pulse" />
+                  <span className="text-sm md:text-base font-bold text-amber-900">ยินดีต้อนรับกลับสู่การผจญภัย! ⚓🗺️</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pr-6 pb-4">
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                className="gap-2 border-2 border-red-500 text-red-600 hover:bg-red-50"
+              >
+                <LogOut className="h-4 w-4" />
+                ออกจากระบบ
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Cards - Map Style */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div 
+            className="relative overflow-hidden rounded-2xl border-4 border-amber-700 bg-[#f9f1df] shadow-2xl"
+            style={{
+              backgroundImage: `radial-gradient(circle at 20px 20px, rgba(139, 115, 85, 0.1) 2px, transparent 2px)`,
+              backgroundSize: '40px 40px'
+            }}
+          >
+            <div className="p-6 text-center relative z-10">
+              <Target className="h-8 w-8 text-amber-700 mx-auto mb-3" />
+              <p className="text-3xl font-black text-amber-900">{points}</p>
+              <p className="text-xs text-amber-800 font-bold">คะแนนสะสม</p>
+            </div>
+          </div>
+          
+          <div 
+            className="relative overflow-hidden rounded-2xl border-4 border-amber-700 bg-[#f9f1df] shadow-2xl"
+            style={{
+              backgroundImage: `radial-gradient(circle at 20px 20px, rgba(139, 115, 85, 0.1) 2px, transparent 2px)`,
+              backgroundSize: '40px 40px'
+            }}
+          >
+            <div className="p-6 text-center relative z-10">
+              <MapPin className="h-8 w-8 text-amber-700 mx-auto mb-3" />
+              <p className="text-3xl font-black text-amber-900">{completedLocations.length}/{locations.length}</p>
+              <p className="text-xs text-amber-800 font-bold">สถานที่ทำกิจกรรม</p>
+            </div>
+          </div>
+          
+          <div 
+            className="relative overflow-hidden rounded-2xl border-4 border-amber-700 bg-[#f9f1df] shadow-2xl"
+            style={{
+              backgroundImage: `radial-gradient(circle at 20px 20px, rgba(139, 115, 85, 0.1) 2px, transparent 2px)`,
+              backgroundSize: '40px 40px'
+            }}
+          >
+            <div className="p-6 text-center relative z-10">
+              <CheckCircle2 className="h-8 w-8 text-amber-700 mx-auto mb-3" />
+              <p className="text-3xl font-black text-amber-900">{subEventCheckins.length}</p>
+              <p className="text-xs text-amber-800 font-bold">กิจกรรมที่ร่วม</p>
+            </div>
+          </div>
+          
+          <div 
+            className={`relative overflow-hidden rounded-2xl border-4 shadow-2xl ${canSpin ? 'border-green-600 bg-green-50' : 'border-gray-400 bg-gray-50'}`}
+            style={{
+              backgroundImage: `radial-gradient(circle at 20px 20px, rgba(139, 115, 85, 0.1) 2px, transparent 2px)`,
+              backgroundSize: '40px 40px'
+            }}
+          >
+            <div className="p-6 text-center relative z-10">
+              <Trophy className={`h-8 w-8 mx-auto mb-3 ${canSpin ? 'text-green-600' : 'text-gray-400'}`} />
+              <p className={`text-3xl font-black ${canSpin ? 'text-green-700' : 'text-gray-500'}`}>
+                {canSpin ? '✓' : '✗'}
+              </p>
+              <p className={`text-xs font-bold ${canSpin ? 'text-green-700' : 'text-gray-600'}`}>หมุนวงล้อ</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Prize Code Display */}
+        {prizeInfo && (
+          <div 
+            className="relative overflow-hidden rounded-2xl border-4 border-amber-700 bg-[#f9f1df] shadow-2xl"
+            style={{
+              backgroundImage: `radial-gradient(circle at 20px 20px, rgba(139, 115, 85, 0.1) 2px, transparent 2px)`,
+              backgroundSize: '40px 40px'
+            }}
+          >
+            <div className="p-6 relative z-10">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <Ticket className="h-5 w-5 text-amber-600" />
-                    <h3 className="font-bold text-amber-900">
+                    <Ticket className="h-6 w-6 text-amber-700" />
+                    <h3 className="font-black text-amber-900 text-lg">
                       {prizeInfo.claimed ? '✅ รางวัลที่ได้รับ' : '🎁 รหัสรับรางวัล'}
                     </h3>
                   </div>
-                  <p className="text-lg font-bold text-amber-700 mb-1">{prizeInfo.prize}</p>
-                  <div className="flex items-center gap-3">
-                    <code className="text-3xl font-mono font-bold text-amber-900 bg-white px-4 py-2 rounded-lg border-2 border-amber-400">
+                  <p className="text-xl font-black text-amber-800 mb-3">{prizeInfo.prize}</p>
+                  <div className="flex items-center gap-3 indent-none">
+                    <code className="text-4xl font-mono font-black text-amber-900 bg-white px-6 py-3 rounded-xl border-4 border-amber-600 shadow-xl">
                       {prizeInfo.claimCode}
                     </code>
                     {prizeInfo.claimed ? (
-                      <span className="px-3 py-1 bg-green-100 border-2 border-green-500 rounded-full text-green-800 text-sm font-bold">
+                      <span className="px-4 py-2 bg-green-100 border-2 border-green-600 rounded-full text-green-800 text-sm font-black">
                         รับแล้ว ✓
                       </span>
                     ) : (
-                      <span className="px-3 py-1 bg-red-100 border-2 border-red-500 rounded-full text-red-800 text-sm font-bold animate-pulse">
+                      <span className="px-4 py-2 bg-red-100 border-2 border-red-600 rounded-full text-red-800 text-sm font-black animate-pulse">
                         ยังไม่ได้รับ
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-amber-700 mt-2">
+                  <p className="text-sm text-amber-800 font-semibold mt-3">
                     {prizeInfo.claimed 
                       ? '✨ เจ้าได้รับรางวัลนี้ไปแล้ว' 
                       : '💡 แสดงรหัสนี้กับเจ้าหน้าที่เพื่อรับรางวัล'}
@@ -284,37 +389,8 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-          )}
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
-              <Target className="h-5 w-5 text-primary mb-2" />
-              <p className="text-2xl font-bold text-primary">{points}</p>
-              <p className="text-xs text-foreground/70">คะแนนสะสม</p>
-            </div>
-            
-            <div className="p-4 rounded-xl bg-accent/10 border border-accent/20">
-              <MapPin className="h-5 w-5 text-accent mb-2" />
-              <p className="text-2xl font-bold text-accent">{completedLocations.length}/{locations.length}</p>
-              <p className="text-xs text-foreground/70">สถานที่ทำกิจกรรม</p>
-            </div>
-            
-            <div className="p-4 rounded-xl bg-secondary/10 border border-secondary/20">
-              <CheckCircle2 className="h-5 w-5 text-secondary mb-2" />
-              <p className="text-2xl font-bold text-secondary">{subEventCheckins.length}</p>
-              <p className="text-xs text-foreground/70">กิจกรรมที่ร่วม</p>
-            </div>
-            
-            <div className={`p-4 rounded-xl border ${canSpin ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-300'}`}>
-              <Trophy className={`h-5 w-5 mb-2 ${canSpin ? 'text-green-600' : 'text-gray-400'}`} />
-              <p className={`text-2xl font-bold ${canSpin ? 'text-green-600' : 'text-gray-400'}`}>
-                {canSpin ? '✓' : '✗'}
-              </p>
-              <p className="text-xs text-foreground/70">หมุนวงล้อ</p>
-            </div>
           </div>
-        </div>
+        )}
 
         {/* Quick Action Buttons - Moved to Top */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -398,7 +474,7 @@ const Dashboard = () => {
                   className={`p-4 rounded-xl border-2 transition-all ${
                     hasCompletedSubEvent 
                       ? 'border-green-400 bg-green-50' 
-                      : 'border-gray-300 bg-gray协助'
+                      : 'border-gray-300 bg-gray-50'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-4">
