@@ -464,7 +464,20 @@ export const BottleQuestModal = ({
               </div>
 
               {/* Action buttons */}
-              <div className="flex justify-center gap-3 pt-3 sm:pt-4">
+              <div className="flex flex-col gap-3 pt-3 sm:pt-4">
+                {/* Show scan QR button if scanner available */}
+                {subEvents.length > 0 && !alreadyCheckedIn && onScanQR && (
+                  <Button
+                    onClick={() => setShowScanner(true)}
+                    size="lg"
+                    className="pirate-button text-sm sm:text-base md:text-lg px-6 sm:px-8 border-4 border-purple-700 hover:scale-105 transition-transform"
+                    style={{ fontFamily: 'Pirata One, serif' }}
+                  >
+                    📱 สแกน QR Code เพื่อเช็กอิน
+                  </Button>
+                )}
+                
+                {/* Fallback location check-in button (will auto-generate signature) */}
                 {!alreadyCheckedIn && locationId && onCheckIn && (
                   <Button
                     onClick={async () => {
@@ -487,12 +500,14 @@ export const BottleQuestModal = ({
                     }}
                     size="lg"
                     disabled={isCheckingIn}
+                    variant="outline"
                     className="pirate-button text-sm sm:text-base md:text-lg px-6 sm:px-8 border-4 border-amber-700 hover:scale-105 transition-transform"
                     style={{ fontFamily: 'Pirata One, serif' }}
                   >
-                    {isCheckingIn ? 'กำลังเช็กอิน...' : '✓ เช็กอินเลย! ⚓'}
+                    {isCheckingIn ? 'กำลังเช็กอิน...' : '✓ เช็กอินสถานที่ ⚓'}
                   </Button>
                 )}
+                
                 <Button
                   onClick={onClose}
                   size="lg"
