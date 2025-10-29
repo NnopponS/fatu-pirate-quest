@@ -82,14 +82,14 @@ export const QRScannerModal = ({ isOpen, onClose, onScan }: QRScannerModalProps)
               isActiveRef.current = false;
               stopScanning();
               
-              // Call onScan immediately, then close modal
+              // Call onScan immediately, then close modal right away
               console.log('📤 Calling onScan callback...');
               onScan(code.data);
               
-              // Close modal after showing success animation
+              // Close modal immediately to allow next action (bottle quest, etc.)
               setTimeout(() => {
                 onClose();
-              }, 1500);
+              }, 300);
               return;
             }
           }

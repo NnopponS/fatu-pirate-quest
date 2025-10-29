@@ -647,13 +647,11 @@ const Map = () => {
         <QRScannerModal 
           isOpen={scannerOpen}
           onClose={() => {
-            console.log('Closing QR Scanner...');
+            console.log('Closing QR Scanner modal...');
             setScannerOpen(false);
-            // Reset any scanning state
-            setScannedQrData(null);
           }}
           onScan={(value) => {
-            console.log('QR Scanner detected:', value);
+            console.log('QR Scanner onScan called with:', value);
             handleQrScan(value);
           }}
         />
