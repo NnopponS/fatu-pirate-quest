@@ -15,11 +15,11 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
     if (skipped) return;
 
     const timers = [
-      setTimeout(() => setPhase("ship"), 1800),       // 1.8s: แผนที่ -> เรือ
-      setTimeout(() => setPhase("pirate"), 4000),     // 4s: เรือ -> โจรสลัด
-      setTimeout(() => setPhase("bottle"), 6500),     // 6.5s: โจรสลัด -> ขวด
-      setTimeout(() => setPhase("treasure"), 8500),   // 8.5s: ขวด -> สมบัติ
-      setTimeout(() => setPhase("complete"), 11500),  // 11.5s: จบ
+      setTimeout(() => setPhase("ship"), 3000),       // 3s: แผนที่ (3 วินาที)
+      setTimeout(() => setPhase("pirate"), 6500),     // 6.5s: เรือ (3.5 วินาที)
+      setTimeout(() => setPhase("bottle"), 10500),    // 10.5s: โจรสลัด (4 วินาที)
+      setTimeout(() => setPhase("treasure"), 13500),  // 13.5s: ขวด (3 วินาที)
+      setTimeout(() => setPhase("complete"), 18000),  // 18s: สมบัติ (4.5 วินาที) -> จบ
     ];
 
     return () => timers.forEach(clearTimeout);
