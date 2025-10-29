@@ -34,6 +34,16 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageU
   const [selectedSubEvent, setSelectedSubEvent] = useState<SubEvent | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
+  // Calculate completed sub-events for this location
+  const completedCount = subEvents && subEvents.length > 0 
+    ? completedSubEvents.filter(id => subEvents.some(se => se.id === id)).length 
+    : 0;
+
+  // Debug logging
+  if (subEvents && subEvents.length > 0) {
+    console.log(`📍 ${name}: completedSubEvents=`, completedSubEvents, `subEvents=`, subEvents.map(se => se.id), `completedCount=${completedCount}/${subEvents.length}`);
+  }
+
   return (
     <div
       className={`relative overflow-hidden rounded-2xl border-2 transition-all duration-500 ${
@@ -76,7 +86,7 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageU
             </span>
             {subEvents && subEvents.length > 0 && (
               <span className="px-2 py-1 bg-blue-100 border border-blue-400 rounded-lg text-xs font-bold text-blue-800">
-                {completedSubEvents.filter(id => subEvents.some(se => se.id === id)).length}/{subEvents.length} กิจกรรม
+                {completedCount}/{subEvents.length} กิจกรรม
               </span>
             )}
           </div>
