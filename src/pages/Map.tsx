@@ -194,8 +194,8 @@ const Map = () => {
 
     if (!sig) {
       toast({
-        title: "ข้อมูลไม่ครบ",
-        description: "ไม่พบ QR Signature กรุณาสแกน QR Code ใหม่",
+        title: "กรุณาสแกน QR Code ของสถานที่ก่อน",
+        description: "ต้องสแกน QR Code CHECKIN ของสถานที่เพื่อเช็คอิน",
         variant: "destructive",
       });
       return;
