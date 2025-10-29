@@ -640,7 +640,9 @@ const Map = () => {
                       description={location.description}
                       subEvents={location.sub_events}
                       checkedIn={checkins.includes(location.id)}
-                      completedSubEvents={completedSubEvents}
+                      completedSubEvents={subEventCheckins
+                        .filter((se: any) => se.location_id === location.id)
+                        .map((se: any) => se.sub_event_id)}
                     />
                   </div>
                 ))}
