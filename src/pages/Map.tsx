@@ -247,9 +247,28 @@ const Map = () => {
 
     try {
       const parts = value.split("|");
+      console.log("Parsing SUBEVENT QR parts:", parts);
+      
       const subEventId = parts[1];
-      const sig = parts[2] || await signSubEventCheckin(subEventId, todayStr(0), CHECKIN_SECRET, 1);
-      const version = parts[3];
+      
+      // Format: SUBEVENT|subEventId|sig|version (4 parts)
+      let sig: string | undefined;
+      let version: string | undefined;
+      
+      if (parts.length === 4) {
+        // Has signature: SUBEVENT|id|sig|version
+        sig = parts[2];
+        version = parts[3];
+      } else if (parts.length === 3) {
+        // No signature: SUBEVENT|id|version
+        version = parts[2];
+        // Generate signature
+        sig = await signSubEventCheckin(subEventId, todayStr(0), CHECKIN_SECRET, parseInt(version, 10) || 1);
+      }
+
+      if (!sig) {
+        throw new Error("ไม่สามารถสร้าง QR signature ได้");
+      }
 
       // Note: checkinSubEvent will be called, which already saves location_id
       const result = await checkinSubEvent(
