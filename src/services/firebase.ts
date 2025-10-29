@@ -937,10 +937,10 @@ export const checkinParticipant = async (
 export const checkinSubEvent = async (
   participantId: string,
   subEventId: string,
-  signature: string,
+  signature?: string, // Optional for fixed QR codes
   qrVersion?: number,
 ): Promise<CheckinResponse> => {
-  if (!participantId || !subEventId || !signature) {
+  if (!participantId || !subEventId) {
     throw new Error("Missing required fields");
   }
 
@@ -968,14 +968,8 @@ export const checkinSubEvent = async (
     throw new Error("Sub-event not found");
   }
 
-  // Validate version only (no signature validation for fixed QR codes)
-  const currentVersion = foundSubEvent.qr_code_version ?? 1;
-  
-  if (qrVersion !== undefined && qrVersion !== currentVersion) {
-    throw new Error("QR code ไม่ถูกต้อง กรุณาใช้ QR code เวอร์ชันล่าสุด");
-  }
-
-  // No signature validation - QR code is fixed and doesn't expire
+  // Fixed QR codes - no version or signature validation needed
+  // Accept any version of QR code as long as sub-event exists
 
   // ตรวจสอบว่าเคย scan sub-event นี้แล้วหรือไม่
   const existingSubEventCheckin = await firebaseDb.get<SubEventCheckinRecord>(
