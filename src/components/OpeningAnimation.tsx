@@ -708,9 +708,9 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
         </AnimatePresence>
       </div>
 
-      {/* Progress Indicator - Responsive */}
+      {/* Progress Indicator - Centered */}
       <motion.div 
-        className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 px-4"
+        className="absolute bottom-6 md:bottom-10 left-0 right-0 flex items-center justify-center gap-2 md:gap-3"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
