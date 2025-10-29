@@ -808,6 +808,7 @@ const Map = () => {
         alreadyCheckedIn={questLocation ? checkins.includes(questLocation.id) : false}
         completedSubEvents={completedSubEvents}
         locationId={questLocation?.id}
+        subEventId={scannedQrData?.subEventId}
         qrSignature={scannedQrData?.sig}
         qrVersion={scannedQrData?.version}
         onCheckIn={handleCheckInFromModal}

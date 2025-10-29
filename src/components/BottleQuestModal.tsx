@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { X, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,7 @@ interface BottleQuestModalProps {
   alreadyCheckedIn: boolean;
   completedSubEvents: string[];
   locationId?: number;
+  subEventId?: string;
   qrSignature?: string;
   qrVersion?: string;
   onCheckIn?: (locationId: number, signature?: string, version?: string) => void;
@@ -40,11 +42,13 @@ export const BottleQuestModal = ({
   alreadyCheckedIn,
   completedSubEvents,
   locationId,
+  subEventId,
   qrSignature,
   qrVersion,
   onCheckIn,
   onScanQR
 }: BottleQuestModalProps) => {
+  const navigate = useNavigate();
   const [phase, setPhase] = useState<"water" | "bottle" | "opening" | "scroll">("water");
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
@@ -466,12 +470,23 @@ export const BottleQuestModal = ({
               {/* Action buttons */}
               <div className="flex justify-center pt-3 sm:pt-4">
                 <Button
-                  onClick={onClose}
+                  onClick={() => {
+                    // Navigate to checkin page with sub-event info
+                    if (subEventId && qrVersion) {
+                      const params = new URLSearchParams();
+                      params.set('subevent', subEventId);
+                      params.set('v', qrVersion);
+                      navigate(`/checkin?${params.toString()}`);
+                    } else {
+                      onClose();
+                    }
+                  }}
                   size="lg"
-                  className="pirate-button text-sm sm:text-base md:text-lg px-6 sm:px-8"
+                  className="pirate-button text-sm sm:text-base md:text-lg px-6 sm:px-8 border-4 border-amber-700 hover:scale-105 transition-transform"
                   variant="default"
+                  style={{ fontFamily: 'Pirata One, serif' }}
                 >
-                  {alreadyCheckedIn ? 'รับทราบแล้ว ⚓' : 'ปิด'}
+                  {alreadyCheckedIn ? 'รับทราบแล้ว ⚓' : '✓ ยืนยันเช็คอิน'}
                 </Button>
               </div>
             </div>
