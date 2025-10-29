@@ -1,31 +1,4 @@
 import { motion } from "framer-motion";
-import { ReactNode, useEffect } from "react";
-
-interface PageTransitionProps {
-  children: ReactNode;
-}
-
-export const PageTransition = ({ children }: PageTransitionProps) => {
-  // Scroll to top เมื่อเปลี่ยนหน้า
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }, []);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{
-        duration: 0.2,
-        ease: "easeInOut"
-      }}
-      style={{ width: '100%', minHeight: '100vh' }}
-    >
-      {children}
-    </motion.div>
-  );
-};
 
 // Loading component สำหรับ Suspense fallback
 export const PageLoader = () => (

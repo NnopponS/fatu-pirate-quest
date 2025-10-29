@@ -2,12 +2,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { lazy, Suspense } from "react";
-import { AnimatePresence } from "framer-motion";
-import { PageTransition, PageLoader } from "./components/PageTransition";
+import { PageLoader } from "./components/PageTransition";
+import { ScrollToTop } from "./components/ScrollToTop";
 
 // Eager load: Homepage & Auth (needed immediately)
 import Index from "./pages/Index";
@@ -30,105 +30,14 @@ const PrizeVerification = lazy(() => import("./pages/PrizeVerification"));
 // Lazy load: Error page
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-const queryClient = new QueryClient();
-
-// Animated Routes wrapper
-const AnimatedRoutes = () => {
-  const location = useLocation();
-  
-  return (
-    <AnimatePresence mode="sync" initial={false}>
-      <Routes location={location} key={location.pathname}>
-        {/* Eager loaded routes - Homepage & Auth */}
-        <Route path="/" element={<PageTransition><Index /></PageTransition>} />
-        <Route path="/onboarding" element={<PageTransition><Onboarding /></PageTransition>} />
-        <Route path="/signup" element={<PageTransition><Signup /></PageTransition>} />
-        <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
-        
-        {/* Lazy loaded routes - User pages */}
-        <Route 
-          path="/dashboard" 
-          element={
-            <PageTransition>
-              <ProtectedRoute requireParticipant>
-                <Dashboard />
-              </ProtectedRoute>
-            </PageTransition>
-          } 
-        />
-        <Route 
-          path="/map" 
-          element={
-            <PageTransition>
-              <ProtectedRoute requireParticipant>
-                <Map />
-              </ProtectedRoute>
-            </PageTransition>
-          } 
-        />
-        <Route 
-          path="/checkin" 
-          element={
-            <PageTransition>
-              <ProtectedRoute requireParticipant>
-                <Checkin />
-              </ProtectedRoute>
-            </PageTransition>
-          } 
-        />
-        <Route 
-          path="/rewards" 
-          element={
-            <PageTransition>
-              <ProtectedRoute requireParticipant>
-                <Rewards />
-              </ProtectedRoute>
-            </PageTransition>
-          } 
-        />
-        <Route 
-          path="/profile" 
-          element={
-            <PageTransition>
-              <ProtectedRoute requireParticipant>
-                <Profile />
-              </ProtectedRoute>
-            </PageTransition>
-          } 
-        />
-        <Route 
-          path="/game" 
-          element={<PageTransition><FlappyBird /></PageTransition>} 
-        />
-        
-        {/* Lazy loaded routes - Admin pages */}
-        <Route 
-          path="/admin" 
-          element={
-            <PageTransition>
-              <ProtectedRoute requireAdmin>
-                <AdminDashboard />
-              </ProtectedRoute>
-            </PageTransition>
-          } 
-        />
-        <Route 
-          path="/prize-verification" 
-          element={
-            <PageTransition>
-              <ProtectedRoute requireAdmin>
-                <PrizeVerification />
-              </ProtectedRoute>
-            </PageTransition>
-          } 
-        />
-        
-        {/* Error page */}
-        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-      </Routes>
-    </AnimatePresence>
-  );
-};
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30000, // 30 seconds
+      gcTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -137,8 +46,82 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <Suspense fallback={<PageLoader />}>
-            <AnimatedRoutes />
+            <Routes>
+              {/* Eager loaded routes - Homepage & Auth */}
+              <Route path="/" element={<Index />} />
+              <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/login" element={<Login />} />
+              
+              {/* Lazy loaded routes - User pages */}
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute requireParticipant>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/map" 
+                element={
+                  <ProtectedRoute requireParticipant>
+                    <Map />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/checkin" 
+                element={
+                  <ProtectedRoute requireParticipant>
+                    <Checkin />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/rewards" 
+                element={
+                  <ProtectedRoute requireParticipant>
+                    <Rewards />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute requireParticipant>
+                    <Profile />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/game" 
+                element={<FlappyBird />} 
+              />
+              
+              {/* Lazy loaded routes - Admin pages */}
+              <Route 
+                path="/admin" 
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/prize-verification" 
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <PrizeVerification />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Error page */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </Suspense>
         </BrowserRouter>
       </TooltipProvider>
