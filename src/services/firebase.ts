@@ -1023,21 +1023,45 @@ export const checkinSubEvent = async (
     created_at: new Date().toISOString(),
   };
 
+  // Check if location has been checked in, if not, auto check-in
+  const existingLocationCheckin = await firebaseDb.get<CheckinRecord>(
+    `checkins/${participantId}/${parentLocation.id}`
+  );
+
+  const needsLocationCheckin = !existingLocationCheckin;
+
   const participant = await getParticipantById(participantId);
   if (!participant) {
     throw new Error("Participant not found");
   }
 
-  const updatedPoints = participant.points + pointsToAward;
+  const locationPoints = parentLocation.points ?? 0;
+  const updatedPoints = participant.points + pointsToAward + (needsLocationCheckin ? locationPoints : 0);
 
-  await Promise.all([
+  // Prepare operations
+  const operations = [
     firebaseDb.set(`sub_event_checkins/${participantId}/${subEventId}`, subEventCheckin),
-    pointsToAward > 0 
-      ? firebaseDb.update(`participants/${participantId}`, { points: updatedPoints })
-      : Promise.resolve(),
-  ]);
+  ];
 
-  return { ok: true, pointsAdded: pointsToAward };
+  // Add location checkin if needed
+  if (needsLocationCheckin) {
+    const locationCheckin: CheckinRecord = {
+      participant_id: participantId,
+      location_id: parentLocation.id,
+      method: "subevent_auto",
+      created_at: new Date().toISOString(),
+    };
+    operations.push(firebaseDb.set(`checkins/${participantId}/${parentLocation.id}`, locationCheckin));
+  }
+
+  // Update points if there are any to add
+  if (updatedPoints > participant.points) {
+    operations.push(firebaseDb.update(`participants/${participantId}`, { points: updatedPoints }));
+  }
+
+  await Promise.all(operations);
+
+  return { ok: true, pointsAdded: pointsToAward + (needsLocationCheckin ? locationPoints : 0) };
 };
 
 const getPointsRequired = async () => {

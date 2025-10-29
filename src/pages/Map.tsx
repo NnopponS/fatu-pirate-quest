@@ -251,6 +251,7 @@ const Map = () => {
       const sig = parts[2] || await signSubEventCheckin(subEventId, todayStr(0), CHECKIN_SECRET, 1);
       const version = parts[3];
 
+      // Note: checkinSubEvent will be called, which already saves location_id
       const result = await checkinSubEvent(
         participantId,
         subEventId,
