@@ -464,57 +464,14 @@ export const BottleQuestModal = ({
               </div>
 
               {/* Action buttons */}
-              <div className="flex flex-col gap-3 pt-3 sm:pt-4">
-                {/* Show scan QR button if scanner available */}
-                {subEvents.length > 0 && !alreadyCheckedIn && onScanQR && (
-                  <Button
-                    onClick={() => setShowScanner(true)}
-                    size="lg"
-                    className="pirate-button text-sm sm:text-base md:text-lg px-6 sm:px-8 border-4 border-purple-700 hover:scale-105 transition-transform"
-                    style={{ fontFamily: 'Pirata One, serif' }}
-                  >
-                    📱 สแกน QR Code เพื่อเช็กอิน
-                  </Button>
-                )}
-                
-                {/* Fallback location check-in button (will auto-generate signature) */}
-                {!alreadyCheckedIn && locationId && onCheckIn && (
-                  <Button
-                    onClick={async () => {
-                      setIsCheckingIn(true);
-                      try {
-                        await onCheckIn(locationId, qrSignature, qrVersion);
-                        setTimeout(() => {
-                          setIsCheckingIn(false);
-                          onClose();
-                        }, 2000);
-                      } catch (error) {
-                        console.error('Check-in error:', error);
-                        setIsCheckingIn(false);
-                        toast({
-                          title: "เช็กอินไม่สำเร็จ",
-                          description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                    size="lg"
-                    disabled={isCheckingIn}
-                    variant="outline"
-                    className="pirate-button text-sm sm:text-base md:text-lg px-6 sm:px-8 border-4 border-amber-700 hover:scale-105 transition-transform"
-                    style={{ fontFamily: 'Pirata One, serif' }}
-                  >
-                    {isCheckingIn ? 'กำลังเช็กอิน...' : '✓ เช็กอินสถานที่ ⚓'}
-                  </Button>
-                )}
-                
+              <div className="flex justify-center pt-3 sm:pt-4">
                 <Button
                   onClick={onClose}
                   size="lg"
                   className="pirate-button text-sm sm:text-base md:text-lg px-6 sm:px-8"
-                  variant={alreadyCheckedIn ? "default" : "outline"}
+                  variant="default"
                 >
-                  {alreadyCheckedIn ? 'รับทราบแล้ว ⚓' : 'มองดูก่อน'}
+                  {alreadyCheckedIn ? 'รับทราบแล้ว ⚓' : 'ปิด'}
                 </Button>
               </div>
             </div>
