@@ -607,7 +607,6 @@ const Map = () => {
                       <h2 className="text-2xl sm:text-3xl font-black text-amber-900" style={{ fontFamily: 'Pirata One, serif' }}>
                         จุดล่าสมบัติ
                       </h2>
-                      <p className="text-xs sm:text-sm text-amber-800 font-semibold">เช็กอิน + ร่วมกิจกรรม ⚓💎</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 sm:gap-4">

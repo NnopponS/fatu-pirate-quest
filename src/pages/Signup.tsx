@@ -402,9 +402,6 @@ const Signup = () => {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button className="flex-1" onClick={() => navigate("/dashboard")}>
-                ไปท่าเรือข้า
-              </Button>
               <Button className="flex-1" variant="outline" onClick={() => navigate("/login")}>
                 ไปหน้าเข้าสู่ระบบ
               </Button>
