@@ -463,18 +463,9 @@ export const BottleQuestModal = ({
                 </p>
               </div>
 
-              {/* Info message if no QR signature */}
-              {!alreadyCheckedIn && locationId && onCheckIn && !qrSignature && (
-                <div className="p-4 bg-amber-100 border-2 border-amber-500 rounded-xl text-center mb-4">
-                  <p className="text-amber-900 font-bold text-sm">
-                    📱 กรุณาสแกน QR Code CHECKIN ของสถานที่นี้เพื่อเช็คอิน
-                  </p>
-                </div>
-              )}
-
               {/* Action buttons */}
               <div className="flex justify-center gap-3 pt-3 sm:pt-4">
-                {!alreadyCheckedIn && locationId && onCheckIn && qrSignature && (
+                {!alreadyCheckedIn && locationId && onCheckIn && (
                   <Button
                     onClick={async () => {
                       setIsCheckingIn(true);

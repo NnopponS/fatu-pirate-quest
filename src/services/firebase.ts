@@ -1035,15 +1035,15 @@ export const checkinSubEvent = async (
     throw new Error("Participant not found");
   }
 
-  const locationPoints = parentLocation.points ?? 0;
-  const updatedPoints = participant.points + pointsToAward + (needsLocationCheckin ? locationPoints : 0);
+  // No location points, only sub-event points
+  const updatedPoints = participant.points + pointsToAward;
 
   // Prepare operations
   const operations = [
     firebaseDb.set(`sub_event_checkins/${participantId}/${subEventId}`, subEventCheckin),
   ];
 
-  // Add location checkin if needed
+  // Add location checkin if needed (no points, just mark as checked in)
   if (needsLocationCheckin) {
     const locationCheckin: CheckinRecord = {
       participant_id: participantId,
@@ -1061,7 +1061,7 @@ export const checkinSubEvent = async (
 
   await Promise.all(operations);
 
-  return { ok: true, pointsAdded: pointsToAward + (needsLocationCheckin ? locationPoints : 0) };
+  return { ok: true, pointsAdded: pointsToAward };
 };
 
 const getPointsRequired = async () => {

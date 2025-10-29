@@ -189,16 +189,16 @@ const Map = () => {
       return;
     }
 
-    const sig = signature || scannedQrData?.sig;
+    // Generate signature if not provided
+    let sig = signature || scannedQrData?.sig;
     const ver = version || scannedQrData?.version;
 
     if (!sig) {
-      toast({
-        title: "กรุณาสแกน QR Code ของสถานที่ก่อน",
-        description: "ต้องสแกน QR Code CHECKIN ของสถานที่เพื่อเช็คอิน",
-        variant: "destructive",
-      });
-      return;
+      // Auto-generate signature for manual check-in
+      const { signCheckin } = await import("@/lib/crypto");
+      const { todayStr } = await import("@/lib/crypto");
+      const { CHECKIN_SECRET } = await import("@/lib/constants");
+      sig = await signCheckin(locationId, todayStr(0), CHECKIN_SECRET, 1);
     }
 
     try {
