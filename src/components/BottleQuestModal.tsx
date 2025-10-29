@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { X, Camera } from "lucide-react";
@@ -50,6 +50,19 @@ export const BottleQuestModal = ({
 }: BottleQuestModalProps) => {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<"water" | "bottle" | "opening" | "scroll">("water");
+
+  // Filter completed sub-events to only include those in this location's subEvents
+  const filteredCompletedSubEvents = useMemo(() => {
+    const subEventIds = subEvents.map(se => se.id);
+    const filtered = completedSubEvents.filter(id => subEventIds.includes(id));
+    console.log(`🍾 BottleQuestModal ${locationName}:`, {
+      subEventIds,
+      completedSubEvents,
+      filtered,
+      'แสดง': `${filtered.length}/${subEvents.length}`
+    });
+    return filtered;
+  }, [completedSubEvents, subEvents, locationName]);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const { toast } = useToast();
@@ -374,7 +387,7 @@ export const BottleQuestModal = ({
                   <h3 className="text-base sm:text-lg md:text-xl font-bold">🗺️ รายการภารกิจ:</h3>
                   <div className="space-y-2 sm:space-y-3">
                     {subEvents.map((subEvent, idx) => {
-                      const isCompleted = completedSubEvents.includes(subEvent.id);
+                      const isCompleted = filteredCompletedSubEvents.includes(subEvent.id);
                       
                       return (
                         <div
@@ -439,14 +452,14 @@ export const BottleQuestModal = ({
                     </div>
                     <div className="flex items-center justify-between text-sm sm:text-base">
                       <span className="text-green-700 font-semibold">✓ ทำแล้ว:</span>
-                      <span className="font-bold text-green-700">{completedSubEvents.length} กิจกรรม</span>
+                      <span className="font-bold text-green-700">{filteredCompletedSubEvents.length} กิจกรรม</span>
                     </div>
                     <div className="flex items-center justify-between text-sm sm:text-base">
                       <span className="text-amber-700 font-semibold">○ ยังไม่ทำ:</span>
-                      <span className="font-bold text-amber-700">{subEvents.length - completedSubEvents.length} กิจกรรม</span>
+                      <span className="font-bold text-amber-700">{subEvents.length - filteredCompletedSubEvents.length} กิจกรรม</span>
                     </div>
                   </div>
-                  {subEvents.length - completedSubEvents.length === 0 && (
+                  {subEvents.length - filteredCompletedSubEvents.length === 0 && (
                     <div className="mt-3 p-2 sm:p-3 bg-green-100 border-2 border-green-600 rounded-lg text-center">
                       <p className="text-green-800 font-bold">🎉 ยินดีด้วย! ทำครบทุกกิจกรรมในสถานที่นี้แล้ว</p>
                     </div>
