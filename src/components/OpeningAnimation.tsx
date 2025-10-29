@@ -8,16 +8,18 @@ interface OpeningAnimationProps {
 }
 
 export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
-  const [phase, setPhase] = useState<"map" | "bottle" | "treasure" | "complete">("map");
+  const [phase, setPhase] = useState<"map" | "ship" | "pirate" | "bottle" | "treasure" | "complete">("map");
   const [skipped, setSkipped] = useState(false);
 
   useEffect(() => {
     if (skipped) return;
 
     const timers = [
-      setTimeout(() => setPhase("bottle"), 2000),     // 2s: แผนที่ -> ขวด
-      setTimeout(() => setPhase("treasure"), 4000),   // 4s: ขวด -> สมบัติ
-      setTimeout(() => setPhase("complete"), 7000),   // 7s: จบ
+      setTimeout(() => setPhase("ship"), 1800),       // 1.8s: แผนที่ -> เรือ
+      setTimeout(() => setPhase("pirate"), 4000),     // 4s: เรือ -> โจรสลัด
+      setTimeout(() => setPhase("bottle"), 6500),     // 6.5s: โจรสลัด -> ขวด
+      setTimeout(() => setPhase("treasure"), 8500),   // 8.5s: ขวด -> สมบัติ
+      setTimeout(() => setPhase("complete"), 11500),  // 11.5s: จบ
     ];
 
     return () => timers.forEach(clearTimeout);
@@ -198,7 +200,252 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
             </motion.div>
           )}
 
-          {/* Phase 2: Message in Bottle */}
+          {/* Phase 2: Pirate Ship Sailing */}
+          {phase === "ship" && (
+            <motion.div
+              key="ship"
+              className="text-center"
+              initial={{ x: -window.innerWidth }}
+              animate={{ x: 0 }}
+              exit={{ x: window.innerWidth, opacity: 0 }}
+              transition={{ duration: 1, ease: "easeOut" }}
+            >
+              <motion.div
+                className="relative inline-block"
+                animate={{
+                  y: [0, -15, 0],
+                  rotate: [-2, 2, -2]
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                {/* Ship with all details */}
+                <div className="relative scale-150">
+                  {/* Ship emoji as base */}
+                  <motion.div
+                    className="text-[180px] drop-shadow-2xl"
+                    animate={{
+                      scale: [1, 1.02, 1]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity
+                    }}
+                  >
+                    ⛵
+                  </motion.div>
+
+                  {/* Pirate flag on top */}
+                  <motion.div
+                    className="absolute -top-12 left-1/2 -translate-x-1/2 text-6xl"
+                    animate={{
+                      rotate: [-5, 5, -5]
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity
+                    }}
+                  >
+                    🏴‍☠️
+                  </motion.div>
+
+                  {/* Water splash */}
+                  {[...Array(5)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute text-3xl"
+                      style={{
+                        left: `${20 + i * 15}%`,
+                        bottom: '-20%'
+                      }}
+                      animate={{
+                        y: [0, -30, -60],
+                        x: [(i - 2) * 5, (i - 2) * 10],
+                        opacity: [0, 1, 0],
+                        scale: [0.5, 1, 0.3]
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        delay: i * 0.2
+                      }}
+                    >
+                      💦
+                    </motion.div>
+                  ))}
+
+                  {/* Seagulls */}
+                  {[0, 1].map((i) => (
+                    <motion.div
+                      key={`seagull-${i}`}
+                      className="absolute text-4xl"
+                      style={{
+                        left: i === 0 ? '-30%' : '120%',
+                        top: '-40%'
+                      }}
+                      animate={{
+                        x: [0, (i === 0 ? 1 : -1) * 100],
+                        y: [0, -20, -10, -30, 0]
+                      }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        delay: i * 2
+                      }}
+                    >
+                      🦅
+                    </motion.div>
+                  ))}
+
+                  {/* Treasure chest on deck */}
+                  <motion.div
+                    className="absolute top-1/3 left-1/2 -translate-x-1/2 text-3xl"
+                    animate={{
+                      scale: [1, 1.1, 1]
+                    }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity
+                    }}
+                  >
+                    💰
+                  </motion.div>
+                </div>
+
+                <motion.h1 
+                  className="mt-12 text-5xl font-black text-amber-900"
+                  style={{ fontFamily: 'Pirata One, serif' }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  เรือโจรสลัดกำลังมา...
+                </motion.h1>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* Phase 3: Pirate Captain Greeting */}
+          {phase === "pirate" && (
+            <motion.div
+              key="pirate"
+              className="text-center"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              exit={{ scale: 0, rotate: 180, opacity: 0 }}
+              transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
+            >
+              <motion.div className="relative inline-block">
+                {/* Pirate Captain */}
+                <motion.div
+                  className="text-[200px] drop-shadow-2xl"
+                  animate={{
+                    rotate: [-5, 5, -5]
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  🏴‍☠️
+                </motion.div>
+
+                {/* Speech bubble with "อาฮอย!" */}
+                <motion.div
+                  className="absolute -top-20 -left-40 bg-white rounded-3xl px-8 py-4 shadow-2xl border-4 border-amber-700"
+                  initial={{ scale: 0, x: -50 }}
+                  animate={{ scale: 1, x: 0 }}
+                  transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                >
+                  <motion.p 
+                    className="text-5xl font-black text-amber-900 whitespace-nowrap"
+                    style={{ fontFamily: 'Pirata One, serif' }}
+                    animate={{
+                      scale: [1, 1.1, 1]
+                    }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity
+                    }}
+                  >
+                    อาฮอย! ⚓
+                  </motion.p>
+                  {/* Bubble tail */}
+                  <div 
+                    className="absolute bottom-0 right-12 translate-y-full w-0 h-0"
+                    style={{
+                      borderLeft: '20px solid transparent',
+                      borderRight: '20px solid transparent',
+                      borderTop: '20px solid white'
+                    }}
+                  />
+                </motion.div>
+
+                {/* Sparkles around pirate */}
+                {[...Array(6)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute text-5xl"
+                    style={{
+                      left: `${Math.cos((i / 6) * Math.PI * 2) * 120 + 50}%`,
+                      top: `${Math.sin((i / 6) * Math.PI * 2) * 120 + 50}%`
+                    }}
+                    animate={{
+                      scale: [0, 1.5, 0],
+                      rotate: [0, 180, 360]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      delay: i * 0.3
+                    }}
+                  >
+                    ✨
+                  </motion.div>
+                ))}
+
+                {/* Coins falling around */}
+                {[...Array(8)].map((_, i) => (
+                  <motion.div
+                    key={`coin-${i}`}
+                    className="absolute text-4xl"
+                    style={{
+                      left: `${10 + i * 10}%`,
+                      top: '-10%'
+                    }}
+                    animate={{
+                      y: [0, 200],
+                      rotate: [0, 360 * (i % 2 === 0 ? 1 : -1)],
+                      opacity: [0, 1, 1, 0]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      delay: i * 0.3
+                    }}
+                  >
+                    🪙
+                  </motion.div>
+                ))}
+              </motion.div>
+
+              <motion.h1 
+                className="mt-12 text-5xl font-black text-amber-900"
+                style={{ fontFamily: 'Pirata One, serif' }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                กัปตันฟาตูต้อนรับเจ้า!
+              </motion.h1>
+            </motion.div>
+          )}
+
+          {/* Phase 4: Message in Bottle */}
           {phase === "bottle" && (
             <motion.div
               key="bottle"
@@ -287,7 +534,7 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
             </motion.div>
           )}
 
-          {/* Phase 3: Treasure Reveal + Welcome */}
+          {/* Phase 5: Treasure Reveal + Welcome */}
           {phase === "treasure" && (
             <motion.div
               key="treasure"
@@ -468,8 +715,8 @@ export const OpeningAnimation = ({ onComplete }: OpeningAnimationProps) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
       >
-        {["map", "bottle", "treasure"].map((p, i) => {
-          const currentIndex = ["map", "bottle", "treasure"].indexOf(phase);
+        {["map", "ship", "pirate", "bottle", "treasure"].map((p, i) => {
+          const currentIndex = ["map", "ship", "pirate", "bottle", "treasure"].indexOf(phase);
           const isActive = i <= currentIndex;
           return (
             <motion.div
