@@ -57,8 +57,8 @@ export const AdminSubEventManager = ({ locations, onSave }: Props) => {
               const dateStr = todayStr();
               const sig = await signSubEventCheckin(subEvent.id, dateStr, CHECKIN_SECRET, currentVersion);
               
-              // Format: SUBEVENT|subEventId|version
-              const checkinData = `SUBEVENT|${subEvent.id}|${currentVersion}`;
+              // Format: SUBEVENT|subEventId|sig|version (4 parts)
+              const checkinData = `SUBEVENT|${subEvent.id}|${sig}|${currentVersion}`;
               
               const qrDataUrl = await QRCode.toDataURL(checkinData, {
                 width: 1000,
