@@ -65,6 +65,7 @@ const Map = () => {
   const [questModalOpen, setQuestModalOpen] = useState(false);
   const [questLocation, setQuestLocation] = useState<LocationEntry | null>(null);
   const [completedSubEvents, setCompletedSubEvents] = useState<string[]>([]);
+  const [subEventCheckins, setSubEventCheckins] = useState<any[]>([]);
   
   // Chatbot state
   const [chatbotOpen, setChatbotOpen] = useState(false);
@@ -101,11 +102,10 @@ const Map = () => {
         setCheckins(data.checkins);
         setPoints(data.points ?? 0);
         setPointsRequired(data.pointsRequired);
+        setSubEventCheckins(data.subEventCheckins || []);
         
-        if (data.subEventCheckins && Array.isArray(data.subEventCheckins)) {
-          const completedIds = data.subEventCheckins.map((se: any) => se.sub_event_id);
-          setCompletedSubEvents(completedIds);
-        }
+        // ไม่ต้องตั้งค่า completedSubEvents ที่นี่ เพราะเราจะ filter ใน BottleQuestModal
+        setCompletedSubEvents([]);
       } else {
         const data: any = await getMapData('');
         const transformedLocations = data.locations.map((location: any) => ({
@@ -806,7 +806,9 @@ const Map = () => {
           points_awarded: se.points_awarded ?? 100
         })) || []}
         alreadyCheckedIn={questLocation ? checkins.includes(questLocation.id) : false}
-        completedSubEvents={completedSubEvents}
+        completedSubEvents={questLocation ? subEventCheckins.filter((se: any) => 
+          questLocation.sub_events?.some(subEv => subEv.id === se.sub_event_id)
+        ).map((se: any) => se.sub_event_id) : []}
         locationId={questLocation?.id}
         subEventId={scannedQrData?.subEventId}
         qrSignature={scannedQrData?.sig}
