@@ -46,8 +46,15 @@ interface PrizeInfo {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { auth, logout } = useAuth();
   const { toast } = useToast();
+  
+  // Extract user from auth for easier access
+  const user = auth?.role === 'participant' ? {
+    id: auth.participantId,
+    username: auth.username,
+    displayName: auth.displayName
+  } : null;
   
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [prize, setPrize] = useState<PrizeInfo | null>(null);
