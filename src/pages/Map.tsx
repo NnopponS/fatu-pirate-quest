@@ -605,7 +605,7 @@ const Map = () => {
             <div>
               <p className="text-xs font-bold text-amber-800 mb-1">กิจกรรมพิเศษ</p>
               <h3 className="text-xl md:text-2xl font-black text-amber-900">ตอบแบบสอบถาม</h3>
-              <p className="text-sm text-amber-800 mt-1">กดปุ่มเพื่อไปยังแบบฟอร์ม และสแกน QR กิจกรรมหน้างานเพื่อรับ <span className="font-bold">+100 คะแนน</span></p>
+              <p className="text-sm text-amber-800 mt-1">กดปุ่มเพื่อไปยังแบบฟอร์ม และเปิดหลักฐานให้ Staff เห็นเพื่อรับ QR +100 คะแนน <span className="font-bold">+100 คะแนน</span></p>
             </div>
             <Button
               size="lg"
