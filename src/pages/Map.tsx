@@ -287,7 +287,7 @@ const Map = () => {
     }
   }, [participantId, toast, loadData]);
 
-  const handleQrScan = useCallback((value: string) => {
+  const handleQrScan = useCallback(async (value: string) => {
     console.log("📱 QR Code received in Map.tsx:", value);
     
     if (!value) {
@@ -357,9 +357,14 @@ const Map = () => {
       
     console.log("Setting scanned QR data:", parsedData);
     
-    // Handle SUBEVENT QR codes - find location and show bottle modal
+    // Handle SUBEVENT QR codes
     if (parsedData.isValid && parsedData.type === 'subevent' && parsedData.subEventId && participantId) {
       console.log("Processing sub-event QR code:", parsedData.subEventId);
+      // If it's the global survey sub-event, handle directly without showing bottle modal
+      if (parsedData.subEventId === '1-survey') {
+        await handleSubEventQrScan(value);
+        return;
+      }
       
       // Find the location that contains this sub-event
       const location = locations.find(loc => 
@@ -423,7 +428,7 @@ const Map = () => {
       setScannedQrData(parsedData);
       setQrPreviewOpen(true);
     }
-  }, [locations, participantId, navigate, setScannerOpen, setQuestModalOpen, setQuestLocation, setScannedQrData, setQrPreviewOpen]);
+  }, [locations, participantId, navigate, setScannerOpen, setQuestModalOpen, setQuestLocation, setScannedQrData, setQrPreviewOpen, handleSubEventQrScan]);
 
   return (
     <PirateBackdrop>
@@ -743,7 +748,7 @@ const Map = () => {
           setQuestModalOpen(false);
         }}
         locationName={questLocation?.name || ""}
-        subEvents={questLocation?.sub_events?.map(se => ({
+        subEvents={questLocation?.sub_events?.filter(se => se.id !== '1-survey').map(se => ({
           id: se.id,
           name: se.name,
           description: se.description,
@@ -752,7 +757,7 @@ const Map = () => {
         })) || []}
         alreadyCheckedIn={questLocation ? checkins.includes(questLocation.id) : false}
         completedSubEvents={questLocation ? subEventCheckins.filter((se: any) => 
-          questLocation.sub_events?.some(subEv => subEv.id === se.sub_event_id)
+          se.sub_event_id !== '1-survey' && questLocation.sub_events?.some(subEv => subEv.id === se.sub_event_id)
         ).map((se: any) => se.sub_event_id) : []}
         locationId={questLocation?.id}
         subEventId={scannedQrData?.subEventId}
