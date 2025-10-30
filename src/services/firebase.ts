@@ -1070,7 +1070,11 @@ export const checkinSubEvent = async (
     created_at: new Date().toISOString(),
   };
 
-  // Do not auto mark location check-in from sub-event participation anymore
+  // Auto mark location check-in when doing sub-event (except survey which is handled above)
+  const existingLocationCheckin = await firebaseDb.get<CheckinRecord>(
+    `checkins/${participantId}/${parentLocation.id}`
+  );
+  const needsLocationCheckin = !existingLocationCheckin;
 
   const participant = await getParticipantById(participantId);
   if (!participant) {
@@ -1084,6 +1088,17 @@ export const checkinSubEvent = async (
   const operations: Array<Promise<unknown>> = [
     firebaseDb.set(`sub_event_checkins/${participantId}/${subEventId}`, subEventCheckin),
   ];
+
+  // Add location checkin if needed (no location points here, just mark attendance)
+  if (needsLocationCheckin) {
+    const locationCheckin: CheckinRecord = {
+      participant_id: participantId,
+      location_id: parentLocation.id,
+      method: "subevent_auto",
+      created_at: new Date().toISOString(),
+    };
+    operations.push(firebaseDb.set(`checkins/${participantId}/${parentLocation.id}`, locationCheckin));
+  }
 
   // Update points if there are any to add
   if (updatedPoints > participant.points) {
