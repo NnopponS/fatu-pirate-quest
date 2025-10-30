@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Gift, Package } from "lucide-react";
 
@@ -89,6 +89,9 @@ export const BottleShaker = ({ onShake, disabled, prizes }: BottleShakerProps) =
   const [showClaim, setShowClaim] = useState(false);
   const [claimed, setClaimed] = useState(false);
   const [revealing, setRevealing] = useState(false);
+  const [motionEnabled, setMotionEnabled] = useState(false);
+  const lastAccel = useRef<{ x: number; y: number; z: number; t: number } | null>(null);
+  const shakeCooldownRef = useRef<number>(0);
 
   const handleShake = async () => {
     if (disabled || shaking || shakeCount >= 5) return;
@@ -131,6 +134,52 @@ export const BottleShaker = ({ onShake, disabled, prizes }: BottleShakerProps) =
   const displayPrizes = prizes.length > 0 ? prizes : [{ name: "ยังไม่มีการตั้งค่ารางวัล", weight: 1, stock: 0 }];
   const canShake = shakeCount < 5 && !disabled && !result;
   const shakeProgress = (shakeCount / 5) * 100;
+
+  // Device motion shake support
+  useEffect(() => {
+    if (!motionEnabled || !canShake) return;
+
+    const threshold = 15; // m/s^2 approximate
+    const minIntervalMs = 400;
+
+    const onMotion = (e: DeviceMotionEvent) => {
+      const now = Date.now();
+      if (now - shakeCooldownRef.current < minIntervalMs) return;
+      const acc = e.accelerationIncludingGravity;
+      if (!acc) return;
+      const ax = acc.x || 0;
+      const ay = acc.y || 0;
+      const az = acc.z || 0;
+      const magnitude = Math.sqrt(ax * ax + ay * ay + az * az);
+      // Basic high-pass via diff
+      const prev = lastAccel.current;
+      lastAccel.current = { x: ax, y: ay, z: az, t: now };
+      if (magnitude > threshold) {
+        shakeCooldownRef.current = now;
+        // fire one shake
+        handleShake();
+      }
+    };
+
+    window.addEventListener('devicemotion', onMotion, { passive: true });
+    return () => window.removeEventListener('devicemotion', onMotion as any);
+  }, [motionEnabled, canShake]);
+
+  const requestMotionPermission = async () => {
+    // iOS 13+
+    try {
+      const anyWindow = window as any;
+      if (typeof anyWindow.DeviceMotionEvent !== 'undefined' && typeof anyWindow.DeviceMotionEvent.requestPermission === 'function') {
+        const res = await anyWindow.DeviceMotionEvent.requestPermission();
+        if (res === 'granted') setMotionEnabled(true);
+      } else {
+        // Android or desktop
+        setMotionEnabled(true);
+      }
+    } catch {
+      setMotionEnabled(false);
+    }
+  };
 
   return (
     <>
@@ -339,6 +388,20 @@ export const BottleShaker = ({ onShake, disabled, prizes }: BottleShakerProps) =
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Motion tip and enable */}
+        {!result && canShake && (
+          <div className="mx-auto max-w-xl px-4 py-3 text-xs text-amber-900/80">
+            <p>💡 คุณสามารถเขย่ามือถือเพื่อเขย่าขวดได้</p>
+            {!motionEnabled && (
+              <div className="mt-2">
+                <Button size="sm" variant="outline" onClick={requestMotionPermission}>
+                  เปิดใช้งานการเขย่ามือถือ
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

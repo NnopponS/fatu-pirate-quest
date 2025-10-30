@@ -572,8 +572,19 @@ const Map = () => {
                   </div>
                 </div>
                 <p className="text-xs sm:text-sm text-amber-800 font-bold mt-2 text-center">
-                  {points >= pointsRequired ? '🎉 ครบแล้ว! ไปหมุนวงล้อ!' : `เหลือ ${(pointsRequired - points).toLocaleString()} คะแนน`}
+                  {points >= pointsRequired ? '🎉 ครบแล้ว! พร้อมลุ้นรางวัล!' : `เหลือ ${(pointsRequired - points).toLocaleString()} คะแนน`}
                 </p>
+                {points >= pointsRequired && (
+                  <div className="mt-3 flex items-center justify-center">
+                    <Button 
+                      size="sm"
+                      className="gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow"
+                      onClick={() => navigate('/rewards')}
+                    >
+                      🍾 เขย่าขวดลุ้นรางวัล
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -624,74 +635,7 @@ const Map = () => {
           )}
         </div>
 
-        {/* Bottom Actions - Map Style */}
-        <div 
-          className="relative overflow-hidden rounded-2xl border-4 border-amber-700 bg-[#f9f1df] p-6 sm:p-8 shadow-2xl"
-          style={{
-            backgroundImage: `radial-gradient(circle at 20px 20px, rgba(139, 115, 85, 0.1) 2px, transparent 2px)`,
-            backgroundSize: '40px 40px'
-          }}
-        >
-          <div className="flex flex-col items-center justify-center gap-4">
-            {participantId ? (
-              <div className="flex flex-col w-full max-w-md gap-4">
-                <Button 
-                  size="lg" 
-                  onClick={() => navigate("/rewards")} 
-                  className="w-full gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-xl hover:scale-105 transition-transform text-base sm:text-lg py-5 sm:py-6 font-bold"
-                >
-                  <Trophy className="h-5 w-5 sm:h-6 sm:w-6" />
-                  🎰 หมุนวงล้อสมบัติ
-                </Button>
-                <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    onClick={() => navigate("/profile")} 
-                    className="border-2 border-amber-600 hover:bg-amber-100"
-                  >
-                    <User className="h-5 w-5" />
-                  </Button>
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    onClick={() => navigate("/")} 
-                    className="border-2 border-amber-600 hover:bg-amber-100"
-                  >
-                    <Anchor className="h-5 w-5" />
-                  </Button>
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    onClick={handleLogout} 
-                    className="border-2 border-red-400 text-red-600 hover:bg-red-50"
-                  >
-                    <LogOut className="h-5 w-5" />
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col w-full max-w-md gap-4">
-                <Button 
-                  size="lg" 
-                  onClick={() => navigate("/login")} 
-                  className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-xl hover:scale-105 transition-transform text-base sm:text-lg py-5 sm:py-6 font-bold"
-                >
-                  🏴‍☠️ เข้าสู่ระบบเพื่อล่าสมบัติ
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  onClick={() => navigate("/")} 
-                  className="w-full border-2 border-amber-600 hover:bg-amber-100"
-                >
-                  <Anchor className="mr-2 h-5 w-5" />
-                  กลับหน้าแรก
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Bottom Actions removed per request */}
       </div>
 
       {/* QR Scanner Modal */}

@@ -407,48 +407,17 @@ export const PirateHero = () => {
 
           <div className="pirate-divider" />
 
-          {/* Action Buttons - SUPER PROMINENT CTA */}
+          {/* Action Area - compact, non-buttony CTA with AI tip */}
           <div className="space-y-6 md:space-y-8">
-            {/* 🎯 Big Call to Action Banner */}
-            <div className="bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 p-1 rounded-3xl animate-pulse-slow shadow-2xl">
-              <div className="bg-gradient-to-br from-amber-900 via-orange-800 to-amber-900 rounded-3xl p-6 md:p-8 text-center">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-center gap-3">
-                    <span className="text-5xl md:text-7xl animate-bounce">👇</span>
-                    <h3 className="text-3xl md:text-5xl font-black text-white drop-shadow-lg" style={{ fontFamily: 'Pirata One, serif' }}>
-                      คลิกที่นี่เลย!
-                    </h3>
-                    <span className="text-5xl md:text-7xl animate-bounce" style={{ animationDelay: '0.3s' }}>👇</span>
-                  </div>
-                  <p className="text-lg md:text-2xl text-yellow-100 font-bold">
-                    เริ่มต้นการผจญภัยของคุณเดี๋ยวนี้!
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            {/* ⭐ ปุ่มเริ่มต้นใช้งาน - SUPER BIG */}
-            <div className="max-w-4xl mx-auto">
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 via-orange-400 to-red-400 rounded-3xl blur-3xl group-hover:blur-[40px] transition-all duration-500 opacity-70 group-hover:opacity-100 animate-pulse" />
-                <Button
-                  size="lg"
-                  className="relative w-full h-auto py-10 md:py-16 px-8 md:px-12 text-2xl md:text-4xl font-black shadow-2xl hover:shadow-[0_0_80px_rgba(251,191,36,0.8)] hover:scale-105 transition-all duration-300 bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 hover:from-yellow-400 hover:via-amber-400 hover:to-orange-400 rounded-3xl border-8 border-white/50 text-white"
-                  onClick={() => navigate("/onboarding")}
-                >
-                  <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
-                    <span className="text-7xl md:text-9xl animate-treasure-bounce">🏴‍☠️</span>
-                    <div className="text-center md:text-left space-y-2">
-                      <div className="text-3xl md:text-5xl font-black drop-shadow-2xl">
-                        เริ่มต้นใช้งาน
-                      </div>
-                      <div className="text-lg md:text-2xl text-white/90 font-bold flex items-center justify-center md:justify-start gap-2">
-                        คลิกเลย! 
-                        <span className="animate-bounce">→</span>
-                      </div>
-                    </div>
-                  </div>
-                </Button>
+            {/* Compact Info Banner */}
+            <div className="max-w-3xl mx-auto">
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-50/60 px-4 py-3 md:px-6 md:py-4 text-center shadow">
+                <p className="text-sm md:text-base text-amber-900 font-semibold">
+                  เริ่มต้นการผจญภัยได้จากเมนูด้านล่าง หรือไปที่แผนที่เพื่อสำรวจจุดเช็กอิน
+                </p>
+                <p className="mt-2 text-xs md:text-sm text-amber-800">
+                  💡 มี AI ผู้ช่วยโจรสลัดอยู่มุมขวาล่าง คลิกตัวโจรสลัดเพื่อถามเส้นทาง วิธีเล่น หรือข้อมูลงานได้เลย
+                </p>
               </div>
             </div>
 
