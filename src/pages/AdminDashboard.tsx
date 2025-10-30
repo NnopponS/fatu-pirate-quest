@@ -864,9 +864,9 @@ const AdminDashboard = () => {
                         {searchQuery && ` (แสดง ${filteredParticipants.length} คนจากการค้นหา)`}
                       </p>
                     </div>
-                    <Button variant="outline" className="gap-2" onClick={exportParticipants}>
+                    <Button variant="outline" className="gap-2" onClick={() => handleExportToExcel('participants')}>
                       <Download className="h-4 w-4" />
-                      ดาวน์โหลด CSV
+                      ดาวน์โหลด Excel
                     </Button>
                   </div>
 
@@ -950,9 +950,9 @@ const AdminDashboard = () => {
                     </p>
                   </div>
                   </div>
-                  <Button variant="outline" className="gap-2" onClick={exportLocationCheckins}>
+                  <Button variant="outline" className="gap-2" onClick={() => handleExportToExcel('all')}>
                     <Download className="h-4 w-4" />
-                    Export Check-ins
+                    Export Excel
                   </Button>
                 </div>
 
