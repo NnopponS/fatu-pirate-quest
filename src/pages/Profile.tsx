@@ -55,6 +55,14 @@ const Profile = () => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Partial<UserProfile>>({});
   const [chatbotOpen, setChatbotOpen] = useState(false);
+  
+  // สำหรับแก้ไข Username/Password
+  const [editingCredentials, setEditingCredentials] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [savingCredentials, setSavingCredentials] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -152,6 +160,110 @@ const Profile = () => {
     }
   };
 
+  const handleSaveCredentials = async () => {
+    if (!user || !profile) return;
+
+    // Validate
+    if (!currentPassword) {
+      toast({
+        title: "กรุณากรอกรหัสผ่านปัจจุบัน",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newUsername && newUsername.length < 3) {
+      toast({
+        title: "Username ต้องมีความยาวอย่างน้อย 3 ตัวอักษร",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword && newPassword.length < 6) {
+      toast({
+        title: "รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "รหัสผ่านใหม่ไม่ตรงกัน",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSavingCredentials(true);
+    try {
+      const { firebaseDb } = await import("@/integrations/firebase/database");
+      const { hashPassword, verifyPassword } = await import("@/services/firebase");
+      
+      // Load current participant data
+      const participant = await firebaseDb.get<any>(`participants/${user.id}`);
+      
+      // Verify current password
+      const isPasswordCorrect = await verifyPassword(currentPassword, participant.password_hash);
+      
+      if (!isPasswordCorrect) {
+        toast({
+          title: "รหัสผ่านปัจจุบันไม่ถูกต้อง",
+          variant: "destructive",
+        });
+        setSavingCredentials(false);
+        return;
+      }
+
+      // Update Firebase
+      const updates: any = {};
+      
+      if (newUsername && newUsername !== profile.username) {
+        updates.username = newUsername;
+      }
+      
+      if (newPassword) {
+        updates.password_hash = await hashPassword(newPassword);
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await firebaseDb.update(`participants/${user.id}`, updates);
+        
+        // Update localStorage and auth context
+        if (newUsername && newUsername !== profile.username) {
+          localStorage.setItem('participantUsername', newUsername);
+          setProfile({ ...profile, username: newUsername });
+        }
+        
+        toast({
+          title: "บันทึกข้อมูลสำเร็จ",
+          description: "Username/Password ถูกอัปเดตแล้ว",
+        });
+        
+        // Reset form
+        setEditingCredentials(false);
+        setCurrentPassword("");
+        setNewUsername("");
+        setNewPassword("");
+        setConfirmPassword("");
+      } else {
+        toast({
+          title: "ไม่มีการเปลี่ยนแปลง",
+          description: "กรุณาแก้ไขข้อมูลก่อนบันทึก",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "บันทึกไม่สำเร็จ",
+        description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingCredentials(false);
+    }
+  };
+
   const handleLogout = () => {
     logout();
     toast({
@@ -245,9 +357,9 @@ const Profile = () => {
           </Button>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Profile Info Card */}
-          <Card className="pirate-card">
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Profile Info Card - Column 1 */}
+          <Card className="pirate-card lg:col-span-1">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
@@ -405,8 +517,121 @@ const Profile = () => {
             </CardContent>
           </Card>
 
-          {/* Points & Prize Card */}
-          <div className="space-y-6">
+          {/* Username/Password Card - Column 2 */}
+          <Card className="pirate-card lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Username & Password
+                </span>
+                {!editingCredentials ? (
+                  <Button size="sm" variant="outline" onClick={() => setEditingCredentials(true)} className="gap-2">
+                    <Edit className="h-4 w-4" />
+                    แก้ไข
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleSaveCredentials} disabled={savingCredentials} className="gap-2">
+                      <Save className="h-4 w-4" />
+                      บันทึก
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => {
+                      setEditingCredentials(false);
+                      setCurrentPassword("");
+                      setNewUsername("");
+                      setNewPassword("");
+                      setConfirmPassword("");
+                    }} className="gap-2">
+                      <X className="h-4 w-4" />
+                      ยกเลิก
+                    </Button>
+                  </div>
+                )}
+              </CardTitle>
+              <CardDescription>จัดการ Username และรหัสผ่าน</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {editingCredentials ? (
+                <>
+                  <div className="space-y-2">
+                    <Label>Username ปัจจุบัน</Label>
+                    <Input value={profile.username} disabled className="bg-gray-100" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Username ใหม่ (ไม่บังคับ)</Label>
+                    <Input
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      placeholder="ถ้าต้องการเปลี่ยน Username"
+                      disabled={savingCredentials}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>รหัสผ่านปัจจุบัน *</Label>
+                    <Input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="กรอกรหัสผ่านปัจจุบัน"
+                      disabled={savingCredentials}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>รหัสผ่านใหม่ (ไม่บังคับ)</Label>
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="ถ้าต้องการเปลี่ยนรหัสผ่าน"
+                      disabled={savingCredentials}
+                    />
+                  </div>
+
+                  {newPassword && (
+                    <div className="space-y-2">
+                      <Label>ยืนยันรหัสผ่านใหม่</Label>
+                      <Input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="ยืนยันรหัสผ่านใหม่"
+                        disabled={savingCredentials}
+                      />
+                    </div>
+                  )}
+
+                  <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
+                    <p className="text-xs text-amber-800">
+                      💡 <strong>หมายเหตุ:</strong> ต้องกรอกรหัสผ่านปัจจุบันเสมอ หากต้องการเปลี่ยน Username ต้องกรอกรหัสผ่านปัจจุบันด้วย
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5">
+                    <User className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="text-sm text-foreground/60">Username</p>
+                      <p className="font-semibold font-mono">{profile.username}</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
+                    <p className="text-xs text-blue-800">
+                      🔒 รหัสผ่านของคุณปลอดภัย หากต้องการเปลี่ยนกรุณากดปุ่ม "แก้ไข"
+                    </p>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Points & Prize Cards - Column 3 */}
+          <div className="space-y-6 lg:col-span-1">
             {/* Points Card */}
             <Card className="pirate-card border-2 border-primary/30">
               <CardHeader>

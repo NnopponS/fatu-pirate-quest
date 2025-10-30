@@ -410,6 +410,14 @@ const hashPassword = async (password: string) => {
   return toHex(digest);
 };
 
+// Export hash and verify functions
+export { hashPassword };
+
+export const verifyPassword = async (password: string, hashedPassword: string): Promise<boolean> => {
+  const computedHash = await hashPassword(password);
+  return computedHash === hashedPassword;
+};
+
 const normalizeUsername = (value: string) =>
   value.trim().toLowerCase();
 
