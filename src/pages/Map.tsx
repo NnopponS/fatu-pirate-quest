@@ -87,7 +87,7 @@ const Map = () => {
       if (participantId) {
         const data: any = await getMapData(participantId);
         
-        const transformedLocations = data.locations.map((location: any) => ({
+        const transformedLocationsAll = data.locations.map((location: any) => ({
           id: location.id,
           name: location.name,
           lat: location.lat,
@@ -98,7 +98,8 @@ const Map = () => {
           description: location.description,
           sub_events: location.sub_events && Array.isArray(location.sub_events) ? location.sub_events : [],
         }));
-        
+        // Show only Gymnasium 4 to users
+        const transformedLocations = transformedLocationsAll.filter((loc: any) => loc.id === 1);
         setLocations(transformedLocations);
         console.log("📊 Map data checkins:", data.checkins);
         console.log("📊 Map data checkins length:", data.checkins?.length);
@@ -112,7 +113,7 @@ const Map = () => {
         setCompletedSubEvents([]);
       } else {
         const data: any = await getMapData('');
-        const transformedLocations = data.locations.map((location: any) => ({
+        const transformedLocationsAll = data.locations.map((location: any) => ({
           id: location.id,
           name: location.name,
           lat: location.lat,
@@ -123,7 +124,7 @@ const Map = () => {
           description: location.description,
           sub_events: location.sub_events && Array.isArray(location.sub_events) ? location.sub_events : [],
         }));
-        
+        const transformedLocations = transformedLocationsAll.filter((loc: any) => loc.id === 1);
         setLocations(transformedLocations);
         setPointsRequired(data.pointsRequired);
       }
@@ -431,7 +432,7 @@ const Map = () => {
         messages={[
           "ฮาฮอย! นี่คือแผนที่สมบัติ! 🗺️",
           "คลิกที่ข้าได้ถ้าอยากคุยนะ! 💬",
-          "เช็กอินทั้ง 4 จุดเพื่อสะสมคะแนน! ⚓",
+          "เช็กอินเพื่อสะสมคะแนน! ⚓",
           "สแกน QR Code ที่แต่ละจุดด้วยนะ! 📱",
           "สะสมครบ 400 คะแนนแล้วหมุนวงล้อ! 🎰",
           "โชคดีในการล่าสมบัติ! 💎",
@@ -500,8 +501,7 @@ const Map = () => {
                 </p>
                 <p className="text-sm md:text-base text-amber-900 leading-relaxed">
                   ข้าขอต้อนรับเจ้าเข้าสู่แผนที่สมบัติแห่งเกาะ FATU 
-                  เช็กอินทั้ง <span className="font-bold text-amber-800">4 จุด</span> เพื่อสะสมคะแนน 
-                  และร่วม<span className="font-bold text-amber-800">กิจกรรมพิเศษ</span>เพื่อรับคะแนนเพิ่มเติม +100!
+                  เช็กอินแล้วร่วม<span className="font-bold text-amber-800">กิจกรรมพิเศษ</span>เพื่อรับคะแนนเพิ่มเติม +100!
                 </p>
                 <div className="flex flex-wrap justify-center gap-2 text-lg">
                   <span className="px-3 py-1 bg-amber-100 border-2 border-amber-400 rounded-full">⚓</span>
