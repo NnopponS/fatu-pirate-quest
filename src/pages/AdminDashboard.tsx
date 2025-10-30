@@ -1020,11 +1020,10 @@ const AdminDashboard = () => {
                     <div className="space-y-2">
                       {(() => {
                         const survey = dashboard?.locations.flatMap(l => l.sub_events || []).find(se => se.id === "1-survey");
-                        const loc = dashboard?.locations.find(l => (l.sub_events || []).some(se => se.id === "1-survey"));
                         return (
                           <>
                             <div className="text-sm"><span className="font-semibold">SubEvent ID:</span> 1-survey</div>
-                            <div className="text-sm"><span className="font-semibold">สถานที่:</span> {loc?.name ?? '—'}</div>
+                            <div className="text-sm"><span className="font-semibold">สถานที่:</span> — (Global)</div>
                             <div className="text-sm"><span className="font-semibold">QR Version:</span> {survey?.qr_code_version ?? 1}</div>
                             <div className="text-sm"><span className="font-semibold">คะแนน:</span> {survey?.points_awarded ?? 100}</div>
                           </>

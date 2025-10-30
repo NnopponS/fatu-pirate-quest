@@ -536,7 +536,7 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
         <div className="flex items-center justify-between border-t pt-4">
           <h4 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
-            กิจกรรมย่อย ({subEvents.length})
+            กิจกรรมย่อย ({subEvents.filter(se => se.id !== "1-survey").length})
           </h4>
           {!showAddSubEvent && (
             <Button variant="outline" size="sm" onClick={() => setShowAddSubEvent(true)} className="gap-2">
