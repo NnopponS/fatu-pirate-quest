@@ -109,6 +109,11 @@ const Signup = () => {
 
       setCredentials({ username: result.username, password: result.password });
 
+      // Auto scroll to credentials after a short delay
+      setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }, 300);
+
       toast({
         title: "✅ สมัครสมาชิกสำเร็จ!",
         description: "กรุณาถ่ายรูปข้อมูลชื่อผู้ใช้และรหัสผ่านด้านล่าง",
