@@ -111,12 +111,9 @@ const Signup = () => {
 
       toast({
         title: "✅ สมัครสมาชิกสำเร็จ!",
-        description: `Username: ${result.username} | Password: ${result.password}`,
+        description: "กรุณาถ่ายรูปข้อมูลชื่อผู้ใช้และรหัสผ่านด้านล่าง",
         duration: 8000, // แสดง toast นานขึ้นเพื่อให้มีเวลาอ่าน
       });
-
-      // Navigate to login immediately
-      navigate("/login");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
@@ -391,15 +388,25 @@ const Signup = () => {
               </div>
             </div>
 
-            <div className="rounded-lg border-2 border-accent/30 bg-accent/10 p-4">
-              <p className="text-sm font-semibold text-accent text-center">
-                ⚠️ สำคัญมาก: กรุณาถ่ายรูปหรือบันทึกข้อมูลนี้ไว้ เพื่อใช้เข้าสู่ระบบในครั้งถัดไป
+            <div className="rounded-lg border-4 border-amber-500 bg-gradient-to-br from-amber-50 to-orange-50 p-6 shadow-xl">
+              <p className="text-lg font-bold text-amber-900 text-center mb-2">
+                ⚠️ สำคัญมาก!
+              </p>
+              <p className="text-base text-amber-800 text-center">
+                กรุณาถ่ายรูปหรือบันทึกข้อมูล Username และ Password นี้ไว้ เพื่อใช้เข้าสู่ระบบในครั้งถัดไป
+              </p>
+              <p className="text-sm text-amber-700 text-center mt-3 font-semibold">
+                💡 ขอแนะนำให้ถ่ายรูปหน้าจอไว้เพื่อความสะดวก
               </p>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button className="flex-1" variant="outline" onClick={() => navigate("/login")}>
-                ไปหน้าเข้าสู่ระบบ
+              <Button 
+                size="lg"
+                className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-bold text-lg py-6 shadow-xl" 
+                onClick={() => navigate("/login")}
+              >
+                🚀 ไปหน้าเข้าสู่ระบบ
               </Button>
             </div>
           </div>
