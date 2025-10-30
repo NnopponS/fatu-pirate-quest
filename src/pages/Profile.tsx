@@ -71,16 +71,6 @@ const Profile = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingCredentials, setSavingCredentials] = useState(false);
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-
-    // Load profile data from Firebase
-    loadProfile();
-  }, [user, navigate]);
-
   const loadProfile = async () => {
     if (!user) return;
 
@@ -131,6 +121,16 @@ const Profile = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    // Load profile data from Firebase
+    loadProfile();
+  }, [user, navigate]);
 
   const handleSave = async () => {
     if (!user || !profile) return;
