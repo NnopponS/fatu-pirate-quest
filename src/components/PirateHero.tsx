@@ -421,6 +421,17 @@ export const PirateHero = () => {
               </div>
             </div>
 
+            {/* Start Onboarding - compact button */}
+            <div className="text-center">
+              <Button
+                size="lg"
+                className="inline-flex items-center gap-2 px-6 py-4 rounded-xl bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 text-white hover:from-yellow-400 hover:via-amber-400 hover:to-orange-400 shadow"
+                onClick={() => navigate("/onboarding")}
+              >
+                🏴‍☠️ เริ่มต้นใช้งาน
+              </Button>
+            </div>
+
             {/* 📱 ปุ่มย่อย 3 ปุ่ม (แนวนอน) */}
             <div className="max-w-3xl mx-auto">
               <div className="grid gap-3 md:gap-4 grid-cols-3">
