@@ -52,9 +52,11 @@ import {
   Trophy,
   Loader2,
   AlertCircle,
+  QrCode,
 } from "lucide-react";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { AdminLocationManager } from "@/components/AdminLocationManager";
+import QRCode from "qrcode";
 import { AdminParticipantManager } from "@/components/AdminParticipantManager";
 import { HeroCardsTab } from "@/components/HeroCardsTabContent";
 import { supabase } from "@/integrations/supabase/client";
@@ -204,6 +206,47 @@ const AdminDashboard = () => {
     },
     [logout, toast],
   );
+
+  // Survey (1-survey) QR state
+  const [surveyQr, setSurveyQr] = useState<string>("");
+  const [surveyRegenerating, setSurveyRegenerating] = useState<boolean>(false);
+
+  useEffect(() => {
+    const generateSurveyQr = async () => {
+      const survey = dashboard?.locations.flatMap(l => l.sub_events || []).find(se => se.id === "1-survey");
+      if (!survey) {
+        setSurveyQr("");
+        return;
+      }
+      const version = survey.qr_code_version ?? 1;
+      const data = `SUBEVENT|${survey.id}|${version}`;
+      try {
+        const url = await QRCode.toDataURL(data, { width: 800, margin: 2, errorCorrectionLevel: 'H' });
+        setSurveyQr(url);
+      } catch (e) {
+        console.error('Failed generating survey QR:', e);
+      }
+    };
+    generateSurveyQr();
+  }, [dashboard]);
+
+  const regenerateSurveyQr = async () => {
+    if (!token || !dashboard) return;
+    const loc = dashboard.locations.find(l => (l.sub_events || []).some(se => se.id === "1-survey"));
+    if (!loc) return;
+    const current = loc.sub_events || [];
+    const updated = current.map(se => se.id === "1-survey" ? { ...se, qr_code_version: (se.qr_code_version ?? 1) + 1 } : se);
+    setSurveyRegenerating(true);
+    try {
+      await updateLocationApi(token, { id: loc.id, sub_events: updated });
+      toast({ title: "สร้าง QR แบบสอบถามใหม่แล้ว" });
+      fetchDashboard(token);
+    } catch (error) {
+      toast({ title: "สร้าง QR ไม่สำเร็จ", description: errorMessage(error), variant: 'destructive' });
+    } finally {
+      setSurveyRegenerating(false);
+    }
+  };
 
   useEffect(() => {
     const sessionToken = localStorage.getItem("adminToken");
@@ -954,6 +997,63 @@ const AdminDashboard = () => {
                     <Download className="h-4 w-4" />
                     Export Excel
                   </Button>
+                </div>
+
+                {/* Survey Sub-Event (Standalone Card) */}
+                <div className="rounded-2xl border border-rope/40 bg-white/70 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-xl font-semibold text-primary">แบบสอบถาม (แยกการจัดการ)</h3>
+                      <p className="text-sm text-foreground/70">กิจกรรมย่อย: 1-survey — จัดการแยก ไม่รวมใน Gym4</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => token && fetchDashboard(token)} className="gap-2">
+                        <Download className="h-4 w-4" />รีเฟรช
+                      </Button>
+                      <Button onClick={regenerateSurveyQr} disabled={surveyRegenerating} className="gap-2">
+                        {surveyRegenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
+                        สร้าง QR ใหม่
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-[1fr,320px] gap-6 items-start">
+                    <div className="space-y-2">
+                      {(() => {
+                        const survey = dashboard?.locations.flatMap(l => l.sub_events || []).find(se => se.id === "1-survey");
+                        const loc = dashboard?.locations.find(l => (l.sub_events || []).some(se => se.id === "1-survey"));
+                        return (
+                          <>
+                            <div className="text-sm"><span className="font-semibold">SubEvent ID:</span> 1-survey</div>
+                            <div className="text-sm"><span className="font-semibold">สถานที่:</span> {loc?.name ?? '—'}</div>
+                            <div className="text-sm"><span className="font-semibold">QR Version:</span> {survey?.qr_code_version ?? 1}</div>
+                            <div className="text-sm"><span className="font-semibold">คะแนน:</span> {survey?.points_awarded ?? 100}</div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                    <div className="rounded-xl border-2 border-primary/30 bg-primary/5 p-4">
+                      <div className="font-semibold mb-3 flex items-center gap-2"><QrCode className="h-5 w-5" /> QR แบบสอบถาม</div>
+                      {surveyQr ? (
+                        <img src={surveyQr} alt="Survey QR" className="w-full rounded" />
+                      ) : (
+                        <div className="text-sm text-foreground/60">ไม่มีข้อมูล QR</div>
+                      )}
+                      {surveyQr && (
+                        <Button
+                          variant="outline"
+                          className="w-full mt-3"
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = surveyQr;
+                            link.download = `survey-1-survey.png`;
+                            link.click();
+                          }}
+                        >
+                          <Download className="h-4 w-4 mr-2" /> ดาวน์โหลด QR
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid gap-6">

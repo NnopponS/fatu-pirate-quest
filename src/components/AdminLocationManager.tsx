@@ -79,6 +79,7 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
       const codes: { [key: string]: string } = {};
       
       for (const subEvent of subEvents) {
+        if (subEvent.id === "1-survey") continue;
         try {
           const currentVersion = subEvent.qr_code_version ?? 1;
           
@@ -592,9 +593,9 @@ export const AdminLocationManager = ({ location, onSave, onSaveSubEvents }: Prop
         )}
 
         {/* Sub-Events List */}
-        {subEvents.length > 0 && (
+        {subEvents.filter(se => se.id !== "1-survey").length > 0 && (
           <Accordion type="single" collapsible className="space-y-2">
-            {subEvents.map((subEvent) => {
+            {subEvents.filter(se => se.id !== "1-survey").map((subEvent) => {
               const draft = editingSubEvents[subEvent.id] || subEvent;
               const hasChanges = Boolean(editingSubEvents[subEvent.id]);
 

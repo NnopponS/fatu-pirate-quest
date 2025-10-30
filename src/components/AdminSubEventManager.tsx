@@ -24,6 +24,7 @@ interface SubEvent {
   image_url?: string;
   time?: string;
   qr_code_version?: number;
+  points_awarded?: number;
 }
 
 interface LocationRecord {
@@ -53,6 +54,7 @@ export const AdminSubEventManager = ({ locations, onSave }: Props) => {
       for (const location of locations) {
         if (location.sub_events) {
           for (const subEvent of location.sub_events) {
+            if (subEvent.id === "1-survey") continue; // hidden/managed separately
             try {
               const currentVersion = subEvent.qr_code_version ?? 1;
               
@@ -282,11 +284,11 @@ export const AdminSubEventManager = ({ locations, onSave }: Props) => {
             <div className="flex items-center gap-3 mb-4">
               <MapPin className="h-6 w-6 text-amber-600" />
               <h3 className="text-xl font-bold text-gray-900">{location.name}</h3>
-              <span className="text-sm text-gray-600">({location.sub_events.length} กิจกรรม)</span>
+              <span className="text-sm text-gray-600">({(location.sub_events || []).filter(se => se.id !== "1-survey").length} กิจกรรม)</span>
             </div>
 
             <Accordion type="single" collapsible className="space-y-2">
-              {location.sub_events.map((subEvent) => {
+              {(location.sub_events || []).filter(se => se.id !== "1-survey").map((subEvent) => {
                 const draft = editingSubEvent[subEvent.id] || subEvent;
                 const hasChanges = Boolean(editingSubEvent[subEvent.id]);
 
