@@ -98,9 +98,8 @@ const Map = () => {
           description: location.description,
           sub_events: location.sub_events && Array.isArray(location.sub_events) ? location.sub_events : [],
         }));
-        // Show only Gymnasium 4 to users
-        const transformedLocations = transformedLocationsAll.filter((loc: any) => loc.id === 1);
-        setLocations(transformedLocations);
+        // Show all locations
+        setLocations(transformedLocationsAll);
         console.log("📊 Map data checkins:", data.checkins);
         console.log("📊 Map data checkins length:", data.checkins?.length);
         setCheckins(data.checkins);
@@ -124,8 +123,7 @@ const Map = () => {
           description: location.description,
           sub_events: location.sub_events && Array.isArray(location.sub_events) ? location.sub_events : [],
         }));
-        const transformedLocations = transformedLocationsAll.filter((loc: any) => loc.id === 1);
-        setLocations(transformedLocations);
+        setLocations(transformedLocationsAll);
         setPointsRequired(data.pointsRequired);
       }
     } catch (error: unknown) {
