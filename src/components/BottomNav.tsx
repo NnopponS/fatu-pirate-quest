@@ -23,7 +23,6 @@ export const BottomNav = () => {
     { path: "/dashboard", icon: Home, label: "หน้าหลัก", color: "text-amber-700" },
     { path: "/map", icon: Map, label: "แผนที่", color: "text-blue-700" },
     { path: "/rewards", icon: Trophy, label: "รางวัล", color: "text-yellow-700" },
-    { path: "/profile", icon: User, label: "โปรไฟล์", color: "text-purple-700" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -80,7 +79,7 @@ export const BottomNav = () => {
 
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-t-4 border-amber-600 shadow-2xl">
-        <div className="grid grid-cols-5 gap-1 p-2">
+        <div className="grid grid-cols-4 gap-1 p-2">
           {navItems.map((item) => (
             <button
               key={item.path}

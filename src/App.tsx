@@ -20,7 +20,6 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Map = lazy(() => import("./pages/Map"));
 const Checkin = lazy(() => import("./pages/Checkin"));
 const Rewards = lazy(() => import("./pages/Rewards"));
-const Profile = lazy(() => import("./pages/Profile"));
 const FlappyBird = lazy(() => import("./pages/FlappyBird"));
 
 // Lazy load: Admin pages (rarely used, load on demand)
@@ -85,14 +84,6 @@ const App = () => (
                 element={
                   <ProtectedRoute requireParticipant>
                     <Rewards />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute requireParticipant>
-                    <Profile />
                   </ProtectedRoute>
                 } 
               />
