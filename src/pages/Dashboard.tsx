@@ -7,6 +7,7 @@ import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { PirateCharacter } from "@/components/PirateCharacter";
 import { PirateChatbot } from "@/components/PirateChatbot";
 import { BottleQuestModal } from "@/components/BottleQuestModal";
+import { BottomNav } from "@/components/BottomNav";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
@@ -207,6 +208,7 @@ const Dashboard = () => {
 
   return (
     <PirateBackdrop>
+      <BottomNav />
       <PirateCharacter 
         messages={[
           `อาฮอย ${participantName}! ข้าต้อนรับเจ้ากลับมายังท่าเรือ! 🏴‍☠️`,

@@ -109,18 +109,20 @@ const Signup = () => {
 
       setCredentials({ username: result.username, password: result.password });
 
-      // Check if there's a return URL (e.g., from checkin page)
-      const returnUrl = sessionStorage.getItem("returnUrl");
-      if (returnUrl && !isAdminSignup) {
-        sessionStorage.removeItem("returnUrl");
-        // Delay navigation to show credentials first
-        setTimeout(() => navigate(returnUrl), 3000);
-      }
+      // Scroll to bottom to show credentials
+      setTimeout(() => {
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+      }, 100);
 
       toast({
-        title: "สมัครสมาชิกสำเร็จ",
-        description: "บันทึกข้อมูลไว้ให้เรียบร้อย อย่าลืมเก็บชื่อผู้ใช้และรหัสผ่านของคุณ",
+        title: "✅ สมัครสมาชิกสำเร็จ!",
+        description: "กำลังเตรียมพาไปหน้า Login...",
       });
+
+      // Auto navigate to login after 4 seconds (enough time to save credentials)
+      setTimeout(() => {
+        navigate("/login");
+      }, 4000);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";

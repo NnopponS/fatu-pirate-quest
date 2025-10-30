@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { PirateCharacter } from "@/components/PirateCharacter";
 import { PirateChatbot } from "@/components/PirateChatbot";
+import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -179,6 +180,7 @@ const Profile = () => {
 
   return (
     <PirateBackdrop>
+      <BottomNav />
       <PirateCharacter
         messages={[
           "สวัสดีครับลูกเรือ! 👋",

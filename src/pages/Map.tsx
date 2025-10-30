@@ -12,6 +12,7 @@ import { PirateCharacter } from "@/components/PirateCharacter";
 import { BottleQuestModal } from "@/components/BottleQuestModal";
 import { PirateChatbot } from "@/components/PirateChatbot";
 import { QRScannerModal } from "@/components/QRScannerModal";
+import { BottomNav } from "@/components/BottomNav";
 import { signSubEventCheckin, todayStr } from "@/lib/crypto";
 import { CHECKIN_SECRET } from "@/lib/constants";
 
@@ -425,6 +426,7 @@ const Map = () => {
 
   return (
     <PirateBackdrop>
+      <BottomNav />
       <PirateCharacter 
         messages={[
           "ฮาฮอย! นี่คือแผนที่สมบัติ! 🗺️",

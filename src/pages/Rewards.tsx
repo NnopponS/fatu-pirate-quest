@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PirateBackdrop } from "@/components/PirateBackdrop";
 import { PirateCharacter } from "@/components/PirateCharacter";
+import { BottomNav } from "@/components/BottomNav";
 
 interface PrizeOption {
   name: string;
@@ -102,7 +103,8 @@ const Rewards = () => {
 
   return (
     <PirateBackdrop>
-          <PirateCharacter 
+      <BottomNav />
+      <PirateCharacter 
         messages={[
           "ฮาฮอย! คะแนนเจ้าครบแล้วหรือยัง? 🍾",
           "เขย่าขวด 5 ครั้งเพื่อรับสมบัติ! 💎",
