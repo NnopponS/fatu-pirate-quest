@@ -90,8 +90,32 @@ export const BottleShaker = ({ onShake, disabled, prizes }: BottleShakerProps) =
   const [claimed, setClaimed] = useState(false);
   const [revealing, setRevealing] = useState(false);
   const [motionEnabled, setMotionEnabled] = useState(false);
+  const [motionSupported, setMotionSupported] = useState(false);
+  const [motionPermissionRequested, setMotionPermissionRequested] = useState(false);
   const lastAccel = useRef<{ x: number; y: number; z: number; t: number } | null>(null);
   const shakeCooldownRef = useRef<number>(0);
+
+  // ตรวจสอบว่า device รองรับ motion หรือไม่
+  useEffect(() => {
+    const checkMotionSupport = () => {
+      if (typeof DeviceMotionEvent !== 'undefined') {
+        // iOS 13+ requires permission
+        const anyWindow = window as any;
+        if (typeof anyWindow.DeviceMotionEvent !== 'undefined' && typeof anyWindow.DeviceMotionEvent.requestPermission === 'function') {
+          setMotionSupported(true);
+        } else {
+          // Android/Desktop - should work but might need https
+          setMotionSupported(true);
+          // Try to auto-enable on Android
+          setTimeout(() => {
+            setMotionEnabled(true);
+          }, 1000);
+        }
+      }
+    };
+    
+    checkMotionSupport();
+  }, []);
 
   const handleShake = async () => {
     if (disabled || shaking || shakeCount >= 5) return;
@@ -166,17 +190,23 @@ export const BottleShaker = ({ onShake, disabled, prizes }: BottleShakerProps) =
   }, [motionEnabled, canShake]);
 
   const requestMotionPermission = async () => {
-    // iOS 13+
+    setMotionPermissionRequested(true);
     try {
       const anyWindow = window as any;
       if (typeof anyWindow.DeviceMotionEvent !== 'undefined' && typeof anyWindow.DeviceMotionEvent.requestPermission === 'function') {
+        // iOS 13+ requires permission
         const res = await anyWindow.DeviceMotionEvent.requestPermission();
-        if (res === 'granted') setMotionEnabled(true);
+        if (res === 'granted') {
+          setMotionEnabled(true);
+        } else {
+          setMotionEnabled(false);
+        }
       } else {
-        // Android or desktop
+        // Android or desktop - enable directly
         setMotionEnabled(true);
       }
-    } catch {
+    } catch (err) {
+      console.error('Device motion permission error:', err);
       setMotionEnabled(false);
     }
   };
@@ -392,16 +422,32 @@ export const BottleShaker = ({ onShake, disabled, prizes }: BottleShakerProps) =
         )}
 
         {/* Motion tip and enable */}
-        {!result && canShake && (
+        {!result && canShake && motionSupported && (
           <div className="mx-auto max-w-xl px-4 py-3 text-xs text-amber-900/80">
-            <p>💡 คุณสามารถเขย่ามือถือเพื่อเขย่าขวดได้</p>
-            {!motionEnabled && (
-              <div className="mt-2">
+            {motionEnabled ? (
+              <div className="bg-green-50 border border-green-300 rounded-lg p-3">
+                <p className="text-green-800">✓ การเขย่ามือถือเปิดใช้งานแล้ว เขย่ามือถือหรือกดปุ่มเพื่อเขย่าขวด</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p>💡 คุณสามารถเขย่ามือถือเพื่อเขย่าขวดได้</p>
                 <Button size="sm" variant="outline" onClick={requestMotionPermission}>
                   เปิดใช้งานการเขย่ามือถือ
                 </Button>
+                {motionPermissionRequested && !motionEnabled && (
+                  <p className="text-red-600 font-semibold mt-2">
+                    ⚠️ ไม่สามารถเปิดใช้งานได้ กรุณากดปุ่มเขย่าขวดแทน
+                  </p>
+                )}
               </div>
             )}
+          </div>
+        )}
+        
+        {/* Alternative button when motion is not supported */}
+        {!result && canShake && !motionSupported && (
+          <div className="mx-auto max-w-xl px-4 py-3 text-xs text-amber-900/80 bg-amber-50 border border-amber-300 rounded-lg">
+            <p>💡 อุปกรณ์นี้ไม่รองรับการเขย่าอัตโนมัติ กรุณากดปุ่ม "เขย่าขวด" เพื่อเขย่าขวด</p>
           </div>
         )}
       </div>
