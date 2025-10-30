@@ -1625,55 +1625,117 @@ export const invalidateAdminSession = async (token: string) => {
   await firebaseDb.remove(`admin_sessions/${token}`);
 };
 
-export const resetAllData = async (token: string) => {
+// Reset User Data Only (ลบเฉพาะข้อมูล User - ไม่ลบ locations, prizes, hero_cards, settings)
+export const resetAllData = async (token: string, adminPassword: string) => {
   const session = await validateAdminSession(token);
   if (!session) {
     throw new Error("Invalid session");
   }
 
-  await ensureDefaults();
+  // Verify admin password
+  const adminUser = await firebaseDb.get<AdminUserRecord>(`admin_users/${DEFAULT_ADMIN_USERNAME}`);
+  if (!adminUser) {
+    throw new Error("ไม่พบข้อมูล Admin");
+  }
 
-  // Get all participants to reset their points
-  const participantsRecord = await firebaseDb.get<Record<string, ParticipantRecord>>("participants");
-  const participants = objectValues(participantsRecord);
+  const isPasswordValid = await verifyPassword(adminPassword, adminUser.password_hash);
+  if (!isPasswordValid) {
+    throw new Error("รหัสผ่าน Admin ไม่ถูกต้อง");
+  }
 
-  // Reset all participants points to 0
-  const resetPromises = participants.map(participant =>
-    firebaseDb.update(`participants/${participant.id}`, { points: 0 })
-  );
-
-  // Delete all checkins and sub-event checkins - must delete each participant's checkins recursively
+  // ลบเฉพาะข้อมูล User Data เท่านั้น
   const checkinsRecord = await firebaseDb.get<Record<string, any>>("checkins");
   const subEventCheckinsRecord = await firebaseDb.get<Record<string, any>>("sub_event_checkins");
   const spinsRecord = await firebaseDb.get<Record<string, any>>("spins");
 
-  const checkinsDeletePromises = checkinsRecord 
-    ? Object.keys(checkinsRecord).map(participantId => 
-        firebaseDb.remove(`checkins/${participantId}`)
-      )
-    : [];
+  const deletePromises = [];
 
-  const subEventCheckinsDeletePromises = subEventCheckinsRecord
-    ? Object.keys(subEventCheckinsRecord).map(participantId =>
-        firebaseDb.remove(`sub_event_checkins/${participantId}`)
-      )
-    : [];
+  // Delete checkins
+  if (checkinsRecord) {
+    deletePromises.push(...Object.keys(checkinsRecord).map(participantId => 
+      firebaseDb.remove(`checkins/${participantId}`)
+    ));
+  }
 
-  const spinsDeletePromises = spinsRecord
-    ? Object.keys(spinsRecord).map(participantId =>
-        firebaseDb.remove(`spins/${participantId}`)
-      )
-    : [];
+  // Delete sub-event checkins
+  if (subEventCheckinsRecord) {
+    deletePromises.push(...Object.keys(subEventCheckinsRecord).map(participantId =>
+      firebaseDb.remove(`sub_event_checkins/${participantId}`)
+    ));
+  }
 
-  // Execute all deletions and resets
-  await Promise.all([
-    ...resetPromises,
-    ...checkinsDeletePromises,
-    ...subEventCheckinsDeletePromises,
-    ...spinsDeletePromises,
-  ]);
+  // Delete spins
+  if (spinsRecord) {
+    deletePromises.push(...Object.keys(spinsRecord).map(participantId =>
+      firebaseDb.remove(`spins/${participantId}`)
+    ));
+  }
 
-  // Clear all cache
+  // Execute all deletions
+  await Promise.all(deletePromises);
+
+  // Clear cache
+  clearCache();
+};
+
+// Delete All Participants (ลบลูกเรือทั้งหมด)
+export const deleteAllParticipants = async (token: string, adminPassword: string) => {
+  const session = await validateAdminSession(token);
+  if (!session) {
+    throw new Error("Invalid session");
+  }
+
+  // Verify admin password
+  const adminUser = await firebaseDb.get<AdminUserRecord>(`admin_users/${DEFAULT_ADMIN_USERNAME}`);
+  if (!adminUser) {
+    throw new Error("ไม่พบข้อมูล Admin");
+  }
+
+  const isPasswordValid = await verifyPassword(adminPassword, adminUser.password_hash);
+  if (!isPasswordValid) {
+    throw new Error("รหัสผ่าน Admin ไม่ถูกต้อง");
+  }
+
+  // Get all data
+  const participantsRecord = await firebaseDb.get<Record<string, ParticipantRecord>>("participants");
+  const checkinsRecord = await firebaseDb.get<Record<string, any>>("checkins");
+  const subEventCheckinsRecord = await firebaseDb.get<Record<string, any>>("sub_event_checkins");
+  const spinsRecord = await firebaseDb.get<Record<string, any>>("spins");
+
+  const deletePromises = [];
+
+  // Delete all participants
+  if (participantsRecord) {
+    deletePromises.push(...Object.keys(participantsRecord).map(participantId =>
+      firebaseDb.remove(`participants/${participantId}`)
+    ));
+  }
+
+  // Delete all checkins
+  if (checkinsRecord) {
+    deletePromises.push(...Object.keys(checkinsRecord).map(participantId =>
+      firebaseDb.remove(`checkins/${participantId}`)
+    ));
+  }
+
+  // Delete all sub-event checkins
+  if (subEventCheckinsRecord) {
+    deletePromises.push(...Object.keys(subEventCheckinsRecord).map(participantId =>
+      firebaseDb.remove(`sub_event_checkins/${participantId}`)
+    ));
+  }
+
+  // Delete all spins
+  if (spinsRecord) {
+    deletePromises.push(...Object.keys(spinsRecord).map(participantId =>
+      firebaseDb.remove(`spins/${participantId}`)
+    ));
+  }
+
+  // Execute all deletions
+  await Promise.all(deletePromises);
+
+  // Clear cache
   clearCache();
 
   console.log("[Admin] Reset all data - cleared checkins, sub-event checkins, spins, and reset all points to 0");

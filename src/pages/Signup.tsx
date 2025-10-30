@@ -109,20 +109,14 @@ const Signup = () => {
 
       setCredentials({ username: result.username, password: result.password });
 
-      // Scroll to bottom to show credentials
-      setTimeout(() => {
-        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-      }, 100);
-
       toast({
         title: "✅ สมัครสมาชิกสำเร็จ!",
-        description: "กำลังเตรียมพาไปหน้า Login...",
+        description: `Username: ${result.username} | Password: ${result.password}`,
+        duration: 8000, // แสดง toast นานขึ้นเพื่อให้มีเวลาอ่าน
       });
 
-      // Auto navigate to login after 4 seconds (enough time to save credentials)
-      setTimeout(() => {
-        navigate("/login");
-      }, 4000);
+      // Navigate to login immediately
+      navigate("/login");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";

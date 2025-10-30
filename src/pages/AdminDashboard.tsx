@@ -314,33 +314,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleResetAllData = async () => {
-    if (!token) return;
-    
-    if (!confirm("⚠️ คุณแน่ใจหรือไม่ที่จะลบข้อมูลทั้งหมด?\n\nข้อมูลที่จะถูกลบ:\n- การเช็กอินทั้งหมด\n- การเช็กอินกิจกรรมย่อยทั้งหมด\n- ข้อมูลคะแนนของผู้เข้าร่วม\n\nข้อมูลผู้เข้าร่วมจะยังคงอยู่ แต่คะแนนและการเช็กอินจะถูกลบ")) {
-      return;
-    }
-
-    if (!confirm("⚠️ การกระทำนี้ไม่สามารถยกเลิกได้!\n\nกรุณาตรวจสอบอีกครั้งว่าคุณต้องการลบข้อมูลทั้งหมดจริงๆ")) {
-      return;
-    }
-    
-    try {
-      const { resetAllData } = await import("@/services/firebase");
-      await resetAllData(token);
-      toast({ 
-        title: "รีเซ็ตข้อมูลสำเร็จ",
-        description: "ข้อมูลการเช็กอินทั้งหมดถูกลบเรียบร้อยแล้ว"
-      });
-      fetchDashboard(token);
-    } catch (error) {
-      toast({
-        title: "รีเซ็ตข้อมูลไม่สำเร็จ",
-        description: error instanceof Error ? error.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ",
-        variant: "destructive",
-      });
-    }
-  };
+  // Removed old handleResetAllData - use handleResetUserData or handleDeleteAllParticipants instead
 
   const updateParticipant = async (participantId: string, updates: Partial<ParticipantRow>) => {
     if (!token) return;
@@ -628,305 +602,86 @@ const AdminDashboard = () => {
     });
   }, [dashboard, searchQuery]);
 
-  const exportParticipants = () => {
-    if (!dashboard) return;
+  // Removed old CSV export functions - use Excel Export instead
+  
+  const handleResetUserData = async () => {
+    if (!token) return;
 
-    const header = [
-      "ID",
-      "Username",
-      "ชื่อ",
-      "นามสกุล",
-      "คะแนน",
-      "อายุ",
-      "ระดับชั้น",
-      "สถานศึกษา",
-      "แผนการศึกษา",
-      "เบอร์โทร",
-      "สถานะรางวัล",
-      "รางวัลที่ได้",
-      "รหัสรับรางวัล",
-      "มอบรางวัลแล้ว",
-      "วันที่มอบรางวัล",
-      "ลงทะเบียนเมื่อ",
-    ];
+    const adminPassword = prompt(
+      "⚠️ กรุณากรอกรหัสผ่าน Admin เพื่อยืนยันการ Reset ข้อมูล User:\n\n" +
+      "การดำเนินการนี้จะลบ:\n" +
+      "• ข้อมูลเช็กอินทั้งหมด\n" +
+      "• ข้อมูลกิจกรรมย่อยทั้งหมด\n" +
+      "• ข้อมูลการหมุนวงล้อและรางวัล\n\n" +
+      "แต่จะไม่ลบ: ข้อมูลลูกเรือ, สถานที่, กิจกรรม, รางวัล, Hero Cards\n\n" +
+      "กรอกรหัสผ่าน Admin:"
+    );
 
-    const rows = dashboard.participants.map((p) => {
-      const spin = dashboard.spins.find((s) => s.participant_id === p.id);
-      return [
-        p.id,
-        p.username,
-        p.first_name,
-        p.last_name,
-        String(p.points),
-        p.age ? String(p.age) : "",
-        p.grade_level ?? "",
-        p.school ?? "",
-        p.program ?? "",
-        p.phone_number ?? "",
-        spin ? "หมุนวงล้อแล้ว" : "ยังไม่ได้หมุน",
-        spin ? spin.prize : "-",
-        spin ? spin.claim_code : "-",
-        spin ? (spin.claimed ? "มอบแล้ว" : "รอมอบ") : "-",
-        spin && spin.claimed_at ? new Date(spin.claimed_at).toLocaleString('th-TH') : "-",
-        new Date(p.created_at).toISOString(),
-      ];
-    });
+    if (!adminPassword) return;
 
-    const csvContent = [header, ...rows]
-      .map((row) =>
-        row
-          .map((value) => {
-            const sanitized = value.replace(/"/g, '""');
-            return `"${sanitized}"`;
-          })
-          .join(","),
-      )
-      .join("\n");
+    if (!confirm("⚠️ ยืนยันอีกครั้ง! แน่ใจว่าต้องการ Reset ข้อมูล User?")) {
+      return;
+    }
 
-    // ✅ Add UTF-8 BOM for Excel Thai language support
-    const BOM = "\uFEFF";
-    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `fatu_participants_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    try {
+      const { resetAllData } = await import("@/services/firebase");
+      await resetAllData(token, adminPassword);
+      toast({
+        title: "✅ Reset ข้อมูล User สำเร็จ",
+        description: "ลบเช็กอิน กิจกรรม และรางวัลเรียบร้อย (ข้อมูลลูกเรือยังอยู่)",
+      });
+      fetchDashboard(token);
+    } catch (error) {
+      toast({
+        title: "❌ Reset ไม่สำเร็จ",
+        description: errorMessage(error),
+        variant: "destructive",
+      });
+    }
   };
 
-  const exportLocationCheckins = () => {
-    if (!dashboard) return;
+  const handleDeleteAllParticipants = async () => {
+    if (!token) return;
 
-    const header = [
-      "Checkin ID",
-      "Participant ID",
-      "Username",
-      "ชื่อ-นามสกุล",
-      "Location ID",
-      "ชื่อสถานที่",
-      "Method",
-      "เช็กอินเมื่อ",
-    ];
+    const adminPassword = prompt(
+      "🚨 กรุณากรอกรหัสผ่าน Admin เพื่อยืนยันการลบลูกเรือทั้งหมด:\n\n" +
+      "⚠️ คำเตือนรุนแรง!\n" +
+      "การดำเนินการนี้จะลบ:\n" +
+      "• ข้อมูลลูกเรือทั้งหมด\n" +
+      "• ข้อมูลเช็กอินทั้งหมด\n" +
+      "• ข้อมูลกิจกรรมทั้งหมด\n" +
+      "• ข้อมูลรางวัลทั้งหมด\n\n" +
+      "ไม่สามารถย้อนกลับได้!\n\n" +
+      "กรอกรหัสผ่าน Admin:"
+    );
 
-    const rows = dashboard.checkins.map((checkin) => {
-      const participant = dashboard.participants.find((p) => p.id === checkin.participant_id);
-      const location = dashboard.locations.find((l) => l.id === checkin.location_id);
-      return [
-        `${checkin.participant_id}-${checkin.location_id}`,
-        checkin.participant_id,
-        participant?.username ?? "",
-        participant ? `${participant.first_name} ${participant.last_name}` : "",
-        String(checkin.location_id),
-        location?.name ?? "",
-        checkin.method,
-        new Date(checkin.created_at).toISOString(),
-      ];
-    });
+    if (!adminPassword) return;
 
-    const csvContent = [header, ...rows]
-      .map((row) =>
-        row
-          .map((value) => {
-            const sanitized = String(value).replace(/"/g, '""');
-            return `"${sanitized}"`;
-          })
-          .join(","),
-      )
-      .join("\n");
+    if (!confirm("🚨 ยืนยันอีกครั้ง! แน่ใจ 100% ว่าต้องการลบลูกเรือทั้งหมด?")) {
+      return;
+    }
 
-    // ✅ Add UTF-8 BOM for Excel Thai language support
-    const BOM = "\uFEFF";
-    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `fatu_location_checkins_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    if (!confirm("🚨 ยืนยันครั้งสุดท้าย! การกระทำนี้ไม่สามารถกู้คืนได้!")) {
+      return;
+    }
+
+    try {
+      const { deleteAllParticipants } = await import("@/services/firebase");
+      await deleteAllParticipants(token, adminPassword);
+      toast({
+        title: "✅ ลบลูกเรือทั้งหมดสำเร็จ",
+        description: "ข้อมูลลูกเรือทั้งหมดถูกลบออกจากระบบแล้ว",
+      });
+      fetchDashboard(token);
+    } catch (error) {
+      toast({
+        title: "❌ ลบไม่สำเร็จ",
+        description: errorMessage(error),
+        variant: "destructive",
+      });
+    }
   };
 
-  const exportSubEventCheckins = () => {
-    if (!dashboard) return;
-
-    const header = [
-      "Checkin ID",
-      "Participant ID",
-      "Username",
-      "ชื่อ-นามสกุล",
-      "Sub Event ID",
-      "ชื่อกิจกรรม",
-      "Location ID",
-      "ชื่อสถานที่",
-      "คะแนนที่ได้",
-      "เข้าร่วมเมื่อ",
-    ];
-
-    const rows = dashboard.subEventCheckins.map((checkin) => {
-      const participant = dashboard.participants.find((p) => p.id === checkin.participant_id);
-      const location = dashboard.locations.find((l) => l.id === checkin.location_id);
-      const subEvent = location?.sub_events?.find((se) => se.id === checkin.sub_event_id);
-      return [
-        `${checkin.participant_id}-${checkin.sub_event_id}`,
-        checkin.participant_id,
-        participant?.username ?? "",
-        participant ? `${participant.first_name} ${participant.last_name}` : "",
-        checkin.sub_event_id,
-        subEvent?.name ?? "",
-        String(checkin.location_id),
-        location?.name ?? "",
-        String(checkin.points_awarded),
-        new Date(checkin.created_at).toISOString(),
-      ];
-    });
-
-    const csvContent = [header, ...rows]
-      .map((row) =>
-        row
-          .map((value) => {
-            const sanitized = String(value).replace(/"/g, '""');
-            return `"${sanitized}"`;
-          })
-          .join(","),
-      )
-      .join("\n");
-
-    // ✅ Add UTF-8 BOM for Excel Thai language support
-    const BOM = "\uFEFF";
-    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `fatu_subevent_checkins_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  // ✅ Export all data to Excel with multiple sheets
-  const exportAllDataToExcel = () => {
-    if (!dashboard) return;
-
-    const workbook = XLSX.utils.book_new();
-
-    // Sheet 1: ข้อมูลผู้ลงทะเบียน (Participants)
-    const participantsData = [
-      ["ID", "Username", "ชื่อ", "นามสกุล", "คะแนน", "อายุ", "ระดับชั้น", "สถานศึกษา", "แผนการศึกษา", "เบอร์โทร", "สถานะรางวัล", "รางวัลที่ได้", "รหัสรับรางวัล", "มอบรางวัลแล้ว", "วันที่มอบรางวัล", "ลงทะเบียนเมื่อ"],
-      ...dashboard.participants.map((p) => {
-        const spin = dashboard.spins.find((s) => s.participant_id === p.id);
-        return [
-          p.id,
-          p.username,
-          p.first_name,
-          p.last_name,
-          p.points,
-          p.age ?? "",
-          p.grade_level ?? "",
-          p.school ?? "",
-          p.program ?? "",
-          p.phone_number ?? "",
-          spin ? "หมุนวงล้อแล้ว" : "ยังไม่ได้หมุน",
-          spin ? spin.prize : "-",
-          spin ? spin.claim_code : "-",
-          spin ? (spin.claimed ? "มอบแล้ว" : "รอมอบ") : "-",
-          spin && spin.claimed_at ? new Date(spin.claimed_at).toLocaleString('th-TH') : "-",
-          new Date(p.created_at).toLocaleString('th-TH'),
-        ];
-      }),
-    ];
-    const participantsSheet = XLSX.utils.aoa_to_sheet(participantsData);
-    XLSX.utils.book_append_sheet(workbook, participantsSheet, "ผู้ลงทะเบียน");
-
-    // Sheet 2: เช็กอินสถานที่ทั้งหมด (All Location Check-ins)
-    const allCheckinsData = [
-      ["Checkin ID", "Participant ID", "Username", "ชื่อ-นามสกุล", "Location ID", "ชื่อสถานที่", "Method", "เช็กอินเมื่อ"],
-      ...dashboard.checkins.map((checkin) => {
-        const participant = dashboard.participants.find((p) => p.id === checkin.participant_id);
-        const location = dashboard.locations.find((l) => l.id === checkin.location_id);
-        return [
-          `${checkin.participant_id}-${checkin.location_id}`,
-          checkin.participant_id,
-          participant?.username ?? "",
-          participant ? `${participant.first_name} ${participant.last_name}` : "",
-          checkin.location_id,
-          location?.name ?? "",
-          checkin.method,
-          new Date(checkin.created_at).toLocaleString('th-TH'),
-        ];
-      }),
-    ];
-    const allCheckinsSheet = XLSX.utils.aoa_to_sheet(allCheckinsData);
-    XLSX.utils.book_append_sheet(workbook, allCheckinsSheet, "เช็กอินทั้งหมด");
-
-    // Sheet 3-N: แยกเช็กอินตามสถานที่ (Checkins by Location)
-    dashboard.locations.forEach((location) => {
-      const locationCheckins = dashboard.checkins.filter((c) => c.location_id === location.id);
-      const locationData = [
-        ["Participant ID", "Username", "ชื่อ-นามสกุล", "Method", "เช็กอินเมื่อ"],
-        ...locationCheckins.map((checkin) => {
-          const participant = dashboard.participants.find((p) => p.id === checkin.participant_id);
-          return [
-            checkin.participant_id,
-            participant?.username ?? "",
-            participant ? `${participant.first_name} ${participant.last_name}` : "",
-            checkin.method,
-            new Date(checkin.created_at).toLocaleString('th-TH'),
-          ];
-        }),
-      ];
-      const locationSheet = XLSX.utils.aoa_to_sheet(locationData);
-      // Shorten location name for sheet name (max 31 chars for Excel)
-      const sheetName = location.name.substring(0, 25);
-      XLSX.utils.book_append_sheet(workbook, locationSheet, sheetName);
-    });
-
-    // Sheet: กิจกรรมย่อย (Sub-events)
-    const subEventsData = [
-      ["Checkin ID", "Participant ID", "Username", "ชื่อ-นามสกุล", "Sub Event ID", "ชื่อกิจกรรม", "Location ID", "ชื่อสถานที่", "คะแนนที่ได้", "เข้าร่วมเมื่อ"],
-      ...dashboard.subEventCheckins.map((checkin) => {
-        const participant = dashboard.participants.find((p) => p.id === checkin.participant_id);
-        const location = dashboard.locations.find((l) => l.id === checkin.location_id);
-        const subEvent = location?.sub_events?.find((se) => se.id === checkin.sub_event_id);
-        return [
-          `${checkin.participant_id}-${checkin.sub_event_id}`,
-          checkin.participant_id,
-          participant?.username ?? "",
-          participant ? `${participant.first_name} ${participant.last_name}` : "",
-          checkin.sub_event_id,
-          subEvent?.name ?? "",
-          checkin.location_id,
-          location?.name ?? "",
-          checkin.points_awarded,
-          new Date(checkin.created_at).toLocaleString('th-TH'),
-        ];
-      }),
-    ];
-    const subEventsSheet = XLSX.utils.aoa_to_sheet(subEventsData);
-    XLSX.utils.book_append_sheet(workbook, subEventsSheet, "กิจกรรมย่อย");
-
-    // Generate Excel file and download
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `FATU_Complete_Data_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "ดาวน์โหลดสำเร็จ",
-      description: "ไฟล์ Excel ถูกดาวน์โหลดเรียบร้อยแล้ว",
-    });
-  };
-
-  // Google Sheets functions
   // Excel Export Functions
   const handleExportToExcel = async (type: 'all' | 'participants' | 'statistics' | 'prizes' = 'all') => {
     if (!dashboard) {
@@ -1739,21 +1494,22 @@ const AdminDashboard = () => {
                     </ul>
                     <div className="flex gap-2">
                       <Button 
-                        onClick={exportAllDataToExcel}
-                        className="flex-1 gap-2 shadow-lg"
+                        onClick={() => handleExportToExcel('all')}
+                        disabled={exportingExcel || !dashboard}
+                        className="w-full gap-2 shadow-lg bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
                         size="lg"
                       >
-                        <Download className="h-5 w-5" />
-                        ดาวน์โหลด Excel ทั้งหมด
-                      </Button>
-                      <Button 
-                        onClick={handleResetAllData}
-                        variant="destructive"
-                        className="gap-2 shadow-lg"
-                        size="lg"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                        Reset ข้อมูลทั้งหมด
+                        {exportingExcel ? (
+                          <>
+                            <RefreshCw className="h-5 w-5 animate-spin" />
+                            กำลัง Export...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-5 w-5" />
+                            📥 ดาวน์โหลด Excel ทั้งหมด
+                          </>
+                        )}
                       </Button>
                     </div>
                     <p className="mt-3 text-center text-xs text-foreground/60">
@@ -1761,45 +1517,6 @@ const AdminDashboard = () => {
                     </p>
                   </div>
 
-                  {/* CSV Exports - Individual */}
-                  <div className="space-y-4">
-                    <div className="rounded-2xl border border-rope/40 bg-white/70 px-6 py-6 shadow-sm">
-                      <h3 className="mb-4 text-lg font-semibold text-primary">Export CSV แยกไฟล์</h3>
-                      <div className="space-y-3">
-                        <Button
-                          variant="outline"
-                          onClick={exportParticipants}
-                          className="w-full justify-start gap-2"
-                        >
-                          <Users className="h-4 w-4" />
-                          ผู้ลงทะเบียน (CSV)
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={exportLocationCheckins}
-                          className="w-full justify-start gap-2"
-                        >
-                          <MapPin className="h-4 w-4" />
-                          เช็กอินสถานที่ (CSV)
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={exportSubEventCheckins}
-                          className="w-full justify-start gap-2"
-                        >
-                          <Calendar className="h-4 w-4" />
-                          กิจกรรมย่อย (CSV)
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-amber-400/40 bg-amber-50/50 px-4 py-4">
-                      <p className="text-sm text-amber-900">
-                        <strong>💡 คำแนะนำ:</strong> ใช้ Excel Export เพื่อความสะดวก 
-                        (ครบทุกข้อมูลในไฟล์เดียว) หรือ CSV Export หากต้องการเฉพาะข้อมูลบางส่วน
-                      </p>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Google Sheets Integration */}
@@ -1917,67 +1634,62 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-                {/* Reset All Data */}
-                <div className="rounded-2xl border-2 border-red-300 bg-red-50 px-6 py-6 shadow-lg">
-                  <h3 className="text-lg font-semibold text-red-900 mb-2 flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5" />
-                    ⚠️ Reset ข้อมูลทั้งหมด
-                  </h3>
-                  <p className="text-sm text-red-800 mb-4">
-                    การดำเนินการนี้จะลบข้อมูลทั้งหมดออกจากระบบ เช่น:
-                  </p>
-                  <ul className="text-sm text-red-800 space-y-1 mb-4">
-                    <li>• ข้อมูลผู้เข้าร่วมทั้งหมด</li>
-                    <li>• ข้อมูลเช็กอินทั้งหมด</li>
-                    <li>• ข้อมูลกิจกรรมย่อยทั้งหมด</li>
-                    <li>• ข้อมูลการหมุนวงล้อและรางวัล</li>
-                    <li>• ข้อมูล Hero Cards</li>
-                  </ul>
-                  <p className="text-xs text-red-700 font-semibold mb-3">
-                    ⚠️ คำเตือน: การดำเนินการนี้ไม่สามารถย้อนกลับได้!
-                  </p>
-                  <Button 
-                    variant="destructive"
-                    size="lg"
-                    className="w-full gap-2"
-                    onClick={async () => {
-                      if (!confirm(
-                        "⚠️ ยืนยันการ Reset ข้อมูลทั้งหมด?\n\n" +
-                        "การดำเนินการนี้จะลบ:\n" +
-                        "• ข้อมูลผู้เข้าร่วมทั้งหมด\n" +
-                        "• ข้อมูลเช็กอินทั้งหมด\n" +
-                        "• ข้อมูลกิจกรรมย่อยทั้งหมด\n" +
-                        "• ข้อมูลการหมุนวงล้อและรางวัล\n" +
-                        "• ข้อมูล Hero Cards\n\n" +
-                        "ไม่สามารถย้อนกลับได้!"
-                      )) {
-                        return;
-                      }
-                      
-                      if (!confirm("⚠️ ยืนยันอีกครั้ง! คุณแน่ใจว่าต้องการ Reset ข้อมูลทั้งหมด?")) {
-                        return;
-                      }
+                {/* Danger Zone - Reset & Delete */}
+                <div className="space-y-4">
+                  {/* Reset User Data */}
+                  <div className="rounded-2xl border-2 border-orange-400 bg-orange-50 px-6 py-6 shadow-lg">
+                    <h3 className="text-lg font-semibold text-orange-900 mb-2 flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5" />
+                      ⚠️ Reset ข้อมูล User
+                    </h3>
+                    <p className="text-sm text-orange-800 mb-3">
+                      ลบข้อมูลการเข้าร่วมของ User (ไม่ลบข้อมูลลูกเรือ):
+                    </p>
+                    <ul className="text-sm text-orange-800 space-y-1 mb-4">
+                      <li>• ข้อมูลเช็กอินทั้งหมด</li>
+                      <li>• ข้อมูลกิจกรรมย่อยทั้งหมด</li>
+                      <li>• ข้อมูลการหมุนวงล้อและรางวัล</li>
+                      <li className="text-green-700 font-bold">✓ ไม่ลบ: ข้อมูลลูกเรือ, สถานที่, กิจกรรม, รางวัล, Hero Cards</li>
+                    </ul>
+                    <Button 
+                      variant="destructive"
+                      size="lg"
+                      className="w-full gap-2 bg-orange-600 hover:bg-orange-700"
+                      onClick={handleResetUserData}
+                    >
+                      <Trash2 className="h-5 w-5" />
+                      Reset ข้อมูล User (ต้องใส่รหัส Admin)
+                    </Button>
+                  </div>
 
-                      try {
-                        const { resetAllData } = await import("@/services/firebase");
-                        await resetAllData(token!);
-                        toast({ 
-                          title: "Reset ข้อมูลสำเร็จ",
-                          description: "ข้อมูลทั้งหมดถูกลบเรียบร้อยแล้ว"
-                        });
-                        fetchDashboard(token!);
-                      } catch (error) {
-                        toast({
-                          title: "Reset ข้อมูลไม่สำเร็จ",
-                          description: errorMessage(error),
-                          variant: "destructive"
-                        });
-                      }
-                    }}
-                  >
-                    <Trash2 className="h-5 w-5" />
-                    Reset ข้อมูลทั้งหมด
-                  </Button>
+                  {/* Delete All Participants */}
+                  <div className="rounded-2xl border-4 border-red-500 bg-red-50 px-6 py-6 shadow-xl">
+                    <h3 className="text-lg font-bold text-red-900 mb-2 flex items-center gap-2">
+                      <AlertCircle className="h-6 w-6" />
+                      🚨 ลบลูกเรือทั้งหมด
+                    </h3>
+                    <p className="text-sm text-red-800 mb-3 font-semibold">
+                      ⚠️ อันตราย! ลบข้อมูลลูกเรือทุกคนออกจากระบบ:
+                    </p>
+                    <ul className="text-sm text-red-900 space-y-1 mb-4 font-semibold">
+                      <li>• ข้อมูลลูกเรือทั้งหมด</li>
+                      <li>• ข้อมูลเช็กอินทั้งหมด</li>
+                      <li>• ข้อมูลกิจกรรมทั้งหมด</li>
+                      <li>• ข้อมูลรางวัลทั้งหมด</li>
+                    </ul>
+                    <p className="text-xs text-red-700 font-black mb-4 bg-red-200 px-3 py-2 rounded-lg">
+                      🚨 คำเตือนรุนแรง: ไม่สามารถย้อนกลับได้! ต้องใส่รหัสผ่าน Admin!
+                    </p>
+                    <Button 
+                      variant="destructive"
+                      size="lg"
+                      className="w-full gap-2 bg-red-700 hover:bg-red-800 text-white font-bold"
+                      onClick={handleDeleteAllParticipants}
+                    >
+                      <Trash2 className="h-5 w-5" />
+                      🚨 ลบลูกเรือทั้งหมด (ต้องใส่รหัส Admin)
+                    </Button>
+                  </div>
                 </div>
               </div>
             </TabsContent>
