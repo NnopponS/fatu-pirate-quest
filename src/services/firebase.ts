@@ -213,6 +213,15 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     map_url: "https://maps.app.goo.gl/hJB4uaVZJkAWoyE98",
     display_order: 1,
     sub_events: [
+      {
+        id: "1-survey",
+        name: "ตอบแบบสอบถาม",
+        location_id: 1,
+        description: "ทำแบบสอบถามความสนใจเข้าศึกษาและความพึงพอใจต่อกิจกรรมของคณะศิลปกรรมศาสตร์ โดยกดปุ่มในแผนที่เพื่อไปยังแบบฟอร์ม และรับคะแนน +100 เมื่อสแกน QR ของกิจกรรมนี้ที่หน้างาน",
+        points_awarded: 100,
+        qr_code_version: 1,
+        display_order: 0
+      },
       { 
         id: "1-arts-management", 
         name: "Workshop การบริหารจัดการศิลปะ", 
@@ -465,6 +474,28 @@ const ensureDefaults = async () => {
     });
     if (Object.keys(updates).length > 0) {
       await firebaseDb.update("locations", updates);
+    }
+
+    // Ensure survey sub-event exists for location 1 without overwriting other sub-events
+    const loc1 = locations["1"]; 
+    if (loc1) {
+      const existingSubEvents = Array.isArray(loc1.sub_events) ? loc1.sub_events : [];
+      const hasSurvey = existingSubEvents.some(se => se && se.id === "1-survey");
+      if (!hasSurvey) {
+        const newSubEvents = [
+          {
+            id: "1-survey",
+            name: "ตอบแบบสอบถาม",
+            location_id: 1,
+            description: "ทำแบบสอบถามที่กำหนดและรับคะแนน +100 โดยสแกน QR ของกิจกรรมนี้",
+            points_awarded: 100,
+            qr_code_version: 1,
+            display_order: 0,
+          },
+          ...existingSubEvents,
+        ];
+        await firebaseDb.update("locations/1", { sub_events: newSubEvents });
+      }
     }
   }
 
@@ -1021,7 +1052,7 @@ export const checkinSubEvent = async (
   const updatedPoints = participant.points + pointsToAward;
 
   // Prepare operations
-  const operations = [
+  const operations: Array<Promise<unknown>> = [
     firebaseDb.set(`sub_event_checkins/${participantId}/${subEventId}`, subEventCheckin),
   ];
 

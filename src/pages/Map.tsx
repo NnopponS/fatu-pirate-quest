@@ -590,6 +590,32 @@ const Map = () => {
           </div>
         )}
 
+        {/* Survey Banner - shown above Gym4 */}
+        <div 
+          className="relative overflow-hidden rounded-2xl border-4 border-amber-700 bg-[#f4e4c1] shadow-xl"
+          style={{
+            backgroundImage: `radial-gradient(circle at 20px 20px, rgba(139, 115, 85, 0.08) 2px, transparent 2px)`,
+            backgroundSize: '40px 40px'
+          }}
+        >
+          <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold text-amber-800 mb-1">กิจกรรมพิเศษ</p>
+              <h3 className="text-xl md:text-2xl font-black text-amber-900">ตอบแบบสอบถาม</h3>
+              <p className="text-sm text-amber-800 mt-1">กดปุ่มเพื่อไปยังแบบฟอร์ม และสแกน QR กิจกรรมหน้างานเพื่อรับ <span className="font-bold">+100 คะแนน</span></p>
+            </div>
+            <Button
+              size="lg"
+              className="gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold"
+              asChild
+            >
+              <a href="https://forms.gle/Fj9Na3UkseszHwJh8" target="_blank" rel="noopener noreferrer">
+                ✍️ เปิดแบบฟอร์ม
+              </a>
+            </Button>
+          </div>
+        </div>
+
         {/* Locations Section */}
         <div className="space-y-6">
           {loading ? (
