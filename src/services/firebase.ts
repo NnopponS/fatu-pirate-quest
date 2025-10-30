@@ -968,6 +968,40 @@ export const checkinSubEvent = async (
 
   await ensureDefaults();
 
+  // Special global sub-event: survey (not attached to any location)
+  if (subEventId === "1-survey") {
+    // Check if already scanned
+    const existing = await firebaseDb.get<SubEventCheckinRecord>(
+      `sub_event_checkins/${participantId}/${subEventId}`
+    );
+    if (existing) {
+      return { ok: true, pointsAdded: 0 };
+    }
+
+    const participant = await getParticipantById(participantId);
+    if (!participant) {
+      throw new Error("Participant not found");
+    }
+
+    const pointsToAward = 100;
+    const record: SubEventCheckinRecord = {
+      participant_id: participantId,
+      sub_event_id: subEventId,
+      location_id: 0, // global, not tied to any location
+      points_awarded: pointsToAward,
+      created_at: new Date().toISOString(),
+    };
+
+    const updatedPoints = participant.points + pointsToAward;
+
+    await Promise.all([
+      firebaseDb.set(`sub_event_checkins/${participantId}/${subEventId}`, record),
+      firebaseDb.update(`participants/${participantId}`, { points: updatedPoints }),
+    ]);
+
+    return { ok: true, pointsAdded: pointsToAward };
+  }
+
   // ค้นหา sub-event จากทุก location
   let foundSubEvent: SubEvent | null = null;
   let parentLocation: LocationRecord | null = null;
