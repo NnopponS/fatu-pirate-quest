@@ -31,17 +31,21 @@ interface LocationCardProps {
 export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageUrl, description, subEvents, completedSubEvents = [] }: LocationCardProps) => {
   const mapsUrl = mapUrl ?? `https://www.google.com/maps?q=${lat},${lng}`;
   const [isEventsOpen, setIsEventsOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Hide special survey sub-event from user-facing list/count
+  const visibleSubEvents = (subEvents || []).filter(se => se.id !== "1-survey");
   const [selectedSubEvent, setSelectedSubEvent] = useState<SubEvent | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
   // Calculate completed sub-events for this location
-  const completedCount = subEvents && subEvents.length > 0 
-    ? completedSubEvents.filter(id => subEvents.some(se => se.id === id)).length 
+  const completedCount = visibleSubEvents && visibleSubEvents.length > 0 
+    ? completedSubEvents.filter(id => visibleSubEvents.some(se => se.id === id)).length 
     : 0;
 
   // Debug logging
-  if (subEvents && subEvents.length > 0) {
-    console.log(`📍 ${name}: completedSubEvents=`, completedSubEvents, `subEvents=`, subEvents.map(se => se.id), `completedCount=${completedCount}/${subEvents.length}`);
+  if (visibleSubEvents && visibleSubEvents.length > 0) {
+    console.log(`📍 ${name}: completedSubEvents=`, completedSubEvents, `subEvents=`, visibleSubEvents.map(se => se.id), `completedCount=${completedCount}/${visibleSubEvents.length}`);
   }
 
   return (
@@ -52,7 +56,8 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageU
           : "border-amber-400 bg-gradient-to-br from-orange-50 to-amber-100 shadow-md hover:shadow-xl hover:shadow-amber-400/20"
       }`}
     >
-      {imageUrl && (
+      {/* Header image hidden when collapsed */}
+      {!isCollapsed && imageUrl && (
         <div className="relative h-48 overflow-hidden">
           <img 
             src={imageUrl} 
@@ -84,15 +89,22 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageU
               {checkedIn ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Clock className="h-3.5 w-3.5" />}
               <span className="text-xs font-bold">{checkedIn ? "✓ เช็กอินแล้ว" : "ยังไม่ได้ทำ"}</span>
             </span>
-            {subEvents && subEvents.length > 0 && (
+            {visibleSubEvents && visibleSubEvents.length > 0 && (
               <span className="px-2 py-1 bg-blue-100 border border-blue-400 rounded-lg text-xs font-bold text-blue-800">
-                {completedCount}/{subEvents.length} กิจกรรม
+                {completedCount}/{visibleSubEvents.length} กิจกรรม
               </span>
             )}
+            <button
+              onClick={() => setIsCollapsed(v => !v)}
+              className={`ml-1 rounded-lg border px-2 py-1 ${checkedIn ? 'border-green-300 bg-green-50' : 'border-amber-300 bg-amber-50'}`}
+              aria-label={isCollapsed ? 'ขยาย' : 'ย่อ'}
+            >
+              <ChevronDown className={`h-4 w-4 transition-transform ${isCollapsed ? '' : 'rotate-180'}`} />
+            </button>
           </div>
         </div>
 
-        {subEvents && subEvents.length > 0 && (
+        {!isCollapsed && visibleSubEvents && visibleSubEvents.length > 0 && (
           <Collapsible open={isEventsOpen} onOpenChange={setIsEventsOpen}>
             <CollapsibleTrigger 
               className={`w-full flex items-center justify-between rounded-lg border-2 px-4 py-2.5 transition-all hover:shadow-md ${
@@ -104,7 +116,7 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageU
               <div className="flex items-center gap-2">
                 <Calendar className={`h-4 w-4 ${checkedIn ? 'text-green-700' : 'text-amber-800'}`} />
                 <span className={`text-sm font-semibold ${checkedIn ? 'text-green-900' : 'text-amber-900'}`}>
-                  🏴‍☠️ กิจกรรมในจุดนี้ ({subEvents.length})
+                  🏴‍☠️ กิจกรรมในจุดนี้ ({visibleSubEvents.length})
                 </span>
               </div>
               <ChevronDown 
@@ -123,7 +135,7 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageU
                   💎 ร่วมกิจกรรม 1 อันเพื่อรับคะแนนเพิ่ม +100
                 </p>
                 <div className="space-y-2">
-                  {subEvents.map((subEvent) => (
+                  {visibleSubEvents.map((subEvent) => (
                     <button
                       key={subEvent.id}
                       onClick={() => {
@@ -160,6 +172,7 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageU
           </Collapsible>
         )}
 
+        {!isCollapsed && (
         <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
           checkedIn ? 'bg-green-100 border border-green-300' : 'bg-amber-100 border border-amber-300'
         }`}>
@@ -172,22 +185,25 @@ export const LocationCard = ({ name, lat, lng, points, checkedIn, mapUrl, imageU
             คะแนนเมื่อเช็กอิน
           </span>
         </div>
+        )}
 
-        <Button 
-          variant="secondary" 
-          size="sm" 
-          className={`w-full gap-2 ${
-            checkedIn 
-              ? 'bg-green-600 hover:bg-green-700 text-white' 
-              : 'bg-amber-600 hover:bg-amber-700 text-white'
-          }`}
-          asChild
-        >
-          <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
-            <MapPin className="h-4 w-4" />
-            เปิดใน Google Maps
-          </a>
-        </Button>
+        {!isCollapsed && (
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            className={`w-full gap-2 ${
+              checkedIn 
+                ? 'bg-green-600 hover:bg-green-700 text-white' 
+                : 'bg-amber-600 hover:bg-amber-700 text-white'
+            }`}
+            asChild
+          >
+            <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
+              <MapPin className="h-4 w-4" />
+              เปิดใน Google Maps
+            </a>
+          </Button>
+        )}
       </div>
 
       {/* Detail Dialog for Sub-Events */}
