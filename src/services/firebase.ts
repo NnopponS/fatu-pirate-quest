@@ -214,32 +214,13 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     display_order: 1,
     sub_events: [
       { 
-        id: "1-arts-admin", 
-        name: "Arts Admin workshop", 
-        location_id: 1, 
-        description: "Workshop การบริหารจัดการศิลปะสำหรับผู้สนใจด้านการจัดการงานศิลปะและวัฒนธรรม",
-        qr_code_version: 1 
-      },
-      { 
-        id: "2-management", 
+        id: "1-arts-management", 
         name: "Workshop การบริหารจัดการศิลปะ", 
         location_id: 1, 
-        description: "เรียนรู้การบริหารจัดการงานศิลปะและวัฒนธรรมอย่างมืออาชีพ",
-        qr_code_version: 1 
-      },
-      { 
-        id: "2-booth", 
-        name: "บูธแนะนำหลักสูตร", 
-        location_id: 1, 
-        description: "พบกับข้อมูลหลักสูตรและโอกาสการศึกษาในคณะศิลปกรรมศาสตร์",
-        qr_code_version: 1 
-      },
-      { 
-        id: "2-exhibition", 
-        name: "ห้องแสดงผลงาน", 
-        location_id: 1, 
-        description: "ชมผลงานศิลปะและการออกแบบจากนักศึกษาและศิษย์เก่า",
-        qr_code_version: 1 
+        description: "เรียนรู้การจัดการงานศิลปะในมุมมืออาชีพ การวางแผนงาน การจัดการทีมงาน การสร้างแบรนด์ให้กับศิลปิน และการบริหารงานศิลปะและวัฒนธรรมอย่างยั่งยืน",
+        points_awarded: 100,
+        qr_code_version: 1,
+        display_order: 1
       },
     ],
   },
@@ -253,18 +234,13 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     display_order: 2,
     sub_events: [
       { 
-        id: "1-moodboard", 
-        name: "กิจกรรมสร้าง Mood Board จากนิตยสาร", 
+        id: "2-moodboard-fashion", 
+        name: "กิจกรรมสร้าง Mood Board จากนิตยสาร และทำชุดจากเศษผ้าเหลือใช้", 
         location_id: 2, 
-        description: "ร่วมสร้างสรรค์ Mood Board จากนิตยสารและสื่อต่างๆ เพื่อแสดงแนวคิดและแรงบันดาลใจ",
-        qr_code_version: 1 
-      },
-      { 
-        id: "1-fabric", 
-        name: "ทำชุดจากเศษผ้าเหลือใช้", 
-        location_id: 2, 
-        description: "เรียนรู้การนำเศษผ้าเหลือใช้มาสร้างสรรค์เป็นชุดแฟชั่นที่ยั่งยืน",
-        qr_code_version: 1 
+        description: "สร้างสรรค์ Mood Board แสดงไอเดีย ความคิดสร้างสรรค์จากนิตยสาร จากนั้นออกแบบและตัดเย็บชุดจากเศษผ้าเหลือใช้ เรียนรู้ Fashion Design แบบ Sustainable และ Upcycling",
+        points_awarded: 100,
+        qr_code_version: 1,
+        display_order: 1
       },
     ],
   },
@@ -278,18 +254,22 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     display_order: 3,
     sub_events: [
       { 
-        id: "4-badge", 
+        id: "3-badge", 
         name: "กิจกรรมทำเข็มกลัด", 
         location_id: 3, 
-        description: "สร้างสรรค์เข็มกลัดด้วยมือจากผ้าและวัสดุต่างๆ",
-        qr_code_version: 1 
+        description: "ออกแบบและสร้างเข็มกลัดด้วยตัวเอง ใช้ผ้า กระดุม และวัสดุต่างๆ สร้างสรรค์ชิ้นงานที่มีเอกลักษณ์เฉพาะตัว เรียนรู้พื้นฐาน Textile Art และ Accessory Design",
+        points_awarded: 100,
+        qr_code_version: 1,
+        display_order: 1
       },
       { 
-        id: "4-weaving", 
+        id: "3-weaving", 
         name: "กิจกรรมลองใช้กี่ทอผ้า", 
         location_id: 3, 
-        description: "ลองสัมผัสประสบการณ์การทอผ้าด้วยกี่ทอแบบดั้งเดิม",
-        qr_code_version: 1 
+        description: "ทดลองใช้กี่ทอผ้าด้วยตัวเอง เรียนรู้กระบวนการทอผ้าแบบดั้งเดิม สัมผัสศิลปะการทอที่สืบทอดมาช้านาน เข้าใจกระบวนการสร้างผ้าจากด้ายสู่ผืนผ้า",
+        points_awarded: 100,
+        qr_code_version: 1,
+        display_order: 2
       },
     ],
   },
@@ -303,26 +283,29 @@ const DEFAULT_LOCATIONS: Record<string, LocationRecord> = {
     display_order: 4,
     sub_events: [
       { 
-        id: "4-workshop-design", 
+        id: "4-theatrical-design", 
         name: "Workshop Theatrical Design", 
         location_id: 4, 
-        description: "เรียนรู้การออกแบบแสงสำหรับเวทีละครอย่างมืออาชีพ",
+        description: "เรียนรู้การออกแบบฉากละคร การจัดแสงสี เครื่องแต่งกาย และองค์ประกอบต่างๆ บนเวที สร้างสรรค์ชุดออกแบบฉากของตัวเอง พร้อมเทคนิคจากผู้เชี่ยวชาญ",
+        points_awarded: 100,
         qr_code_version: 1,
         display_order: 1
       },
       { 
-        id: "4-workshop-acting", 
-        name: "Workshop Acting", 
+        id: "4-story-creation", 
+        name: "Workshop Story Creation", 
         location_id: 4, 
-        description: "เรียนรู้เกี่ยวกับการแสดงเบื้องต้นสำหรับผู้สนใจการแสดง",
+        description: "พัฒนาทักษะการเขียนบทละคร การสร้างตัวละครที่มีมิติ การวางพล็อตเรื่อง และโครงสร้างเรื่องราวที่น่าสนใจ เรียนรู้จากนักเขียนบทมืออาชีพ",
+        points_awarded: 100,
         qr_code_version: 1,
         display_order: 2
       },
       { 
-        id: "4-workshop-story", 
-        name: "Workshop Story Creation", 
+        id: "4-acting", 
+        name: "Workshop Acting", 
         location_id: 4, 
-        description: "เรียนรู้การสร้างเรื่องราวสำหรับบทละครและหนังสั้น",
+        description: "ฝึกทักษะการแสดงเบื้องต้น การแสดงออกทางอารมณ์ ภาษากาย การสร้างตัวละคร และเทคนิคการแสดงบนเวที จากอาจารย์ผู้เชี่ยวชาญด้านศิลปะการแสดง",
+        points_awarded: 100,
         qr_code_version: 1,
         display_order: 3
       },
