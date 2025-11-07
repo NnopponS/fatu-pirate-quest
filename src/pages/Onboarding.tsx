@@ -38,7 +38,7 @@ const Onboarding = () => {
             </div>
             <div className="flex items-center gap-3 p-4 bg-primary/10 rounded-xl">
               <span className="text-2xl">3️⃣</span>
-              <span className="text-left">ทำ Workshop อย่างน้อย 3 ใน 4 สถานที่</span>
+              <span className="text-left">ทำ Workshop 1 ใน 4 สถานที่</span>
             </div>
             <div className="flex items-center gap-3 p-4 bg-primary/10 rounded-xl">
               <span className="text-2xl">4️⃣</span>
@@ -102,7 +102,7 @@ const Onboarding = () => {
                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="font-semibold text-blue-900 mb-2">💡 ทริค!</p>
                   <p className="text-sm text-blue-800">
-                    แต่ละสถานที่มี Workshopหลายกิจกรรม ทำ Workshop <strong>อย่างน้อย 3 ใน 4 สถานที่</strong> เพื่อรับรางวัล
+                    แต่ละสถานที่มี Workshopหลายกิจกรรม ทำ Workshop <strong>1 ใน 4 สถานที่</strong> เพื่อรับรางวัล
                   </p>
                 </div>
               </div>
@@ -156,7 +156,7 @@ const Onboarding = () => {
               <div>
                 <h3 className="text-xl font-bold text-amber-900 mb-2">หมุนวงล้อได้เมื่อไหร่?</h3>
                 <div className="space-y-2 text-amber-800">
-                  <p>✓ เมื่อทำกิจกรรมครบทั้งหมด 3 สถานที่</p>
+                  <p>✓ เมื่อทำกิจกรรม 1 ใน 4 สถานที่</p>
                   <p>✓ เมื่อสะสมคะแนนได้ <strong className="text-amber-900">200 คะแนน</strong></p>
                   <p>✓ กดปุ่ม "หมุนวงล้อ" ในหน้า Dashboard</p>
                 </div>
