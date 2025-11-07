@@ -52,7 +52,7 @@ const Dashboard = () => {
   
   const [loading, setLoading] = useState(true);
   const [points, setPoints] = useState(0);
-  const [pointsRequired, setPointsRequired] = useState(300); // ✅ Default 300 คะแนน
+  const [pointsRequired, setPointsRequired] = useState(200); // ✅ Default 200 คะแนน
   const [locations, setLocations] = useState<Location[]>([]);
   const [checkins, setCheckins] = useState<number[]>([]);
   const [checkinsData, setCheckinsData] = useState<CheckinRecord[]>([]);

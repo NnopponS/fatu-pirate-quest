@@ -142,7 +142,7 @@ const AdminDashboard = () => {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [locationDrafts, setLocationDrafts] = useState<LocationRow[]>([]);
   const [prizeDrafts, setPrizeDrafts] = useState<PrizeRow[]>([]);
-  const [pointsRequired, setPointsRequired] = useState<number>(300); // ✅ Default 300 คะแนน
+  const [pointsRequired, setPointsRequired] = useState<number>(200); // ✅ Default 200 คะแนน
   const [savingLocationId, setSavingLocationId] = useState<number | null>(null);
   const [savingPrizeId, setSavingPrizeId] = useState<string | null>(null);
   const [newPrize, setNewPrize] = useState({ name: "", weight: "10", stock: "10", image_url: "", description: "" });

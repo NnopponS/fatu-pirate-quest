@@ -6,7 +6,7 @@ import { signCheckin, signSubEventCheckin, todayStr } from "@/lib/crypto";
 const encoder = new TextEncoder();
 
 const ADMIN_SESSION_TTL_HOURS = 12;
-const DEFAULT_POINTS_REQUIRED = 300; // ✅ เปลี่ยนจาก 400 เป็น 300 คะแนน
+const DEFAULT_POINTS_REQUIRED = 200; // ✅ เปลี่ยนจาก 300 เป็น 200 คะแนน
 
 // 🚀 Simple Cache Layer - เก็บข้อมูลไว้ชั่วคราวเพื่อลดการเรียก Firebase
 const cache = new Map<string, { data: any; timestamp: number }>();
